@@ -4,13 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClipLinks</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; background: #f5f5f5; }
 .navbar { background: #0C447C; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.logo { font-size: 20px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+.logo { font-size: 20px; font-weight: 500; color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
 .nav-badge { background: rgba(255,255,255,0.15); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+.lang-btn { background: rgba(255,255,255,0.15); color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 20px; border: none; cursor: pointer; }
+.lang-btn:hover { background: rgba(255,255,255,0.25); }
 .hero { background: #0C447C; padding: 2.5rem 2rem 3.5rem; text-align: center; }
 .hero h1 { font-size: 28px; font-weight: 500; color: #fff; margin-bottom: 8px; }
 .hero p { font-size: 14px; color: #B5D4F4; }
@@ -34,8 +36,6 @@ body { font-family: Arial, sans-serif; background: #f5f5f5; }
 .stat .lbl { font-size: 11px; color: #888; }
 .result-card { background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; }
 .result-header { background: #E6F1FB; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
-.result-info { display: flex; align-items: center; gap: 8px; }
-.result-info i { color: #185FA5; font-size: 18px; }
 .result-info span { font-size: 13px; font-weight: 500; color: #0C447C; }
 .result-info small { font-size: 11px; color: #185FA5; display: block; }
 .btn-copy-all { height: 30px; padding: 0 12px; border: 1px solid #B5D4F4; border-radius: 8px; background: #fff; color: #185FA5; font-size: 12px; cursor: pointer; }
@@ -58,56 +58,111 @@ textarea { width: 100%; min-height: 120px; padding: 10px; font-size: 12px; font-
 <body>
 <nav class="navbar">
   <div class="logo">ClipLinks</div>
-  <span class="nav-badge">Beta</span>
+  <div class="nav-right">
+    <span class="nav-badge">Beta</span>
+    <button class="lang-btn" onclick="toggleLang()">🌍 EN</button>
+  </div>
 </nav>
 <div class="hero">
-  <h1>Saca los links de cualquier perfil</h1>
-  <p>TikTok, Instagram y YouTube — grupos de 25, listos para copiar.</p>
+  <h1 id="heroTitle">Saca los links de cualquier perfil</h1>
+  <p id="heroSub">TikTok, Instagram y YouTube — grupos de 25, listos para copiar.</p>
 </div>
 <div class="main">
   <div class="card">
     <div class="platform-tabs">
       <button class="platform-tab active" onclick="setTab(this,'tiktok')">TikTok</button>
       <button class="platform-tab" onclick="setTab(this,'instagram')">Instagram</button>
-      <button class="platform-tab" onclick="setTab(this,'youtube')">YouTube</button>
+      <button class="platform-tab" onclick="setTab(this,'youtube')">YouTube Shorts</button>
     </div>
     <div class="input-wrap">
       <input type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
-      <button class="btn-main" id="fetchBtn" onclick="fetchLinks()">Obtener</button>
+      <button class="btn-main" id="fetchBtn" onclick="fetchLinks()" id="btnGet">Obtener</button>
     </div>
     <div class="date-row">
-      <div class="date-group"><label>Desde</label><input type="date" id="dateFrom" /></div>
-      <div class="date-group"><label>Hasta</label><input type="date" id="dateTo" /></div>
+      <div class="date-group"><label id="labelFrom">Desde</label><input type="date" id="dateFrom" /></div>
+      <div class="date-group"><label id="labelTo">Hasta</label><input type="date" id="dateTo" /></div>
     </div>
   </div>
   <div class="toast" id="toast"></div>
   <div class="error" id="errorBox"></div>
-  <div class="loading" id="loading"><div class="spinner"></div><p style="font-size:13px;color:#888">Buscando videos...</p></div>
+  <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText" style="font-size:13px;color:#888">Buscando videos...</p></div>
   <div class="stats" id="statsRow" style="display:none">
-    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Links totales</div></div>
-    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl">Grupos de 25</div></div>
-    <div class="stat"><div class="val" id="statUser">—</div><div class="lbl">Usuario</div></div>
+    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl" id="lblTotal">Links totales</div></div>
+    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos de 25</div></div>
+    <div class="stat"><div class="val" id="statUser">—</div><div class="lbl" id="lblUser">Usuario</div></div>
   </div>
   <div id="resultsArea"></div>
-  <div class="footer">ClipLinks — Hecho para cliperos</div>
+  <div class="footer" id="footer">ClipLinks — Hecho para cliperos</div>
 </div>
 <script>
 const API = 'https://web-production-db182.up.railway.app';
 let currentPlatform = 'tiktok';
+let lang = navigator.language.startsWith('en') ? 'en' : 'es';
+
+const t = {
+  es: {
+    heroTitle: 'Saca los links de cualquier perfil',
+    heroSub: 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.',
+    placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' },
+    btnGet: 'Obtener',
+    labelFrom: 'Desde', labelTo: 'Hasta',
+    loading: 'Buscando videos...',
+    lblTotal: 'Links totales', lblGroups: 'Grupos de 25', lblUser: 'Usuario',
+    copyAll: 'Copiar todo', copyGroup: 'Copiar grupo',
+    footer: 'ClipLinks — Hecho para cliperos',
+    toastGroup: 'copiado!', toastAll: '¡Todos los links copiados!',
+    error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
+    langBtn: '🌍 EN', langBtnAlt: '🌍 ES'
+  },
+  en: {
+    heroTitle: 'Get links from any profile',
+    heroSub: 'TikTok, Instagram and YouTube — groups of 25, ready to copy.',
+    placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' },
+    btnGet: 'Get links',
+    labelFrom: 'From', labelTo: 'To',
+    loading: 'Searching videos...',
+    lblTotal: 'Total links', lblGroups: 'Groups of 25', lblUser: 'User',
+    copyAll: 'Copy all', copyGroup: 'Copy group',
+    footer: 'ClipLinks — Made for clippers',
+    toastGroup: 'copied!', toastAll: 'All links copied!',
+    error: 'Could not get links. Make sure the user exists and is public.',
+    langBtn: '🌍 ES', langBtnAlt: '🌍 EN'
+  }
+};
+
+function applyLang() {
+  const l = t[lang];
+  document.getElementById('heroTitle').textContent = l.heroTitle;
+  document.getElementById('heroSub').textContent = l.heroSub;
+  document.getElementById('userInput').placeholder = l.placeholder[currentPlatform];
+  document.getElementById('fetchBtn').textContent = l.btnGet;
+  document.getElementById('labelFrom').textContent = l.labelFrom;
+  document.getElementById('labelTo').textContent = l.labelTo;
+  document.getElementById('loadingText').textContent = l.loading;
+  document.getElementById('lblTotal').textContent = l.lblTotal;
+  document.getElementById('lblGroups').textContent = l.lblGroups;
+  document.getElementById('lblUser').textContent = l.lblUser;
+  document.getElementById('footer').textContent = l.footer;
+  document.querySelector('.lang-btn').textContent = l.langBtn;
+}
+
+function toggleLang() {
+  lang = lang === 'es' ? 'en' : 'es';
+  applyLang();
+}
 
 function setTab(el, platform) {
   document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentPlatform = platform;
-  const ph = { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' };
-  document.getElementById('userInput').placeholder = ph[platform];
+  document.getElementById('userInput').placeholder = t[lang].placeholder[platform];
 }
 
 document.getElementById('userInput').addEventListener('keydown', e => { if(e.key==='Enter') fetchLinks(); });
 
 async function fetchLinks() {
   const user = document.getElementById('userInput').value.trim().replace('@','');
-  if(!user) { showError('Escribe un usuario'); return; }
+  if(!user) { showError(t[lang].error); return; }
   hideError();
   document.getElementById('resultsArea').innerHTML = '';
   document.getElementById('statsRow').style.display = 'none';
@@ -117,21 +172,9 @@ async function fetchLinks() {
     const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&count=100&platform=${currentPlatform}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
-    let links = data.links;
-    const from = document.getElementById('dateFrom').value;
-    const to = document.getElementById('dateTo').value;
-    if(from || to) {
-      links = links.filter(l => {
-        if(!l.date) return true;
-        const d = l.date;
-        if(from && d < from) return false;
-        if(to && d > to) return false;
-        return true;
-      });
-    }
-    showResults(user, links);
+    showResults(user, data.links);
   } catch(err) {
-    showError('No se pudieron obtener los links. Comprueba que el usuario existe y es público.');
+    showError(t[lang].error);
   } finally {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('fetchBtn').disabled = false;
@@ -151,13 +194,13 @@ function showResults(user, links) {
   card.className = 'result-card';
   const header = document.createElement('div');
   header.className = 'result-header';
-  header.innerHTML = `<div class="result-info"><div><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div></div><button class="btn-copy-all" onclick="copyAll()">Copiar todo</button>`;
+  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} ${t[lang].lblGroups.toLowerCase()}</small></div><button class="btn-copy-all" onclick="copyAll()">${t[lang].copyAll}</button>`;
   card.appendChild(header);
   groups.forEach((group, gi) => {
     const formatted = group.map((l,i) => i < group.length-1 ? l+',' : l).join('\n');
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
-    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">Copiar grupo ${gi+1}</button></div><textarea id="group${gi}" readonly>${formatted}</textarea>`;
+    wrap.innerHTML = `<div class="group-label"><span>${t[lang].lblGroups.split(' ')[0]} ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">${t[lang].copyGroup} ${gi+1}</button></div><textarea id="group${gi}" readonly>${formatted}</textarea>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
@@ -165,18 +208,20 @@ function showResults(user, links) {
 
 function copyGroup(i) {
   const ta = document.getElementById('group'+i);
-  navigator.clipboard.writeText(ta.value).then(()=>showToast(`Grupo ${i+1} copiado!`)).catch(()=>ta.select());
+  navigator.clipboard.writeText(ta.value).then(()=>showToast(`${t[lang].copyGroup} ${i+1} ${t[lang].toastGroup}`)).catch(()=>ta.select());
 }
 
 function copyAll() {
   const areas = document.querySelectorAll('[id^="group"]');
   const all = Array.from(areas).map(a=>a.value).join('\n');
-  navigator.clipboard.writeText(all).then(()=>showToast('¡Todos los links copiados!')).catch(()=>{});
+  navigator.clipboard.writeText(all).then(()=>showToast(t[lang].toastAll)).catch(()=>{});
 }
 
 function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
 function hideError() { document.getElementById('errorBox').style.display='none'; }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+applyLang();
 </script>
 </body>
 </html>
