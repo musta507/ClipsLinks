@@ -22,12 +22,14 @@ h2 { font-size: 20px; font-weight: 500; color: #111; margin-bottom: 1rem; }
 .row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
 .row:last-child { border-bottom: none; }
 .row .name { color: #333; }
-.row .count { color: #185FA5; font-weight: 500; }
+.row .count { color: #185FA5; font-weight: 500; white-space: nowrap; margin-left: 8px; }
 .bar-wrap { flex: 1; margin: 0 12px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
 .bar { height: 100%; background: #185FA5; border-radius: 3px; }
 .loading { text-align: center; padding: 3rem; color: #888; font-size: 14px; }
 .refresh { height: 34px; padding: 0 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #185FA5; font-size: 13px; cursor: pointer; }
 .refresh:hover { background: #E6F1FB; }
+.search-box { width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 13px; outline: none; margin-bottom: 1rem; }
+.search-box:focus { border-color: #185FA5; }
 </style>
 </head>
 <body>
@@ -43,13 +45,17 @@ h2 { font-size: 20px; font-weight: 500; color: #111; margin-bottom: 1rem; }
   <div id="content"><div class="loading">Cargando estadísticas...</div></div>
 </div>
 <script>
+let allUsers = [];
+
 async function loadStats() {
   try {
     const res = await fetch('/stats');
     const data = await res.json();
     if(data.error) { document.getElementById('content').innerHTML = '<div class="loading">Error: '+data.error+'</div>'; return; }
+    allUsers = data.top_users;
     const maxPlatform = data.platforms.length ? Math.max(...data.platforms.map(p=>p.count)) : 1;
     const maxDaily = data.daily.length ? Math.max(...data.daily.map(d=>d.count)) : 1;
+    const maxUsers = allUsers.length ? Math.max(...allUsers.map(u=>u.count)) : 1;
     document.getElementById('content').innerHTML = `
       <div class="stats">
         <div class="stat"><div class="val">${data.total}</div><div class="lbl">Búsquedas totales</div></div>
@@ -62,31 +68,4 @@ async function loadStats() {
             <span class="name">${p.name}</span>
             <div class="bar-wrap"><div class="bar" style="width:${Math.round(p.count/maxPlatform*100)}%"></div></div>
             <span class="count">${p.count}</span>
-          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
-      </div>
-      <div class="card">
-        <h3>Últimos 7 días</h3>
-        ${data.daily.map(d=>`
-          <div class="row">
-            <span class="name">${d.date}</span>
-            <div class="bar-wrap"><div class="bar" style="width:${Math.round(d.count/maxDaily*100)}%"></div></div>
-            <span class="count">${d.count}</span>
-          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
-      </div>
-      <div class="card">
-        <h3>Top 5 usuarios más buscados</h3>
-        ${data.top_users.map(u=>`
-          <div class="row">
-            <span class="name">@${u.username}</span>
-            <span class="count">${u.count} búsquedas</span>
-          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
-      </div>
-    `;
-  } catch(e) {
-    document.getElementById('content').innerHTML = '<div class="loading">Error al cargar</div>';
-  }
-}
-loadStats();
-</script>
-</body>
-</html>
+          </div>`).join('') || '<div style="colo
