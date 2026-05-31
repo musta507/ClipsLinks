@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import yt_dlp
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -13,19 +12,27 @@ def index():
 @app.route('/links')
 def get_links():
     user = request.args.get('user', '')
-    count = int(request.args.get('count', 25))
-    
+    count = int(request.args.get('count', 100))
+    platform = request.args.get('platform', 'tiktok')
+
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
-    
-    url = f'https://www.tiktok.com/@{user}'
-    
+
+    if platform == 'tiktok':
+        url = f'https://www.tiktok.com/@{user}'
+    elif platform == 'instagram':
+        url = f'https://www.instagram.com/{user}/reels/'
+    elif platform == 'youtube':
+        url = f'https://www.youtube.com/@{user}/shorts'
+    else:
+        return jsonify({'error': 'Plataforma no válida'}), 400
+
     ydl_opts = {
         'quiet': True,
         'extract_flat': True,
         'playlistend': count,
     }
-    
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
