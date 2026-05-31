@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClipLinks — Panel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f5f5f5; }
+.navbar { background: #0C447C; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 20px; font-weight: 500; color: #fff; }
+.nav-link { color: #B5D4F4; font-size: 13px; text-decoration: none; }
+.nav-link:hover { color: #fff; }
+.main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+h2 { font-size: 20px; font-weight: 500; color: #111; margin-bottom: 1rem; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.2rem; text-align: center; }
+.stat .val { font-size: 36px; font-weight: 500; color: #185FA5; }
+.stat .lbl { font-size: 13px; color: #888; margin-top: 4px; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; }
+.card h3 { font-size: 14px; font-weight: 500; color: #111; margin-bottom: 1rem; }
+.row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+.row:last-child { border-bottom: none; }
+.row .name { color: #333; }
+.row .count { color: #185FA5; font-weight: 500; }
+.bar-wrap { flex: 1; margin: 0 12px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+.bar { height: 100%; background: #185FA5; border-radius: 3px; }
+.loading { text-align: center; padding: 3rem; color: #888; font-size: 14px; }
+.refresh { height: 34px; padding: 0 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #185FA5; font-size: 13px; cursor: pointer; }
+.refresh:hover { background: #E6F1FB; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">ClipLinks — Panel</div>
+  <a href="/" class="nav-link">← Volver a la web</a>
+</nav>
+<div class="main">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h2>Estadísticas de uso</h2>
+    <button class="refresh" onclick="loadStats()">↻ Actualizar</button>
+  </div>
+  <div id="content"><div class="loading">Cargando estadísticas...</div></div>
+</div>
+<script>
+async function loadStats() {
+  try {
+    const res = await fetch('/stats');
+    const data = await res.json();
+    if(data.error) { document.getElementById('content').innerHTML = '<div class="loading">Error: '+data.error+'</div>'; return; }
+    const maxPlatform = data.platforms.length ? Math.max(...data.platforms.map(p=>p.count)) : 1;
+    const maxDaily = data.daily.length ? Math.max(...data.daily.map(d=>d.count)) : 1;
+    document.getElementById('content').innerHTML = `
+      <div class="stats">
+        <div class="stat"><div class="val">${data.total}</div><div class="lbl">Búsquedas totales</div></div>
+        <div class="stat"><div class="val">${data.unique_users}</div><div class="lbl">Usuarios únicos</div></div>
+      </div>
+      <div class="card">
+        <h3>Por plataforma</h3>
+        ${data.platforms.map(p=>`
+          <div class="row">
+            <span class="name">${p.name}</span>
+            <div class="bar-wrap"><div class="bar" style="width:${Math.round(p.count/maxPlatform*100)}%"></div></div>
+            <span class="count">${p.count}</span>
+          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
+      </div>
+      <div class="card">
+        <h3>Últimos 7 días</h3>
+        ${data.daily.map(d=>`
+          <div class="row">
+            <span class="name">${d.date}</span>
+            <div class="bar-wrap"><div class="bar" style="width:${Math.round(d.count/maxDaily*100)}%"></div></div>
+            <span class="count">${d.count}</span>
+          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
+      </div>
+      <div class="card">
+        <h3>Top 5 usuarios más buscados</h3>
+        ${data.top_users.map(u=>`
+          <div class="row">
+            <span class="name">@${u.username}</span>
+            <span class="count">${u.count} búsquedas</span>
+          </div>`).join('') || '<div style="color:#888;font-size:13px">Sin datos aún</div>'}
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<div class="loading">Error al cargar</div>';
+  }
+}
+loadStats();
+</script>
+</body>
+</html>
