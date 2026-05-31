@@ -12,8 +12,9 @@ def index():
 @app.route('/links')
 def get_links():
     user = request.args.get('user', '')
-    count = int(request.args.get('count', 100))
     platform = request.args.get('platform', 'tiktok')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
 
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
@@ -27,16 +28,45 @@ def get_links():
     else:
         return jsonify({'error': 'Plataforma no válida'}), 400
 
+    # Si hay fechas, sacamos todos los videos sin límite
+    # Si no hay fechas, limitamos a 100
+    has_dates = date_from or date_to
+    
     ydl_opts = {
         'quiet': True,
         'extract_flat': True,
-        'playlistend': count,
     }
+    
+    if not has_dates:
+        ydl_opts['playlistend'] = 100
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            links = [entry['url'] for entry in info['entries'][:count]]
+            entries = info.get('entries', [])
+            
+            links = []
+            for entry in entries:
+                upload_date = entry.get('upload_date', '')
+                link = entry.get('url', '')
+                
+                if not link:
+                    continue
+                
+                if has_dates and upload_date:
+                    # upload_date formato: YYYYMMDD
+                    # date_from/date_to formato: YYYY-MM-DD
+                    date_str = upload_date  # YYYYMMDD
+                    from_str = date_from.replace('-', '') if date_from else ''
+                    to_str = date_to.replace('-', '') if date_to else ''
+                    
+                    if from_str and date_str < from_str:
+                        continue
+                    if to_str and date_str > to_str:
+                        continue
+                
+                links.append(link)
+            
             return jsonify({'links': links})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
