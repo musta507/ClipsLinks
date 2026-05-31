@@ -76,7 +76,7 @@ textarea { width: 100%; min-height: 120px; padding: 10px; font-size: 12px; font-
     </div>
     <div class="input-wrap">
       <input type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
-      <button class="btn-main" id="fetchBtn" onclick="fetchLinks()" id="btnGet">Obtener</button>
+      <button class="btn-main" id="fetchBtn" onclick="fetchLinks()">Obtener</button>
     </div>
     <div class="date-row">
       <div class="date-group"><label id="labelFrom">Desde</label><input type="date" id="dateFrom" /></div>
@@ -104,29 +104,21 @@ const t = {
     heroTitle: 'Saca los links de cualquier perfil',
     heroSub: 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.',
     placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' },
-    btnGet: 'Obtener',
-    labelFrom: 'Desde', labelTo: 'Hasta',
-    loading: 'Buscando videos...',
-    lblTotal: 'Links totales', lblGroups: 'Grupos de 25', lblUser: 'Usuario',
-    copyAll: 'Copiar todo', copyGroup: 'Copiar grupo',
-    footer: 'ClipLinks — Hecho para cliperos',
+    btnGet: 'Obtener', labelFrom: 'Desde', labelTo: 'Hasta',
+    loading: 'Buscando videos...', lblTotal: 'Links totales', lblGroups: 'Grupos de 25', lblUser: 'Usuario',
+    copyAll: 'Copiar todo', copyGroup: 'Copiar grupo', footer: 'ClipLinks — Hecho para cliperos',
     toastGroup: 'copiado!', toastAll: '¡Todos los links copiados!',
-    error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
-    langBtn: '🌍 EN', langBtnAlt: '🌍 ES'
+    error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.', langBtn: '🌍 EN'
   },
   en: {
     heroTitle: 'Get links from any profile',
     heroSub: 'TikTok, Instagram and YouTube — groups of 25, ready to copy.',
     placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' },
-    btnGet: 'Get links',
-    labelFrom: 'From', labelTo: 'To',
-    loading: 'Searching videos...',
-    lblTotal: 'Total links', lblGroups: 'Groups of 25', lblUser: 'User',
-    copyAll: 'Copy all', copyGroup: 'Copy group',
-    footer: 'ClipLinks — Made for clippers',
+    btnGet: 'Get links', labelFrom: 'From', labelTo: 'To',
+    loading: 'Searching videos...', lblTotal: 'Total links', lblGroups: 'Groups of 25', lblUser: 'User',
+    copyAll: 'Copy all', copyGroup: 'Copy group', footer: 'ClipLinks — Made for clippers',
     toastGroup: 'copied!', toastAll: 'All links copied!',
-    error: 'Could not get links. Make sure the user exists and is public.',
-    langBtn: '🌍 ES', langBtnAlt: '🌍 EN'
+    error: 'Could not get links. Make sure the user exists and is public.', langBtn: '🌍 ES'
   }
 };
 
@@ -146,10 +138,7 @@ function applyLang() {
   document.querySelector('.lang-btn').textContent = l.langBtn;
 }
 
-function toggleLang() {
-  lang = lang === 'es' ? 'en' : 'es';
-  applyLang();
-}
+function toggleLang() { lang = lang === 'es' ? 'en' : 'es'; applyLang(); }
 
 function setTab(el, platform) {
   document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
@@ -168,8 +157,10 @@ async function fetchLinks() {
   document.getElementById('statsRow').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('fetchBtn').disabled = true;
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
   try {
-    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&count=100&platform=${currentPlatform}`);
+    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&date_from=${from}&date_to=${to}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
     showResults(user, data.links);
@@ -194,13 +185,13 @@ function showResults(user, links) {
   card.className = 'result-card';
   const header = document.createElement('div');
   header.className = 'result-header';
-  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} ${t[lang].lblGroups.toLowerCase()}</small></div><button class="btn-copy-all" onclick="copyAll()">${t[lang].copyAll}</button>`;
+  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div><button class="btn-copy-all" onclick="copyAll()">${t[lang].copyAll}</button>`;
   card.appendChild(header);
   groups.forEach((group, gi) => {
     const formatted = group.map((l,i) => i < group.length-1 ? l+',' : l).join('\n');
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
-    wrap.innerHTML = `<div class="group-label"><span>${t[lang].lblGroups.split(' ')[0]} ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">${t[lang].copyGroup} ${gi+1}</button></div><textarea id="group${gi}" readonly>${formatted}</textarea>`;
+    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">${t[lang].copyGroup} ${gi+1}</button></div><textarea id="group${gi}" readonly>${formatted}</textarea>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
