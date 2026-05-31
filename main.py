@@ -53,7 +53,7 @@ def stats():
         platforms = cur.fetchall()
         cur.execute('SELECT DATE(created_at), COUNT(*) FROM searches GROUP BY DATE(created_at) ORDER BY DATE(created_at) DESC LIMIT 7')
         daily = cur.fetchall()
-        cur.execute('SELECT username, COUNT(*) FROM searches GROUP BY username ORDER BY COUNT(*) DESC LIMIT 5')
+        cur.execute('SELECT username, COUNT(*) FROM searches GROUP BY username ORDER BY COUNT(*) DESC')
         top_users = cur.fetchall()
         cur.close()
         conn.close()
