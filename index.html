@@ -12,8 +12,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 .logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #0071E3; }
 .nav-right { display: flex; align-items: center; gap: 10px; }
 .lang-select { font-size: 12px; color: #86868B; padding: 4px 8px; border-radius: 8px; border: 1px solid #E8E8ED; background: #fff; cursor: pointer; outline: none; }
-.btn-pro { height: 34px; padding: 0 16px; border: none; border-radius: 20px; background: #0071E3; color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; }
-.btn-pro:hover { background: #0077ED; }
 .hero { text-align: center; padding: 3rem 1rem 2rem; }
 .hero h1 { font-size: 32px; font-weight: 500; color: #1D1D1F; margin-bottom: 8px; letter-spacing: -0.5px; }
 .hero p { font-size: 15px; color: #86868B; }
@@ -66,7 +64,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
       <option value="es">🌍 Español</option>
       <option value="en">🌍 English</option>
     </select>
-    <button class="btn-pro" onclick="goToPro()">⚡ Probar por $1</button>
   </div>
 </nav>
 <div class="hero">
@@ -134,8 +131,7 @@ const T = {
     footer: 'ClipLinks — Hecho para cliperos',
     toastCopied: '¡Copiado!', toastAll: '¡Links copiados!',
     error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
-    groupLabel: 'Grupo', linksLabel: 'links',
-    btnPro: '⚡ Probar por $1'
+    groupLabel: 'Grupo', linksLabel: 'links'
   },
   en: {
     heroTitle: 'Get links from any profile',
@@ -150,8 +146,7 @@ const T = {
     footer: 'ClipLinks — Made for clippers',
     toastCopied: 'Copied!', toastAll: 'All links copied!',
     error: 'Could not get links. Make sure the user exists and is public.',
-    groupLabel: 'Group', linksLabel: 'links',
-    btnPro: '⚡ Try for $1'
+    groupLabel: 'Group', linksLabel: 'links'
   }
 };
 
@@ -168,7 +163,6 @@ function applyLang() {
   document.getElementById('lblGroups').textContent = t.lblGroups;
   document.getElementById('lblUser').textContent = t.lblUser;
   document.getElementById('footer').textContent = t.footer;
-  document.querySelector('.btn-pro').textContent = t.btnPro;
   document.querySelector('.lang-select').value = lang;
 }
 
@@ -252,17 +246,6 @@ function copyAll() {
   const items = document.querySelectorAll('.link-item');
   const text = Array.from(items).map(i=>i.textContent).join('\n');
   navigator.clipboard.writeText(text).then(()=>showToast(T[lang].toastAll)).catch(()=>{});
-}
-
-async function goToPro() {
-  try {
-    const res = await fetch(`${API}/create-checkout`, { method: 'POST' });
-    const data = await res.json();
-    if(data.url) window.location.href = data.url;
-    else alert('Error al crear el pago');
-  } catch(e) {
-    alert('Error al conectar con el servidor');
-  }
 }
 
 function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
