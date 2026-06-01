@@ -3,9 +3,12 @@ from flask_cors import CORS
 import yt_dlp
 import os
 import psycopg2
+import stripe
 
 app = Flask(__name__)
 CORS(app)
+
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -63,6 +66,27 @@ def stats():
             'daily': [{'date': str(d[0]), 'count': d[1]} for d in daily],
             'top_users': [{'username': u[0], 'count': u[1]} for u in top_users]
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/create-checkout', methods=['POST'])
+def create_checkout():
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': { 'name': 'ClipLinks Pro' },
+                    'unit_amount': 100,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=request.host_url + '?payment=success',
+            cancel_url=request.host_url + '?payment=cancel',
+        )
+        return jsonify({'url': session.url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
