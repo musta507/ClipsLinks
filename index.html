@@ -28,9 +28,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 .periods { display: flex; gap: 6px; flex-wrap: wrap; }
 .period { height: 32px; padding: 0 14px; border: 1px solid #E8E8ED; border-radius: 20px; background: #fff; color: #86868B; font-size: 12px; cursor: pointer; }
 .period.active { background: #E8F1FD; color: #0071E3; border-color: #B8D4F8; }
-.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.date-group label { font-size: 11px; color: #86868B; margin-bottom: 4px; display: block; }
-.date-group input[type="date"] { width: 100%; height: 38px; font-size: 13px; border: 1px solid #E8E8ED; border-radius: 10px; padding: 0 10px; background: #FAFAFA; color: #1D1D1F; outline: none; }
 .btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: #0071E3; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
 .btn:hover { background: #0077ED; }
 .btn:disabled { background: #C7C7CC; cursor: not-allowed; }
@@ -80,111 +77,72 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
       <button class="plat" onclick="setTab(this,'youtube')">YouTube</button>
     </div>
     <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
-    <div class="period-label" id="periodLabel">¿De qué periodo quieres los links?</div>
+    <div class="period-label" id="periodLabel">¿Cuántos links quieres sacar?</div>
     <div class="periods">
-      <button class="period active" onclick="setPeriod(this,1)" id="p1">Hoy</button>
-      <button class="period" onclick="setPeriod(this,2)" id="p2">2 días</button>
-      <button class="period" onclick="setPeriod(this,7)" id="p7">7 días</button>
-      <button class="period" onclick="setPeriod(this,30)" id="p30">30 días</button>
-      <button class="period" onclick="toggleCal(this)" id="pCal">📅 Fechas</button>
-    </div>
-    <div class="date-row" id="dateRow" style="display:none">
-      <div class="date-group"><label id="labelFrom">Desde</label><input type="date" id="dateFrom" /></div>
-      <div class="date-group"><label id="labelTo">Hasta</label><input type="date" id="dateTo" /></div>
+      <button class="period active" onclick="setCount(this,25)">Últimos 25</button>
+      <button class="period" onclick="setCount(this,50)">Últimos 50</button>
+      <button class="period" onclick="setCount(this,100)">Últimos 100</button>
+      <button class="period" onclick="setCount(this,200)">Últimos 200</button>
     </div>
     <button class="btn" id="fetchBtn" onclick="fetchLinks()">Obtener links</button>
   </div>
   <div class="toast" id="toast"></div>
   <div class="error" id="errorBox"></div>
-  <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText" style="font-size:13px;color:#86868B">Buscando videos...</p></div>
+  <div class="loading" id="loading"><div class="spinner"></div><p style="font-size:13px;color:#86868B">Buscando videos...</p></div>
   <div class="stats" id="statsRow" style="display:none">
-    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl" id="lblTotal">Links totales</div></div>
-    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos</div></div>
-    <div class="stat"><div class="val" id="statUser">—</div><div class="lbl" id="lblUser">Usuario</div></div>
+    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Links totales</div></div>
+    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl">Grupos</div></div>
+    <div class="stat"><div class="val" id="statUser">—</div><div class="lbl">Usuario</div></div>
   </div>
   <div id="resultsArea"></div>
-  <div class="footer" id="footer">ClipLinks — Hecho para cliperos</div>
+  <div class="footer">ClipLinks — Hecho para cliperos</div>
 </div>
 <script>
 const API = 'https://web-production-db182.up.railway.app';
 let currentPlatform = 'tiktok';
-let selectedDays = 1;
+let selectedCount = 25;
 let lang = navigator.language.startsWith('en') ? 'en' : 'es';
-
-const translations = {
-  es: { heroTitle: 'Saca los links de cualquier perfil', heroSub: 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.', periodLabel: '¿De qué periodo quieres los links?', btnGet: 'Obtener links', labelFrom: 'Desde', labelTo: 'Hasta', loading: 'Buscando videos...', lblTotal: 'Links totales', lblGroups: 'Grupos', lblUser: 'Usuario', copyAll: 'Copiar todo', copyGroup: 'Copiar grupo', footer: 'ClipLinks — Hecho para cliperos', toastAll: '¡Links copiados!', error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.', langBtn: '🌍 EN', placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' } },
-  en: { heroTitle: 'Get links from any profile', heroSub: 'TikTok, Instagram and YouTube — groups of 25, ready to copy.', periodLabel: 'What period do you want links from?', btnGet: 'Get links', labelFrom: 'From', labelTo: 'To', loading: 'Searching videos...', lblTotal: 'Total links', lblGroups: 'Groups', lblUser: 'User', copyAll: 'Copy all', copyGroup: 'Copy group', footer: 'ClipLinks — Made for clippers', toastAll: 'Links copied!', error: 'Could not get links. Make sure the user exists and is public.', langBtn: '🌍 ES', placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' } }
-};
-
-function applyLang() {
-  const t = translations[lang];
-  document.getElementById('heroTitle').textContent = t.heroTitle;
-  document.getElementById('heroSub').textContent = t.heroSub;
-  document.getElementById('periodLabel').textContent = t.periodLabel;
-  document.getElementById('fetchBtn').textContent = t.btnGet;
-  document.getElementById('labelFrom').textContent = t.labelFrom;
-  document.getElementById('labelTo').textContent = t.labelTo;
-  document.getElementById('loadingText').textContent = t.loading;
-  document.getElementById('lblTotal').textContent = t.lblTotal;
-  document.getElementById('lblGroups').textContent = t.lblGroups;
-  document.getElementById('lblUser').textContent = t.lblUser;
-  document.getElementById('footer').textContent = t.footer;
-  document.querySelector('.lang-btn').textContent = t.langBtn;
-  document.getElementById('userInput').placeholder = t.placeholder[currentPlatform];
-}
-
-function toggleLang() { lang = lang === 'es' ? 'en' : 'es'; applyLang(); }
 
 function setTab(el, platform) {
   document.querySelectorAll('.plat').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   currentPlatform = platform;
-  document.getElementById('userInput').placeholder = translations[lang].placeholder[platform];
+  const ph = { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' };
+  document.getElementById('userInput').placeholder = ph[platform];
 }
 
-function setPeriod(el, days) {
+function setCount(el, count) {
   document.querySelectorAll('.period').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  selectedDays = days;
-  document.getElementById('dateRow').style.display = 'none';
+  selectedCount = count;
 }
 
-function toggleCal(el) {
-  document.querySelectorAll('.period').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  selectedDays = 0;
-  const row = document.getElementById('dateRow');
-  row.style.display = row.style.display === 'none' ? 'grid' : 'none';
+function toggleLang() {
+  lang = lang === 'es' ? 'en' : 'es';
+  document.querySelector('.lang-btn').textContent = lang === 'es' ? '🌍 EN' : '🌍 ES';
+  document.getElementById('heroTitle').textContent = lang === 'es' ? 'Saca los links de cualquier perfil' : 'Get links from any profile';
+  document.getElementById('heroSub').textContent = lang === 'es' ? 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.' : 'TikTok, Instagram and YouTube — groups of 25, ready to copy.';
+  document.getElementById('periodLabel').textContent = lang === 'es' ? '¿Cuántos links quieres sacar?' : 'How many links do you want?';
+  document.getElementById('fetchBtn').textContent = lang === 'es' ? 'Obtener links' : 'Get links';
 }
 
-document.getElementById('userInput').addEventListener('keydown', e => { if(e.key === 'Enter') fetchLinks(); });
-
-function getDateRange() {
-  if(selectedDays === 0) {
-    return { from: document.getElementById('dateFrom').value, to: document.getElementById('dateTo').value };
-  }
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - selectedDays);
-  return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
-}
+document.getElementById('userInput').addEventListener('keydown', e => { if(e.key==='Enter') fetchLinks(); });
 
 async function fetchLinks() {
   const user = document.getElementById('userInput').value.trim().replace('@','');
-  if(!user) { showError(translations[lang].error); return; }
+  if(!user) { showError('Escribe un usuario'); return; }
   hideError();
   document.getElementById('resultsArea').innerHTML = '';
   document.getElementById('statsRow').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('fetchBtn').disabled = true;
-  const { from, to } = getDateRange();
   try {
-    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&date_from=${from}&date_to=${to}`);
+    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&count=${selectedCount}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
     showResults(user, data.links);
   } catch(err) {
-    showError(translations[lang].error);
+    showError('No se pudieron obtener los links. Comprueba que el usuario existe y es público.');
   } finally {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('fetchBtn').disabled = false;
@@ -204,34 +162,32 @@ function showResults(user, links) {
   card.className = 'result-card';
   const header = document.createElement('div');
   header.className = 'result-header';
-  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div><button class="btn-copy-all" onclick="copyAll()">${translations[lang].copyAll}</button>`;
+  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div><button class="btn-copy-all" onclick="copyAll()">Copiar todo</button>`;
   card.appendChild(header);
   groups.forEach((group, gi) => {
     const formatted = group.map((l,i) => i < group.length-1 ? l+',' : l).join('\n');
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
     const list = group.map((l,i) => `<div class="link-item">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
-    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi},'${formatted.replace(/'/g,"\\'")}')"> ${translations[lang].copyGroup} ${gi+1}</button></div><div class="links-list">${list}</div>`;
+    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(\`${formatted.replace(/`/g,'\\`')}\`)">Copiar grupo ${gi+1}</button></div><div class="links-list">${list}</div>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
 }
 
-function copyGroup(i, text) {
-  navigator.clipboard.writeText(text).then(()=>showToast(`Grupo ${i+1} copiado!`)).catch(()=>{});
+function copyGroup(text) {
+  navigator.clipboard.writeText(text).then(()=>showToast('¡Copiado!')).catch(()=>{});
 }
 
 function copyAll() {
-  const groups = document.querySelectorAll('.group-wrap');
-  const all = Array.from(groups).map(g => Array.from(g.querySelectorAll('.link-item')).map(l=>l.textContent).join('\n')).join('\n');
-  navigator.clipboard.writeText(all).then(()=>showToast(translations[lang].toastAll)).catch(()=>{});
+  const items = document.querySelectorAll('.link-item');
+  const all = Array.from(items).map(i=>i.textContent).join('\n');
+  navigator.clipboard.writeText(all).then(()=>showToast('¡Links copiados!')).catch(()=>{});
 }
 
 function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
 function hideError() { document.getElementById('errorBox').style.display='none'; }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
-
-applyLang();
 </script>
 </body>
 </html>
