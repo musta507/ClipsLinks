@@ -70,7 +70,8 @@ def stats():
 def get_links():
     user = request.args.get('user', '')
     platform = request.args.get('platform', 'tiktok')
-    count = int(request.args.get('count', 25))
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
     ip = request.remote_addr
 
     if not user:
@@ -95,17 +96,34 @@ def get_links():
     else:
         return jsonify({'error': 'Plataforma no válida'}), 400
 
+    has_dates = date_from or date_to
+
     ydl_opts = {
         'quiet': True,
-        'extract_flat': True,
-        'playlistend': count,
+        'extract_flat': False,
     }
+
+    if not has_dates:
+        ydl_opts['playlistend'] = 100
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             entries = info.get('entries', [])
-            links = [entry.get('url', '') for entry in entries if entry.get('url')]
+            links = []
+            for entry in entries:
+                upload_date = entry.get('upload_date', '')
+                link = entry.get('webpage_url') or entry.get('url', '')
+                if not link:
+                    continue
+                if has_dates and upload_date:
+                    from_str = date_from.replace('-', '') if date_from else ''
+                    to_str = date_to.replace('-', '') if date_to else ''
+                    if from_str and upload_date < from_str:
+                        continue
+                    if to_str and upload_date > to_str:
+                        continue
+                links.append(link)
             return jsonify({'links': links})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
