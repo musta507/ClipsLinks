@@ -6,58 +6,63 @@
 <title>ClipLinks</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, sans-serif; background: #f5f5f5; }
-.navbar { background: #0C447C; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.logo { font-size: 20px; font-weight: 500; color: #fff; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F5F5F7; }
+.navbar { background: rgba(255,255,255,0.85); border-bottom: 1px solid #E8E8ED; padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 17px; font-weight: 500; color: #1D1D1F; display: flex; align-items: center; gap: 8px; }
+.logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #0071E3; }
 .nav-right { display: flex; align-items: center; gap: 10px; }
-.nav-badge { background: rgba(255,255,255,0.15); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
-.lang-btn { background: rgba(255,255,255,0.15); color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 20px; border: none; cursor: pointer; }
-.lang-btn:hover { background: rgba(255,255,255,0.25); }
-.hero { background: #0C447C; padding: 2.5rem 2rem 3.5rem; text-align: center; }
-.hero h1 { font-size: 28px; font-weight: 500; color: #fff; margin-bottom: 8px; }
-.hero p { font-size: 14px; color: #B5D4F4; }
-.main { max-width: 620px; margin: -1.5rem auto 0; padding: 0 1rem 3rem; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
-.platform-tabs { display: flex; gap: 8px; margin-bottom: 1.2rem; }
-.platform-tab { flex: 1; height: 38px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #888; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.platform-tab.active { background: #185FA5; color: #fff; border-color: #185FA5; }
-.input-wrap { display: flex; gap: 8px; margin-bottom: 1rem; }
-.input-wrap input { flex: 1; height: 42px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; outline: none; }
-.input-wrap input:focus { border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.08); }
-.btn-main { height: 42px; padding: 0 20px; border: none; border-radius: 8px; background: #185FA5; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
-.btn-main:hover { background: #0C447C; }
-.btn-main:disabled { background: #ccc; cursor: not-allowed; }
-.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.date-group label { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
-.date-group input[type="date"] { width: 100%; height: 38px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; padding: 0 10px; outline: none; }
+.nav-badge { background: #E8F1FD; color: #0071E3; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+.lang-btn { background: transparent; color: #86868B; font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid #E8E8ED; cursor: pointer; }
+.hero { text-align: center; padding: 3rem 1rem 2rem; }
+.hero h1 { font-size: 32px; font-weight: 500; color: #1D1D1F; margin-bottom: 8px; letter-spacing: -0.5px; }
+.hero p { font-size: 15px; color: #86868B; }
+.main { max-width: 580px; margin: 0 auto; padding: 0 1rem 3rem; }
+.card { background: #fff; border: 1px solid #E8E8ED; border-radius: 20px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.plats { display: flex; gap: 6px; margin-bottom: 1.2rem; background: #F5F5F7; border-radius: 12px; padding: 4px; }
+.plat { flex: 1; height: 36px; border: none; border-radius: 9px; background: transparent; color: #86868B; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.plat.active { background: #fff; color: #1D1D1F; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.inp { width: 100%; height: 48px; border: 1px solid #E8E8ED; border-radius: 12px; padding: 0 16px; font-size: 15px; outline: none; color: #1D1D1F; margin-bottom: 1rem; background: #FAFAFA; }
+.inp::placeholder { color: #C7C7CC; }
+.inp:focus { border-color: #0071E3; background: #fff; box-shadow: 0 0 0 3px rgba(0,113,227,0.08); }
+.period-label { font-size: 12px; color: #86868B; margin-bottom: 8px; }
+.periods { display: flex; gap: 6px; flex-wrap: wrap; }
+.period { height: 32px; padding: 0 14px; border: 1px solid #E8E8ED; border-radius: 20px; background: #fff; color: #86868B; font-size: 12px; cursor: pointer; }
+.period.active { background: #E8F1FD; color: #0071E3; border-color: #B8D4F8; }
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.date-group label { font-size: 11px; color: #86868B; margin-bottom: 4px; display: block; }
+.date-group input[type="date"] { width: 100%; height: 38px; font-size: 13px; border: 1px solid #E8E8ED; border-radius: 10px; padding: 0 10px; background: #FAFAFA; color: #1D1D1F; outline: none; }
+.btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: #0071E3; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
+.btn:hover { background: #0077ED; }
+.btn:disabled { background: #C7C7CC; cursor: not-allowed; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
-.stat { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
-.stat .val { font-size: 20px; font-weight: 500; color: #185FA5; }
-.stat .lbl { font-size: 11px; color: #888; }
-.result-card { background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; }
-.result-header { background: #E6F1FB; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
-.result-info span { font-size: 13px; font-weight: 500; color: #0C447C; }
-.result-info small { font-size: 11px; color: #185FA5; display: block; }
-.btn-copy-all { height: 30px; padding: 0 12px; border: 1px solid #B5D4F4; border-radius: 8px; background: #fff; color: #185FA5; font-size: 12px; cursor: pointer; }
-.btn-copy-all:hover { background: #E6F1FB; }
-.group-wrap { padding: 12px 14px; border-bottom: 1px solid #eee; }
+.stat { background: #fff; border: 1px solid #E8E8ED; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
+.stat .val { font-size: 22px; font-weight: 500; color: #0071E3; }
+.stat .lbl { font-size: 11px; color: #86868B; margin-top: 2px; }
+.result-card { background: #fff; border: 1px solid #E8E8ED; border-radius: 20px; overflow: hidden; margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.result-header { background: #F5F5F7; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E8E8ED; }
+.result-info span { font-size: 13px; font-weight: 500; color: #1D1D1F; }
+.result-info small { font-size: 11px; color: #86868B; display: block; margin-top: 2px; }
+.btn-copy-all { height: 30px; padding: 0 14px; border: 1px solid #B8D4F8; border-radius: 8px; background: #E8F1FD; color: #0071E3; font-size: 12px; cursor: pointer; }
+.btn-copy-all:hover { background: #D1E8FB; }
+.group-wrap { padding: 12px 16px; border-bottom: 1px solid #F5F5F7; }
 .group-wrap:last-child { border-bottom: none; }
-.group-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.group-label span { font-size: 12px; font-weight: 500; color: #888; }
-.btn-copy-group { height: 26px; padding: 0 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #888; font-size: 11px; cursor: pointer; }
-.btn-copy-group:hover { background: #f5f5f5; }
-textarea { width: 100%; min-height: 120px; padding: 10px; font-size: 12px; font-family: monospace; border: 1px solid #eee; border-radius: 8px; background: #f9f9f9; resize: vertical; outline: none; line-height: 1.8; }
+.group-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.group-label span { font-size: 12px; color: #86868B; }
+.btn-copy-group { height: 26px; padding: 0 10px; border: 1px solid #E8E8ED; border-radius: 6px; background: #fff; color: #86868B; font-size: 11px; cursor: pointer; }
+.btn-copy-group:hover { border-color: #0071E3; color: #0071E3; }
+.links-list { display: flex; flex-direction: column; gap: 3px; }
+.link-item { font-size: 13px; color: #1D1D1F; padding: 5px 8px; background: #F5F5F7; border-radius: 8px; line-height: 1.4; }
 .loading { display: none; text-align: center; padding: 2rem; }
-.spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
+.spinner { width: 28px; height: 28px; border: 3px solid #E8E8ED; border-top-color: #0071E3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.error { display: none; background: #FCEBEB; border: 1px solid #F7C1C1; border-radius: 8px; padding: 12px; font-size: 13px; color: #A32D2D; margin-bottom: 1rem; }
-.toast { background: #0C447C; color: #fff; border-radius: 8px; padding: 10px 16px; font-size: 13px; text-align: center; margin-bottom: 1rem; display: none; }
-.footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #aaa; }
+.error { display: none; background: #FFF2F2; border: 1px solid #FFD1D1; border-radius: 12px; padding: 12px; font-size: 13px; color: #D70015; margin-bottom: 1rem; }
+.toast { background: #1D1D1F; color: #fff; border-radius: 12px; padding: 10px 16px; font-size: 13px; text-align: center; margin-bottom: 1rem; display: none; }
+.footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #C7C7CC; }
 </style>
 </head>
 <body>
 <nav class="navbar">
-  <div class="logo">ClipLinks</div>
+  <div class="logo"><div class="logo-dot"></div> ClipLinks</div>
   <div class="nav-right">
     <span class="nav-badge">Beta</span>
     <button class="lang-btn" onclick="toggleLang()">🌍 EN</button>
@@ -69,26 +74,32 @@ textarea { width: 100%; min-height: 120px; padding: 10px; font-size: 12px; font-
 </div>
 <div class="main">
   <div class="card">
-    <div class="platform-tabs">
-      <button class="platform-tab active" onclick="setTab(this,'tiktok')">TikTok</button>
-      <button class="platform-tab" onclick="setTab(this,'instagram')">Instagram</button>
-      <button class="platform-tab" onclick="setTab(this,'youtube')">YouTube Shorts</button>
+    <div class="plats">
+      <button class="plat active" onclick="setTab(this,'tiktok')">TikTok</button>
+      <button class="plat" onclick="setTab(this,'instagram')">Instagram</button>
+      <button class="plat" onclick="setTab(this,'youtube')">YouTube</button>
     </div>
-    <div class="input-wrap">
-      <input type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
-      <button class="btn-main" id="fetchBtn" onclick="fetchLinks()">Obtener</button>
+    <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
+    <div class="period-label" id="periodLabel">¿De qué periodo quieres los links?</div>
+    <div class="periods">
+      <button class="period active" onclick="setPeriod(this,1)" id="p1">Hoy</button>
+      <button class="period" onclick="setPeriod(this,2)" id="p2">2 días</button>
+      <button class="period" onclick="setPeriod(this,7)" id="p7">7 días</button>
+      <button class="period" onclick="setPeriod(this,30)" id="p30">30 días</button>
+      <button class="period" onclick="toggleCal(this)" id="pCal">📅 Fechas</button>
     </div>
-    <div class="date-row">
+    <div class="date-row" id="dateRow" style="display:none">
       <div class="date-group"><label id="labelFrom">Desde</label><input type="date" id="dateFrom" /></div>
       <div class="date-group"><label id="labelTo">Hasta</label><input type="date" id="dateTo" /></div>
     </div>
+    <button class="btn" id="fetchBtn" onclick="fetchLinks()">Obtener links</button>
   </div>
   <div class="toast" id="toast"></div>
   <div class="error" id="errorBox"></div>
-  <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText" style="font-size:13px;color:#888">Buscando videos...</p></div>
+  <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText" style="font-size:13px;color:#86868B">Buscando videos...</p></div>
   <div class="stats" id="statsRow" style="display:none">
     <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl" id="lblTotal">Links totales</div></div>
-    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos de 25</div></div>
+    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos</div></div>
     <div class="stat"><div class="val" id="statUser">—</div><div class="lbl" id="lblUser">Usuario</div></div>
   </div>
   <div id="resultsArea"></div>
@@ -97,75 +108,83 @@ textarea { width: 100%; min-height: 120px; padding: 10px; font-size: 12px; font-
 <script>
 const API = 'https://web-production-db182.up.railway.app';
 let currentPlatform = 'tiktok';
+let selectedDays = 1;
 let lang = navigator.language.startsWith('en') ? 'en' : 'es';
 
-const t = {
-  es: {
-    heroTitle: 'Saca los links de cualquier perfil',
-    heroSub: 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.',
-    placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' },
-    btnGet: 'Obtener', labelFrom: 'Desde', labelTo: 'Hasta',
-    loading: 'Buscando videos...', lblTotal: 'Links totales', lblGroups: 'Grupos de 25', lblUser: 'Usuario',
-    copyAll: 'Copiar todo', copyGroup: 'Copiar grupo', footer: 'ClipLinks — Hecho para cliperos',
-    toastGroup: 'copiado!', toastAll: '¡Todos los links copiados!',
-    error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.', langBtn: '🌍 EN'
-  },
-  en: {
-    heroTitle: 'Get links from any profile',
-    heroSub: 'TikTok, Instagram and YouTube — groups of 25, ready to copy.',
-    placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' },
-    btnGet: 'Get links', labelFrom: 'From', labelTo: 'To',
-    loading: 'Searching videos...', lblTotal: 'Total links', lblGroups: 'Groups of 25', lblUser: 'User',
-    copyAll: 'Copy all', copyGroup: 'Copy group', footer: 'ClipLinks — Made for clippers',
-    toastGroup: 'copied!', toastAll: 'All links copied!',
-    error: 'Could not get links. Make sure the user exists and is public.', langBtn: '🌍 ES'
-  }
+const translations = {
+  es: { heroTitle: 'Saca los links de cualquier perfil', heroSub: 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.', periodLabel: '¿De qué periodo quieres los links?', btnGet: 'Obtener links', labelFrom: 'Desde', labelTo: 'Hasta', loading: 'Buscando videos...', lblTotal: 'Links totales', lblGroups: 'Grupos', lblUser: 'Usuario', copyAll: 'Copiar todo', copyGroup: 'Copiar grupo', footer: 'ClipLinks — Hecho para cliperos', toastAll: '¡Links copiados!', error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.', langBtn: '🌍 EN', placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' } },
+  en: { heroTitle: 'Get links from any profile', heroSub: 'TikTok, Instagram and YouTube — groups of 25, ready to copy.', periodLabel: 'What period do you want links from?', btnGet: 'Get links', labelFrom: 'From', labelTo: 'To', loading: 'Searching videos...', lblTotal: 'Total links', lblGroups: 'Groups', lblUser: 'User', copyAll: 'Copy all', copyGroup: 'Copy group', footer: 'ClipLinks — Made for clippers', toastAll: 'Links copied!', error: 'Could not get links. Make sure the user exists and is public.', langBtn: '🌍 ES', placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' } }
 };
 
 function applyLang() {
-  const l = t[lang];
-  document.getElementById('heroTitle').textContent = l.heroTitle;
-  document.getElementById('heroSub').textContent = l.heroSub;
-  document.getElementById('userInput').placeholder = l.placeholder[currentPlatform];
-  document.getElementById('fetchBtn').textContent = l.btnGet;
-  document.getElementById('labelFrom').textContent = l.labelFrom;
-  document.getElementById('labelTo').textContent = l.labelTo;
-  document.getElementById('loadingText').textContent = l.loading;
-  document.getElementById('lblTotal').textContent = l.lblTotal;
-  document.getElementById('lblGroups').textContent = l.lblGroups;
-  document.getElementById('lblUser').textContent = l.lblUser;
-  document.getElementById('footer').textContent = l.footer;
-  document.querySelector('.lang-btn').textContent = l.langBtn;
+  const t = translations[lang];
+  document.getElementById('heroTitle').textContent = t.heroTitle;
+  document.getElementById('heroSub').textContent = t.heroSub;
+  document.getElementById('periodLabel').textContent = t.periodLabel;
+  document.getElementById('fetchBtn').textContent = t.btnGet;
+  document.getElementById('labelFrom').textContent = t.labelFrom;
+  document.getElementById('labelTo').textContent = t.labelTo;
+  document.getElementById('loadingText').textContent = t.loading;
+  document.getElementById('lblTotal').textContent = t.lblTotal;
+  document.getElementById('lblGroups').textContent = t.lblGroups;
+  document.getElementById('lblUser').textContent = t.lblUser;
+  document.getElementById('footer').textContent = t.footer;
+  document.querySelector('.lang-btn').textContent = t.langBtn;
+  document.getElementById('userInput').placeholder = t.placeholder[currentPlatform];
 }
 
 function toggleLang() { lang = lang === 'es' ? 'en' : 'es'; applyLang(); }
 
 function setTab(el, platform) {
-  document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.plat').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   currentPlatform = platform;
-  document.getElementById('userInput').placeholder = t[lang].placeholder[platform];
+  document.getElementById('userInput').placeholder = translations[lang].placeholder[platform];
 }
 
-document.getElementById('userInput').addEventListener('keydown', e => { if(e.key==='Enter') fetchLinks(); });
+function setPeriod(el, days) {
+  document.querySelectorAll('.period').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedDays = days;
+  document.getElementById('dateRow').style.display = 'none';
+}
+
+function toggleCal(el) {
+  document.querySelectorAll('.period').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedDays = 0;
+  const row = document.getElementById('dateRow');
+  row.style.display = row.style.display === 'none' ? 'grid' : 'none';
+}
+
+document.getElementById('userInput').addEventListener('keydown', e => { if(e.key === 'Enter') fetchLinks(); });
+
+function getDateRange() {
+  if(selectedDays === 0) {
+    return { from: document.getElementById('dateFrom').value, to: document.getElementById('dateTo').value };
+  }
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - selectedDays);
+  return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
+}
 
 async function fetchLinks() {
   const user = document.getElementById('userInput').value.trim().replace('@','');
-  if(!user) { showError(t[lang].error); return; }
+  if(!user) { showError(translations[lang].error); return; }
   hideError();
   document.getElementById('resultsArea').innerHTML = '';
   document.getElementById('statsRow').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('fetchBtn').disabled = true;
-  const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
+  const { from, to } = getDateRange();
   try {
     const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&date_from=${from}&date_to=${to}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
     showResults(user, data.links);
   } catch(err) {
-    showError(t[lang].error);
+    showError(translations[lang].error);
   } finally {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('fetchBtn').disabled = false;
@@ -185,27 +204,27 @@ function showResults(user, links) {
   card.className = 'result-card';
   const header = document.createElement('div');
   header.className = 'result-header';
-  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div><button class="btn-copy-all" onclick="copyAll()">${t[lang].copyAll}</button>`;
+  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} links — ${groups.length} grupos</small></div><button class="btn-copy-all" onclick="copyAll()">${translations[lang].copyAll}</button>`;
   card.appendChild(header);
   groups.forEach((group, gi) => {
     const formatted = group.map((l,i) => i < group.length-1 ? l+',' : l).join('\n');
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
-    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">${t[lang].copyGroup} ${gi+1}</button></div><textarea id="group${gi}" readonly>${formatted}</textarea>`;
+    const list = group.map((l,i) => `<div class="link-item">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
+    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi},'${formatted.replace(/'/g,"\\'")}')"> ${translations[lang].copyGroup} ${gi+1}</button></div><div class="links-list">${list}</div>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
 }
 
-function copyGroup(i) {
-  const ta = document.getElementById('group'+i);
-  navigator.clipboard.writeText(ta.value).then(()=>showToast(`${t[lang].copyGroup} ${i+1} ${t[lang].toastGroup}`)).catch(()=>ta.select());
+function copyGroup(i, text) {
+  navigator.clipboard.writeText(text).then(()=>showToast(`Grupo ${i+1} copiado!`)).catch(()=>{});
 }
 
 function copyAll() {
-  const areas = document.querySelectorAll('[id^="group"]');
-  const all = Array.from(areas).map(a=>a.value).join('\n');
-  navigator.clipboard.writeText(all).then(()=>showToast(t[lang].toastAll)).catch(()=>{});
+  const groups = document.querySelectorAll('.group-wrap');
+  const all = Array.from(groups).map(g => Array.from(g.querySelectorAll('.link-item')).map(l=>l.textContent).join('\n')).join('\n');
+  navigator.clipboard.writeText(all).then(()=>showToast(translations[lang].toastAll)).catch(()=>{});
 }
 
 function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
