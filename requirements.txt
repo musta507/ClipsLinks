@@ -2,3 +2,4 @@ flask
 flask-cors
 yt-dlp
 psycopg2-binary
+stripe
