@@ -28,6 +28,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 .periods { display: flex; gap: 6px; flex-wrap: wrap; }
 .period { height: 32px; padding: 0 14px; border: 1px solid #E8E8ED; border-radius: 20px; background: #fff; color: #86868B; font-size: 12px; cursor: pointer; }
 .period.active { background: #E8F1FD; color: #0071E3; border-color: #B8D4F8; }
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.date-group label { font-size: 11px; color: #86868B; margin-bottom: 4px; display: block; }
+.date-group input[type="date"] { width: 100%; height: 38px; font-size: 13px; border: 1px solid #E8E8ED; border-radius: 10px; padding: 0 10px; background: #FAFAFA; color: #1D1D1F; outline: none; }
 .btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: #0071E3; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
 .btn:hover { background: #0077ED; }
 .btn:disabled { background: #C7C7CC; cursor: not-allowed; }
@@ -77,18 +80,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
       <button class="plat" onclick="setTab(this,'youtube')">YouTube</button>
     </div>
     <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
-    <div class="period-label" id="periodLabel">¿Cuántos links quieres sacar?</div>
+    <div class="period-label">¿De qué periodo quieres los links?</div>
     <div class="periods">
-      <button class="period active" onclick="setCount(this,25)">Últimos 25</button>
-      <button class="period" onclick="setCount(this,50)">Últimos 50</button>
-      <button class="period" onclick="setCount(this,100)">Últimos 100</button>
-      <button class="period" onclick="setCount(this,200)">Últimos 200</button>
+      <button class="period active" onclick="setPeriod(this,'today')">Hoy</button>
+      <button class="period" onclick="setPeriod(this,'2days')">2 días</button>
+      <button class="period" onclick="setPeriod(this,'7days')">7 días</button>
+      <button class="period" onclick="setPeriod(this,'30days')">30 días</button>
+      <button class="period" onclick="setPeriod(this,'custom')">📅 Fechas</button>
+    </div>
+    <div class="date-row" id="dateRow" style="display:none">
+      <div class="date-group"><label>Desde</label><input type="date" id="dateFrom" /></div>
+      <div class="date-group"><label>Hasta</label><input type="date" id="dateTo" /></div>
     </div>
     <button class="btn" id="fetchBtn" onclick="fetchLinks()">Obtener links</button>
   </div>
   <div class="toast" id="toast"></div>
   <div class="error" id="errorBox"></div>
-  <div class="loading" id="loading"><div class="spinner"></div><p style="font-size:13px;color:#86868B">Buscando videos...</p></div>
+  <div class="loading" id="loading"><div class="spinner"></div><p style="font-size:13px;color:#86868B">Buscando videos... puede tardar unos segundos</p></div>
   <div class="stats" id="statsRow" style="display:none">
     <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Links totales</div></div>
     <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl">Grupos</div></div>
@@ -100,7 +108,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 <script>
 const API = 'https://web-production-db182.up.railway.app';
 let currentPlatform = 'tiktok';
-let selectedCount = 25;
+let selectedPeriod = 'today';
 let lang = navigator.language.startsWith('en') ? 'en' : 'es';
 
 function setTab(el, platform) {
@@ -111,10 +119,11 @@ function setTab(el, platform) {
   document.getElementById('userInput').placeholder = ph[platform];
 }
 
-function setCount(el, count) {
+function setPeriod(el, period) {
   document.querySelectorAll('.period').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  selectedCount = count;
+  selectedPeriod = period;
+  document.getElementById('dateRow').style.display = period === 'custom' ? 'grid' : 'none';
 }
 
 function toggleLang() {
@@ -122,8 +131,18 @@ function toggleLang() {
   document.querySelector('.lang-btn').textContent = lang === 'es' ? '🌍 EN' : '🌍 ES';
   document.getElementById('heroTitle').textContent = lang === 'es' ? 'Saca los links de cualquier perfil' : 'Get links from any profile';
   document.getElementById('heroSub').textContent = lang === 'es' ? 'TikTok, Instagram y YouTube — grupos de 25, listos para copiar.' : 'TikTok, Instagram and YouTube — groups of 25, ready to copy.';
-  document.getElementById('periodLabel').textContent = lang === 'es' ? '¿Cuántos links quieres sacar?' : 'How many links do you want?';
-  document.getElementById('fetchBtn').textContent = lang === 'es' ? 'Obtener links' : 'Get links';
+}
+
+function getDateRange() {
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  if(selectedPeriod === 'custom') {
+    return { from: document.getElementById('dateFrom').value, to: document.getElementById('dateTo').value };
+  }
+  const days = { today: 1, '2days': 2, '7days': 7, '30days': 30 };
+  const from = new Date();
+  from.setDate(from.getDate() - (days[selectedPeriod] - 1));
+  return { from: fmt(from), to: fmt(today) };
 }
 
 document.getElementById('userInput').addEventListener('keydown', e => { if(e.key==='Enter') fetchLinks(); });
@@ -136,8 +155,9 @@ async function fetchLinks() {
   document.getElementById('statsRow').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('fetchBtn').disabled = true;
+  const { from, to } = getDateRange();
   try {
-    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&count=${selectedCount}`);
+    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&date_from=${from}&date_to=${to}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
     showResults(user, data.links);
@@ -169,20 +189,22 @@ function showResults(user, links) {
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
     const list = group.map((l,i) => `<div class="link-item">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
-    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(\`${formatted.replace(/`/g,'\\`')}\`)">Copiar grupo ${gi+1}</button></div><div class="links-list">${list}</div>`;
+    wrap.innerHTML = `<div class="group-label"><span>Grupo ${gi+1} — ${group.length} links</span><button class="btn-copy-group" onclick="copyGroup(${gi})">Copiar grupo ${gi+1}</button></div><div class="links-list" id="links${gi}">${list}</div>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
 }
 
-function copyGroup(text) {
-  navigator.clipboard.writeText(text).then(()=>showToast('¡Copiado!')).catch(()=>{});
+function copyGroup(i) {
+  const items = document.querySelectorAll(`#links${i} .link-item`);
+  const text = Array.from(items).map(item => item.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(()=>showToast(`Grupo ${i+1} copiado!`)).catch(()=>{});
 }
 
 function copyAll() {
   const items = document.querySelectorAll('.link-item');
-  const all = Array.from(items).map(i=>i.textContent).join('\n');
-  navigator.clipboard.writeText(all).then(()=>showToast('¡Links copiados!')).catch(()=>{});
+  const text = Array.from(items).map(i=>i.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(()=>showToast('¡Links copiados!')).catch(()=>{});
 }
 
 function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
