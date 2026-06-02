@@ -100,8 +100,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
   <div class="error" id="errorBox"></div>
   <div class="loading" id="loading">
     <div class="spinner"></div>
-document.getElementById('loading').style.display = 'block';
-document.getElementById('fetchBtn').disabled = true;  </div>
+<p id="loadingText" style="font-size:13px;color:#86868B">Buscando videos...</p>
   <div class="stats" id="statsRow" style="display:none">
     <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl" id="lblTotal">Links totales</div></div>
     <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos</div></div>
@@ -195,9 +194,9 @@ async function fetchLinks() {
   hideError();
   document.getElementById('resultsArea').innerHTML = '';
   document.getElementById('statsRow').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('fetchBtn').disabled = true;
-  try {
+document.getElementById('loading').style.display = 'block';
+document.getElementById('loadingText').textContent = `Cargando los links de los últimos ${selectedCount} videos de @${user} en grupos de ${selectedGroup}`;
+document.getElementById('fetchBtn').disabled = true;  try {
     const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&count=${selectedCount}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
