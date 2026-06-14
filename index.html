@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClipLinks</title>
+<meta name="description" content="ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente. Perfecto para cliperos de Kick y Rainbet. Agrupa los links listos para pegar en tu bot de Discord.">
+<meta name="keywords" content="ClipLinks, Clip Links, Links Clips, linkclips, cliplinks, tiktok link extractor, kick clipper tool, rainbet clipper, extract video links, discord bot clip links, tiktok links discord, extraer links tiktok, links clipero, herramienta clipero, sacar links tiktok, copiar links tiktok, links bot discord, clipper kick links, rainbet links, tiktok links automatico, instagram links extractor, youtube shorts links, clipper tool, clip links discord, sacar links automaticamente, links cliperos kick, organizador de links, lista de links tiktok">
+<meta property="og:title" content="ClipLinks — Extrae links de videos automáticamente">
+<meta property="og:description" content="Extrae links de TikTok, Instagram y YouTube automáticamente y agrúpalos listos para tu bot de Discord. La herramienta perfecta para cliperos de Kick y Rainbet.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://web-production-db182.up.railway.app">
+<title>ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F5F5F7; }
@@ -51,7 +57,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 .loading { display: none; text-align: center; padding: 2rem; }
 .spinner { width: 28px; height: 28px; border: 3px solid #E8E8ED; border-top-color: #0071E3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.error { display: none; background: #FFF2F2; border: 1px solid #FFD1D1; border-radius: 12px; padding: 12px; font-size: 13px; color: #D70015; margin-bottom: 1rem; }
+.error { display: none; background: #FFF8E8; border: 1px solid #FFE0A0; border-radius: 12px; padding: 12px; font-size: 13px; color: #8B6000; margin-bottom: 1rem; }
+.error.red { background: #FFF2F2; border-color: #FFD1D1; color: #D70015; }
 .toast { background: #1D1D1F; color: #fff; border-radius: 12px; padding: 10px 16px; font-size: 13px; text-align: center; margin-bottom: 1rem; display: none; }
 .footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #C7C7CC; }
 </style>
@@ -80,12 +87,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
     <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
     <div class="section-label" id="lblCount">¿Cuántos links quieres sacar?</div>
     <div class="options-row" id="countRow">
-      <button class="opt-btn active" onclick="setCount(this,25)">Últimos 25 links</button>
-      <button class="opt-btn" onclick="setCount(this,50)">Últimos 50 links</button>
-      <button class="opt-btn" onclick="setCount(this,100)">Últimos 100 links</button>
-      <button class="opt-btn" onclick="setCount(this,200)">Últimos 200 links</button>
-      <button class="opt-btn" onclick="setCount(this,500)">Últimos 500 links</button>
-      <button class="opt-btn" onclick="setCount(this,1000)">Últimos 1000 links</button>
+      <button class="opt-btn active" onclick="setCount(this,25)">Últimos 25</button>
+      <button class="opt-btn" onclick="setCount(this,50)">Últimos 50</button>
+      <button class="opt-btn" onclick="setCount(this,100)">Últimos 100</button>
+      <button class="opt-btn" onclick="setCount(this,200)">Últimos 200</button>
+      <button class="opt-btn" onclick="setCount(this,500)">Últimos 500</button>
+      <button class="opt-btn" onclick="setCount(this,1000)">Últimos 1000</button>
+      <button class="opt-btn" onclick="setCount(this,2000)">Últimos 2000</button>
     </div>
     <div class="section-label" id="lblGroup">¿De cuántos links cada grupo?</div>
     <div class="options-row" id="groupRow">
@@ -130,6 +138,7 @@ const T = {
     footer: 'ClipLinks — Hecho para cliperos',
     toastCopied: '¡Copiado!', toastAll: '¡Links copiados!',
     error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
+    warning: (got, asked) => `⚠️ Se pidieron ${asked} links pero solo se obtuvieron ${got}. TikTok puede haber limitado la búsqueda. Puedes intentarlo de nuevo.`,
     groupLabel: 'Grupo', linksLabel: 'links',
     loading: (count, user, group) => `Cargando los links de los últimos ${count} videos de @${user} en grupos de ${group}...`
   },
@@ -145,6 +154,7 @@ const T = {
     footer: 'ClipLinks — Made for clippers',
     toastCopied: 'Copied!', toastAll: 'All links copied!',
     error: 'Could not get links. Make sure the user exists and is public.',
+    warning: (got, asked) => `⚠️ ${asked} links were requested but only ${got} were obtained. TikTok may have limited the search. You can try again.`,
     groupLabel: 'Group', linksLabel: 'links',
     loading: (count, user, group) => `Loading the last ${count} videos from @${user} in groups of ${group}...`
   }
@@ -171,7 +181,7 @@ function setTab(el, platform) {
   document.querySelectorAll('.plat').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   currentPlatform = platform;
-  document.getElementById('userInput').placeholder = T[lang].placeholder[platform];
+  document.getElementById('userInput').placeholder = T[lang].placeholder[currentPlatform];
 }
 
 function setCount(el, count) {
@@ -190,7 +200,7 @@ document.getElementById('userInput').addEventListener('keydown', e => { if(e.key
 
 async function fetchLinks() {
   const user = document.getElementById('userInput').value.trim().replace('@','');
-  if(!user) { showError(T[lang].error); return; }
+  if(!user) { showError(T[lang].error, true); return; }
   hideError();
   document.getElementById('resultsArea').innerHTML = '';
   document.getElementById('statsRow').style.display = 'none';
@@ -201,9 +211,12 @@ async function fetchLinks() {
     const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&count=${selectedCount}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Error');
+    if(data.links.length < selectedCount) {
+      showError(T[lang].warning(data.links.length, selectedCount), false);
+    }
     showResults(user, data.links);
   } catch(err) {
-    showError(T[lang].error);
+    showError(T[lang].error, true);
   } finally {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('fetchBtn').disabled = false;
@@ -248,7 +261,12 @@ function copyAll() {
   navigator.clipboard.writeText(text).then(()=>showToast(T[lang].toastAll)).catch(()=>{});
 }
 
-function showError(msg) { const e=document.getElementById('errorBox'); e.textContent=msg; e.style.display='block'; }
+function showError(msg, isRed = false) {
+  const e = document.getElementById('errorBox');
+  e.textContent = msg;
+  e.className = isRed ? 'error red' : 'error';
+  e.style.display = 'block';
+}
 function hideError() { document.getElementById('errorBox').style.display='none'; }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 
