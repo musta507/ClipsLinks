@@ -50,10 +50,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
 .group-wrap:last-child { border-bottom: none; }
 .group-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .group-label span { font-size: 12px; color: #86868B; }
-.btn-copy-group { height: 26px; padding: 0 10px; border: 1px solid #E8E8ED; border-radius: 6px; background: #fff; color: #86868B; font-size: 11px; cursor: pointer; }
+.btn-copy-group { height: 26px; padding: 0 10px; border: 1px solid #E8E8ED; border-radius: 6px; background: #fff; color: #86868B; font-size: 11px; cursor: pointer; transition: all 0.2s; }
 .btn-copy-group:hover { border-color: #0071E3; color: #0071E3; }
+.btn-copy-group.copied { background: #E8F8EE; border-color: #34C759; color: #1A7A35; }
 .links-list { display: flex; flex-direction: column; gap: 3px; }
-.link-item { font-size: 13px; color: #1D1D1F; padding: 5px 8px; background: #F5F5F7; border-radius: 8px; line-height: 1.4; }
+.link-item { font-size: 13px; color: #1D1D1F; padding: 5px 8px; background: #F5F5F7; border-radius: 8px; line-height: 1.4; transition: background 0.2s; }
+.link-item.copied { background: #E8F8EE; color: #1A7A35; }
 .loading { display: none; text-align: center; padding: 2rem; }
 .spinner { width: 28px; height: 28px; border: 3px solid #E8E8ED; border-top-color: #0071E3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -87,13 +89,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-s
     <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
     <div class="section-label" id="lblCount">¿Cuántos links quieres sacar?</div>
     <div class="options-row" id="countRow">
-      <button class="opt-btn active" onclick="setCount(this,25)">Últimos 25</button>
+      <button class="opt-btn active" onclick="setCount(this,25)">Últimos 25 links</button>
       <button class="opt-btn" onclick="setCount(this,50)">Últimos 50 links</button>
       <button class="opt-btn" onclick="setCount(this,100)">Últimos 100 links</button>
       <button class="opt-btn" onclick="setCount(this,200)">Últimos 200 links</button>
       <button class="opt-btn" onclick="setCount(this,500)">Últimos 500 links</button>
       <button class="opt-btn" onclick="setCount(this,1000)">Últimos 1000 links</button>
-      <button class="opt-btn" onclick="setCount(this,2000)">Últimos 2000 links</button>
+      <button class="opt-btn" onclick="setCount(this,1500)">Últimos 1500 links</button>
     </div>
     <div class="section-label" id="lblGroup">¿De cuántos links cada grupo?</div>
     <div class="options-row" id="groupRow">
@@ -140,7 +142,8 @@ const T = {
     error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
     warning: (got, asked) => `⚠️ Se pidieron ${asked} links pero solo se obtuvieron ${got}. TikTok puede haber limitado la búsqueda. Puedes intentarlo de nuevo.`,
     groupLabel: 'Grupo', linksLabel: 'links',
-    loading: (count, user, group) => `Cargando los links de los últimos ${count} videos de @${user} en grupos de ${group}...`
+    loading: (count, user, group) => `Cargando los links de los últimos ${count} videos de @${user} en grupos de ${group}...`,
+    copyGroupDone: '✓ Copiado'
   },
   en: {
     heroTitle: 'Get links from any profile',
@@ -156,7 +159,8 @@ const T = {
     error: 'Could not get links. Make sure the user exists and is public.',
     warning: (got, asked) => `⚠️ ${asked} links were requested but only ${got} were obtained. TikTok may have limited the search. You can try again.`,
     groupLabel: 'Group', linksLabel: 'links',
-    loading: (count, user, group) => `Loading the last ${count} videos from @${user} in groups of ${group}...`
+    loading: (count, user, group) => `Loading the last ${count} videos from @${user} in groups of ${group}...`,
+    copyGroupDone: '✓ Copied'
   }
 };
 
@@ -242,8 +246,8 @@ function showResults(user, links) {
   groups.forEach((group, gi) => {
     const wrap = document.createElement('div');
     wrap.className = 'group-wrap';
-    const list = group.map((l,i) => `<div class="link-item">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
-    wrap.innerHTML = `<div class="group-label"><span>${t.groupLabel} ${gi+1} — ${group.length} ${t.linksLabel}</span><button class="btn-copy-group" onclick="copyGroup(${gi})">${t.copyGroup} ${gi+1}</button></div><div class="links-list" id="links${gi}">${list}</div>`;
+    const list = group.map((l,i) => `<div class="link-item" id="link-${gi}-${i}">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
+    wrap.innerHTML = `<div class="group-label"><span>${t.groupLabel} ${gi+1} — ${group.length} ${t.linksLabel}</span><button class="btn-copy-group" id="btn-group-${gi}" onclick="copyGroup(${gi})">${t.copyGroup} ${gi+1}</button></div><div class="links-list" id="links${gi}">${list}</div>`;
     card.appendChild(wrap);
   });
   area.appendChild(card);
@@ -252,13 +256,27 @@ function showResults(user, links) {
 function copyGroup(i) {
   const items = document.querySelectorAll(`#links${i} .link-item`);
   const text = Array.from(items).map(item => item.textContent).join('\n');
-  navigator.clipboard.writeText(text).then(()=>showToast(T[lang].toastCopied)).catch(()=>{});
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(T[lang].toastCopied);
+    const btn = document.getElementById(`btn-group-${i}`);
+    if(btn) {
+      btn.textContent = T[lang].copyGroupDone;
+      btn.classList.add('copied');
+    }
+    items.forEach(item => item.classList.add('copied'));
+  }).catch(()=>{});
 }
 
 function copyAll() {
   const items = document.querySelectorAll('.link-item');
   const text = Array.from(items).map(i=>i.textContent).join('\n');
-  navigator.clipboard.writeText(text).then(()=>showToast(T[lang].toastAll)).catch(()=>{});
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(T[lang].toastAll);
+    items.forEach(item => item.classList.add('copied'));
+    document.querySelectorAll('.btn-copy-group').forEach(btn => {
+      btn.classList.add('copied');
+    });
+  }).catch(()=>{});
 }
 
 function showError(msg, isRed = false) {
