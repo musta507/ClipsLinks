@@ -49,9 +49,17 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .plat.active { background: rgba(88,101,242,0.15); color: #fff; border-color: rgba(88,101,242,0.55); box-shadow: 0 4px 16px rgba(88,101,242,0.2); }
 .plat:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #E8E9ED; }
 .field-label { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; margin-bottom: 1.3rem; transition: all 0.2s; }
+.field-wrap { position: relative; margin-bottom: 1.3rem; }
+.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: all 0.2s; }
 .field::placeholder { color: #55585F; }
 .field:focus { border-color: #5865F2; box-shadow: 0 0 0 3px rgba(88,101,242,0.18); }
+.recent { position: absolute; top: 56px; left: 0; right: 0; background: #1B1B22; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); padding: 6px; z-index: 15; display: none; }
+.recent.open { display: block; animation: fadeUp 0.15s ease both; }
+.recent-title { font-size: 10px; font-weight: 600; color: #63666F; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px 4px; }
+.recent-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.recent-item:hover { background: rgba(255,255,255,0.05); }
+.recent-item svg { width: 15px; height: 15px; flex-shrink: 0; color: #8A8E99; }
+.recent-item span { font-size: 13.5px; color: #E8E9ED; }
 .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.3rem; }
 .opt { height: 36px; padding: 0 16px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; background: transparent; color: #A9ADB8; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
 .opt.active { background: rgba(88,101,242,0.16); color: #A5AEFF; border-color: rgba(88,101,242,0.55); }
@@ -125,7 +133,13 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
       </button>
     </div>
     <div class="field-label" data-es="Usuario" data-en="Username">Usuario</div>
-    <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
+    <div class="field-wrap">
+      <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
+      <div class="recent" id="recentBox">
+        <div class="recent-title" data-es="Búsquedas recientes" data-en="Recent searches">Búsquedas recientes</div>
+        <div id="recentList"></div>
+      </div>
+    </div>
     <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
     <div class="opts" id="countOpts">
       <button class="opt active" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
@@ -189,6 +203,8 @@ function toggleMenu(e){
 document.addEventListener('click',function(){
   var m=document.getElementById('userMenu');
   if(m){m.classList.remove('open');}
+  var r=document.getElementById('recentBox');
+  if(r){r.classList.remove('open');}
 });
 function logout(){
   try{localStorage.removeItem('clipuser');}catch(e){}
@@ -214,6 +230,41 @@ function renderAuth(){
   }
 }
 
+// ===== BUSQUEDAS RECIENTES =====
+function getRecent(){
+  try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; }
+}
+function saveRecent(name){
+  var list=getRecent();
+  list=list.filter(function(n){ return n.toLowerCase()!==name.toLowerCase(); });
+  list.unshift(name);
+  list=list.slice(0,2);
+  try{ localStorage.setItem('cliprecent',JSON.stringify(list)); }catch(e){}
+}
+function renderRecent(){
+  var box=document.getElementById('recentBox');
+  var listEl=document.getElementById('recentList');
+  var list=getRecent();
+  if(list.length===0){ box.classList.remove('open'); return; }
+  listEl.innerHTML='';
+  list.forEach(function(name){
+    var d=document.createElement('div');
+    d.className='recent-item';
+    d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+name+'</span>';
+    d.onclick=function(){
+      document.getElementById('userInp').value=name;
+      box.classList.remove('open');
+      fetchLinks();
+    };
+    listEl.appendChild(d);
+  });
+  box.classList.add('open');
+}
+document.getElementById('userInp').addEventListener('focus',function(){
+  if(this.value.trim()===''){ renderRecent(); }
+});
+document.getElementById('userInp').addEventListener('click',function(e){ e.stopPropagation(); });
+
 function applyLang(){
   document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
   document.getElementById('userInp').placeholder=PH[lang][platform];
@@ -236,6 +287,8 @@ document.getElementById('userInp').addEventListener('keydown',function(e){if(e.k
 function fetchLinks(){
   var user=document.getElementById('userInp').value.trim().replace('@','');
   if(!user){return;}
+  document.getElementById('recentBox').classList.remove('open');
+  saveRecent(user);
   document.getElementById('resultBox').style.display='none';
   document.getElementById('warnBox').style.display='none';
   document.getElementById('loadBox').style.display='block';
