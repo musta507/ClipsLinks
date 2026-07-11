@@ -90,6 +90,40 @@ def create_checkout():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def get_avatar(user, platform):
+    """Saca la foto de perfil del usuario. Si falla, devuelve None."""
+    try:
+        if platform == 'tiktok':
+            prof_url = f'https://www.tiktok.com/@{user}'
+        elif platform == 'instagram':
+            prof_url = f'https://www.instagram.com/{user}/'
+        elif platform == 'youtube':
+            prof_url = f'https://www.youtube.com/@{user}'
+        else:
+            return None
+
+        opts = {
+            'quiet': True,
+            'extract_flat': True,
+            'playlistend': 1,
+            'skip_download': True,
+        }
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(prof_url, download=False)
+
+        # Buscar el avatar en distintos campos posibles
+        for key in ('thumbnail', 'channel_thumbnail', 'uploader_avatar'):
+            if info.get(key):
+                return info.get(key)
+
+        thumbs = info.get('thumbnails')
+        if thumbs and isinstance(thumbs, list) and len(thumbs) > 0:
+            return thumbs[-1].get('url')
+
+        return None
+    except:
+        return None
+
 @app.route('/links')
 def get_links():
     user = request.args.get('user', '')
@@ -130,7 +164,22 @@ def get_links():
             info = ydl.extract_info(url, download=False)
             entries = info.get('entries', [])
             links = [entry.get('url', '') for entry in entries if entry.get('url')]
-            return jsonify({'links': links})
+
+            # Intentar sacar el avatar del propio resultado primero
+            avatar = None
+            for key in ('thumbnail', 'channel_thumbnail', 'uploader_avatar'):
+                if info.get(key):
+                    avatar = info.get(key)
+                    break
+            if not avatar:
+                thumbs = info.get('thumbnails')
+                if thumbs and isinstance(thumbs, list) and len(thumbs) > 0:
+                    avatar = thumbs[-1].get('url')
+            # Si no vino, hacer una búsqueda extra del perfil
+            if not avatar:
+                avatar = get_avatar(user, platform)
+
+            return jsonify({'links': links, 'avatar': avatar})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
