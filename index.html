@@ -6,247 +6,288 @@
 <meta name="description" content="ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente. Perfecto para cliperos de Kick y Rainbet. Agrupa los links listos para pegar en tu bot de Discord.">
 <meta name="keywords" content="ClipLinks, Clip Links, Links Clips, linkclips, cliplinks, tiktok link extractor, kick clipper tool, rainbet clipper, extract video links, discord bot clip links, tiktok links discord, extraer links tiktok, links clipero, herramienta clipero, sacar links tiktok, copiar links tiktok, links bot discord, clipper kick links, rainbet links, tiktok links automatico, instagram links extractor, youtube shorts links, clipper tool, clip links discord, sacar links automaticamente, links cliperos kick, organizador de links, lista de links tiktok">
 <meta property="og:title" content="ClipLinks — Extrae links de videos automáticamente">
-<meta property="og:description" content="Extrae links de TikTok, Instagram y YouTube automáticamente y agrúpalos listos para tu bot de Discord.">
+<meta property="og:description" content="Extrae links de TikTok, Instagram y YouTube automáticamente y agrúpalos listos para tu bot de Discord. La herramienta perfecta para cliperos de Kick y Rainbet.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://web-production-db182.up.railway.app">
 <title>ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #313338; }
-.nav { background: #2B2D31; border-bottom: 1px solid #1E1F22; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
-.nav-logo { font-size: 16px; font-weight: 600; color: #F2F3F5; display: flex; align-items: center; gap: 10px; }
-.nav-icon { width: 32px; height: 32px; border-radius: 10px; background: #5865F2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
-.lang-sel { background: #1E1F22; color: #B5BAC1; font-size: 13px; padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; outline: none; }
-.layout { display: grid; grid-template-columns: 220px 1fr 250px; min-height: calc(100vh - 52px); }
-.sidebar-left { background: #2B2D31; border-right: 1px solid #1E1F22; padding: 1.2rem 0.8rem; }
-.side-title { font-size: 11px; font-weight: 600; color: #6D7178; text-transform: uppercase; letter-spacing: 0.4px; padding: 0 8px; margin-bottom: 6px; }
-.side-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 4px; font-size: 14px; color: #B5BAC1; cursor: pointer; margin-bottom: 2px; }
-.side-item.active { background: #404249; color: #F2F3F5; }
-.side-item:hover { background: #383A40; color: #F2F3F5; }
-.side-divider { height: 1px; background: #1E1F22; margin: 12px 8px; }
-.side-step { display: flex; gap: 10px; padding: 6px 8px; margin-bottom: 4px; }
-.step-num { width: 20px; height: 20px; border-radius: 50%; background: #5865F2; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.step-text { font-size: 12px; color: #B5BAC1; line-height: 1.4; }
-.center { padding: 1.5rem; min-width: 0; }
-.title { font-size: 22px; font-weight: 600; color: #F2F3F5; margin-bottom: 4px; }
-.subtitle { font-size: 13px; color: #B5BAC1; margin-bottom: 1.2rem; }
-.card { background: #2B2D31; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; }
-.field-label { font-size: 11px; font-weight: 600; color: #B5BAC1; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
-.field { width: 100%; height: 40px; border: none; border-radius: 4px; padding: 0 12px; font-size: 14px; background: #1E1F22; color: #F2F3F5; outline: none; margin-bottom: 1rem; }
-.field::placeholder { color: #6D7178; }
-.field:focus { outline: 2px solid #5865F2; }
-.opts { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
-.opt { height: 30px; padding: 0 12px; border: none; border-radius: 4px; background: #1E1F22; color: #B5BAC1; font-size: 12px; cursor: pointer; }
-.opt.active { background: #5865F2; color: #fff; font-weight: 500; }
-.opt:hover { background: #383A40; }
-.opt.active:hover { background: #5865F2; }
-.go-btn { width: 100%; height: 42px; border: none; border-radius: 4px; background: #5865F2; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
-.go-btn:hover { background: #4752C4; }
-.loadbox { display: none; text-align: center; padding: 1.5rem; }
-.spin { width: 26px; height: 26px; border: 3px solid #1E1F22; border-top-color: #5865F2; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 8px; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F5F5F7; }
+.navbar { background: rgba(255,255,255,0.85); border-bottom: 1px solid #E8E8ED; padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 17px; font-weight: 500; color: #1D1D1F; display: flex; align-items: center; gap: 8px; }
+.logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #0071E3; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.lang-select { font-size: 12px; color: #86868B; padding: 4px 8px; border-radius: 8px; border: 1px solid #E8E8ED; background: #fff; cursor: pointer; outline: none; }
+.hero { text-align: center; padding: 3rem 1rem 2rem; }
+.hero h1 { font-size: 32px; font-weight: 500; color: #1D1D1F; margin-bottom: 8px; letter-spacing: -0.5px; }
+.hero p { font-size: 15px; color: #86868B; }
+.main { max-width: 580px; margin: 0 auto; padding: 0 1rem 3rem; }
+.card { background: #fff; border: 1px solid #E8E8ED; border-radius: 20px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.plats { display: flex; gap: 6px; margin-bottom: 1.2rem; background: #F5F5F7; border-radius: 12px; padding: 4px; }
+.plat { flex: 1; height: 36px; border: none; border-radius: 9px; background: transparent; color: #86868B; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.plat.active { background: #fff; color: #1D1D1F; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.inp { width: 100%; height: 48px; border: 1px solid #E8E8ED; border-radius: 12px; padding: 0 16px; font-size: 15px; outline: none; color: #1D1D1F; margin-bottom: 1rem; background: #FAFAFA; }
+.inp::placeholder { color: #C7C7CC; }
+.inp:focus { border-color: #0071E3; background: #fff; box-shadow: 0 0 0 3px rgba(0,113,227,0.08); }
+.section-label { font-size: 12px; color: #86868B; margin-bottom: 8px; }
+.options-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.opt-btn { height: 32px; padding: 0 14px; border: 1px solid #E8E8ED; border-radius: 20px; background: #fff; color: #86868B; font-size: 12px; cursor: pointer; }
+.opt-btn.active { background: #E8F1FD; color: #0071E3; border-color: #B8D4F8; }
+.btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: #0071E3; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; }
+.btn:hover { background: #0077ED; }
+.btn:disabled { background: #C7C7CC; cursor: not-allowed; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
+.stat { background: #fff; border: 1px solid #E8E8ED; border-radius: 12px; padding: 10px; text-align: center; }
+.stat .val { font-size: 22px; font-weight: 500; color: #0071E3; }
+.stat .lbl { font-size: 11px; color: #86868B; margin-top: 2px; }
+.result-card { background: #fff; border: 1px solid #E8E8ED; border-radius: 20px; overflow: hidden; margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.result-header { background: #F5F5F7; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E8E8ED; }
+.result-info span { font-size: 13px; font-weight: 500; color: #1D1D1F; }
+.result-info small { font-size: 11px; color: #86868B; display: block; margin-top: 2px; }
+.btn-copy-all { height: 30px; padding: 0 14px; border: 1px solid #B8D4F8; border-radius: 8px; background: #E8F1FD; color: #0071E3; font-size: 12px; cursor: pointer; }
+.btn-copy-all:hover { background: #D1E8FB; }
+.group-wrap { padding: 12px 16px; border-bottom: 1px solid #F5F5F7; }
+.group-wrap:last-child { border-bottom: none; }
+.group-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.group-label span { font-size: 12px; color: #86868B; }
+.btn-copy-group { height: 26px; padding: 0 10px; border: 1px solid #E8E8ED; border-radius: 6px; background: #fff; color: #86868B; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.btn-copy-group:hover { border-color: #0071E3; color: #0071E3; }
+.btn-copy-group.copied { background: #E8F8EE; border-color: #34C759; color: #1A7A35; }
+.links-list { display: flex; flex-direction: column; gap: 3px; }
+.link-item { font-size: 13px; color: #1D1D1F; padding: 5px 8px; background: #F5F5F7; border-radius: 8px; line-height: 1.4; transition: background 0.2s; }
+.link-item.copied { background: #E8F8EE; color: #1A7A35; }
+.loading { display: none; text-align: center; padding: 2rem; }
+.spinner { width: 28px; height: 28px; border: 3px solid #E8E8ED; border-top-color: #0071E3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loadmsg { font-size: 12px; color: #B5BAC1; }
-.warnbox { display: none; background: rgba(240,178,50,0.1); border-left: 4px solid #F0B232; border-radius: 4px; padding: 10px 12px; font-size: 12px; color: #F0B232; margin-bottom: 1rem; }
-.result { background: #2B2D31; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 1rem; }
-.result-head { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1E1F22; flex-wrap: wrap; gap: 8px; }
-.ruser { display: flex; align-items: center; gap: 10px; }
-.rava { width: 38px; height: 38px; border-radius: 50%; background: #5865F2; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; }
-.rname { font-size: 14px; font-weight: 600; color: #F2F3F5; }
-.rmeta { font-size: 12px; color: #B5BAC1; }
-.copyall { height: 30px; padding: 0 12px; border: none; border-radius: 4px; background: #1E1F22; color: #B5BAC1; font-size: 12px; cursor: pointer; }
-.copyall:hover { background: #383A40; color: #F2F3F5; }
-.grp { border-bottom: 1px solid #1E1F22; }
-.grp:last-child { border-bottom: none; }
-.grp-head { padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; background: #232428; }
-.grp-t { font-size: 11px; font-weight: 600; color: #B5BAC1; text-transform: uppercase; }
-.grp-btn { height: 24px; padding: 0 10px; border: none; border-radius: 4px; background: #1E1F22; color: #B5BAC1; font-size: 11px; cursor: pointer; }
-.grp-btn:hover { background: #383A40; color: #F2F3F5; }
-.grp-btn.ok { background: rgba(35,165,90,0.15); color: #23A55A; }
-.lks { padding: 6px 14px 10px; }
-.lk { font-size: 12px; color: #B5BAC1; padding: 2px 6px; border-radius: 3px; line-height: 1.5; font-family: Consolas, Menlo, monospace; word-break: break-all; }
-.lk:hover { background: #1E1F22; }
-.lk.ok { color: #23A55A; }
-.sidebar-right { background: #2B2D31; border-left: 1px solid #1E1F22; padding: 1.2rem 1rem; }
-.faq-item { margin-bottom: 14px; }
-.faq-q { font-size: 12px; font-weight: 600; color: #F2F3F5; margin-bottom: 4px; }
-.faq-a { font-size: 12px; color: #B5BAC1; line-height: 1.5; }
-.format-box { background: #1E1F22; border-radius: 4px; padding: 10px; margin-top: 6px; }
-.format-line { font-size: 11px; color: #6D7178; font-family: Consolas, Menlo, monospace; line-height: 1.6; }
-.foot { text-align: center; padding: 1.2rem; font-size: 12px; color: #6D7178; }
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar-left { border-right: none; border-bottom: 1px solid #1E1F22; }
-  .sidebar-right { border-left: none; border-top: 1px solid #1E1F22; }
-}
+.error { display: none; background: #FFF8E8; border: 1px solid #FFE0A0; border-radius: 12px; padding: 12px; font-size: 13px; color: #8B6000; margin-bottom: 1rem; }
+.error.red { background: #FFF2F2; border-color: #FFD1D1; color: #D70015; }
+.toast { background: #1D1D1F; color: #fff; border-radius: 12px; padding: 10px 16px; font-size: 13px; text-align: center; margin-bottom: 1rem; display: none; }
+.footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #C7C7CC; }
 </style>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-logo"><div class="nav-icon">🔗</div> ClipLinks</div>
-  <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
-    <option value="es">🌍 Español</option>
-    <option value="en">🌍 English</option>
-  </select>
+<nav class="navbar">
+  <div class="logo"><div class="logo-dot"></div> ClipLinks</div>
+  <div class="nav-right">
+    <select class="lang-select" onchange="setLang(this.value)">
+      <option value="es">🌍 Español</option>
+      <option value="en">🌍 English</option>
+    </select>
+  </div>
 </nav>
-<div class="layout">
-  <div class="sidebar-left">
-    <div class="side-title" data-es="Plataformas" data-en="Platforms">Plataformas</div>
-    <div class="side-item active" onclick="setPlatSide(this,'tiktok')"><span>🎵</span> TikTok</div>
-    <div class="side-item" onclick="setPlatSide(this,'instagram')"><span>📸</span> Instagram</div>
-    <div class="side-item" onclick="setPlatSide(this,'youtube')"><span>▶️</span> YouTube</div>
-    <div class="side-divider"></div>
-    <div class="side-title" data-es="Cómo funciona" data-en="How it works">Cómo funciona</div>
-    <div class="side-step"><div class="step-num">1</div><div class="step-text" data-es="Escribe el usuario del perfil" data-en="Type the profile username">Escribe el usuario del perfil</div></div>
-    <div class="side-step"><div class="step-num">2</div><div class="step-text" data-es="Elige cuántos links y el tamaño de grupo" data-en="Choose how many links and the group size">Elige cuántos links y el tamaño de grupo</div></div>
-    <div class="side-step"><div class="step-num">3</div><div class="step-text" data-es="Copia cada grupo y pégalo en el bot" data-en="Copy each group and paste it in the bot">Copia cada grupo y pégalo en el bot</div></div>
+<div class="hero">
+  <h1 id="heroTitle">Saca los links de cualquier perfil</h1>
+  <p id="heroSub">TikTok, Instagram y YouTube — grupos personalizados, listos para copiar.</p>
+</div>
+<div class="main">
+  <div class="card">
+    <div class="plats">
+      <button class="plat active" onclick="setTab(this,'tiktok')">TikTok</button>
+      <button class="plat" onclick="setTab(this,'instagram')">Instagram</button>
+      <button class="plat" onclick="setTab(this,'youtube')">YouTube</button>
+    </div>
+    <input class="inp" type="text" id="userInput" placeholder="@usuario de TikTok..." autocomplete="off" />
+    <div class="section-label" id="lblCount">¿Cuántos links quieres sacar?</div>
+    <div class="options-row" id="countRow">
+      <button class="opt-btn active" onclick="setCount(this,25)">Últimos 25 links</button>
+      <button class="opt-btn" onclick="setCount(this,50)">Últimos 50 links</button>
+      <button class="opt-btn" onclick="setCount(this,100)">Últimos 100 links</button>
+      <button class="opt-btn" onclick="setCount(this,200)">Últimos 200 links</button>
+      <button class="opt-btn" onclick="setCount(this,500)">Últimos 500 links</button>
+      <button class="opt-btn" onclick="setCount(this,1000)">Últimos 1000 links</button>
+      <button class="opt-btn" onclick="setCount(this,1500)">Últimos 1500 links</button>
+    </div>
+    <div class="section-label" id="lblGroup">¿De cuántos links cada grupo?</div>
+    <div class="options-row" id="groupRow">
+      <button class="opt-btn active" onclick="setGroup(this,10)">10</button>
+      <button class="opt-btn" onclick="setGroup(this,25)">25</button>
+      <button class="opt-btn" onclick="setGroup(this,50)">50</button>
+      <button class="opt-btn" onclick="setGroup(this,100)">100</button>
+    </div>
+    <button class="btn" id="fetchBtn" onclick="fetchLinks()" style="margin-top:1rem">Obtener links</button>
   </div>
-  <div class="center">
-    <div class="title" data-es="Extrae tus links" data-en="Extract your links">Extrae tus links</div>
-    <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para copiar.</div>
-    <div class="card">
-      <div class="field-label" data-es="Usuario" data-en="Username">Usuario</div>
-      <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
-      <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
-      <div class="opts" id="countOpts">
-        <button class="opt active" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
-        <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
-        <button class="opt" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
-        <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
-        <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
-        <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
-        <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
-      </div>
-      <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
-      <div class="opts" id="groupOpts">
-        <button class="opt active" onclick="setOpt(this,'group',10)">10</button>
-        <button class="opt" onclick="setOpt(this,'group',25)">25</button>
-        <button class="opt" onclick="setOpt(this,'group',50)">50</button>
-        <button class="opt" onclick="setOpt(this,'group',100)">100</button>
-      </div>
-      <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
-    </div>
-    <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
-    <div class="warnbox" id="warnBox"></div>
-    <div class="result" id="resultBox">
-      <div class="result-head">
-        <div class="ruser">
-          <div class="rava" id="rAva">?</div>
-          <div><div class="rname" id="rName"></div><div class="rmeta" id="rMeta"></div></div>
-        </div>
-        <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
-      </div>
-      <div id="grpsArea"></div>
-    </div>
-    <div class="foot">ClipLinks</div>
+  <div class="toast" id="toast"></div>
+  <div class="error" id="errorBox"></div>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p id="loadingText" style="font-size:13px;color:#86868B">Buscando videos...</p>
   </div>
-  <div class="sidebar-right">
-    <div class="faq-item">
-      <div class="faq-q" data-es="📋 Formato de salida" data-en="📋 Output format">📋 Formato de salida</div>
-      <div class="faq-a" data-es="Cada link termina en coma excepto el último del grupo:" data-en="Each link ends with a comma except the last one in the group:">Cada link termina en coma excepto el último del grupo:</div>
-      <div class="format-box">
-        <div class="format-line">tiktok.com/@user/video/1,</div>
-        <div class="format-line">tiktok.com/@user/video/2,</div>
-        <div class="format-line">tiktok.com/@user/video/3</div>
-      </div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" data-es="⚡ ¿Cuánto tarda?" data-en="⚡ How long does it take?">⚡ ¿Cuánto tarda?</div>
-      <div class="faq-a" data-es="Unos segundos para 100 links. Cantidades grandes pueden tardar algo más." data-en="A few seconds for 100 links. Larger amounts may take a bit longer.">Unos segundos para 100 links. Cantidades grandes pueden tardar algo más.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" data-es="🔒 Perfiles privados" data-en="🔒 Private profiles">🔒 Perfiles privados</div>
-      <div class="faq-a" data-es="Solo funciona con perfiles públicos." data-en="Only works with public profiles.">Solo funciona con perfiles públicos.</div>
-    </div>
+  <div class="stats" id="statsRow" style="display:none">
+    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl" id="lblTotal">Links totales</div></div>
+    <div class="stat"><div class="val" id="statGroups">0</div><div class="lbl" id="lblGroups">Grupos</div></div>
+    <div class="stat"><div class="val" id="statUser">—</div><div class="lbl" id="lblUser">Usuario</div></div>
   </div>
+  <div id="resultsArea"></div>
+  <div class="footer" id="footer">ClipLinks — Hecho para cliperos</div>
 </div>
 <script>
-var API='https://web-production-db182.up.railway.app';
-var count=25,group=10,platform='tiktok';
-var lang=navigator.language.indexOf('en')===0?'en':'es';
-var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
-function applyLang(){
-  document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
-  document.getElementById('userInp').placeholder=PH[lang][platform];
-  document.getElementById('langSel').value=lang;
+const API = 'https://web-production-db182.up.railway.app';
+let currentPlatform = 'tiktok';
+let selectedCount = 25;
+let selectedGroup = 10;
+let lang = navigator.language.startsWith('en') ? 'en' : 'es';
+
+const T = {
+  es: {
+    heroTitle: 'Saca los links de cualquier perfil',
+    heroSub: 'TikTok, Instagram y YouTube — grupos personalizados, listos para copiar.',
+    placeholder: { tiktok: '@usuario de TikTok...', instagram: '@usuario de Instagram...', youtube: '@canal de YouTube...' },
+    lblCount: '¿Cuántos links quieres sacar?',
+    lblGroup: '¿De cuántos links cada grupo?',
+    btnGet: 'Obtener links',
+    lblTotal: 'Links totales', lblGroups: 'Grupos', lblUser: 'Usuario',
+    copyAll: 'Copiar todo', copyGroup: 'Copiar grupo',
+    footer: 'ClipLinks — Hecho para cliperos',
+    toastCopied: '¡Copiado!', toastAll: '¡Links copiados!',
+    error: 'No se pudieron obtener los links. Comprueba que el usuario existe y es público.',
+    warning: (got, asked) => `⚠️ Se pidieron ${asked} links pero solo se obtuvieron ${got}. TikTok puede haber limitado la búsqueda. Puedes intentarlo de nuevo.`,
+    groupLabel: 'Grupo', linksLabel: 'links',
+    loading: (count, user, group) => `Cargando los links de los últimos ${count} videos de @${user} en grupos de ${group}...`,
+    copyGroupDone: '✓ Copiado'
+  },
+  en: {
+    heroTitle: 'Get links from any profile',
+    heroSub: 'TikTok, Instagram and YouTube — custom groups, ready to copy.',
+    placeholder: { tiktok: '@TikTok username...', instagram: '@Instagram username...', youtube: '@YouTube channel...' },
+    lblCount: 'How many links do you want?',
+    lblGroup: 'How many links per group?',
+    btnGet: 'Get links',
+    lblTotal: 'Total links', lblGroups: 'Groups', lblUser: 'User',
+    copyAll: 'Copy all', copyGroup: 'Copy group',
+    footer: 'ClipLinks — Made for clippers',
+    toastCopied: 'Copied!', toastAll: 'All links copied!',
+    error: 'Could not get links. Make sure the user exists and is public.',
+    warning: (got, asked) => `⚠️ ${asked} links were requested but only ${got} were obtained. TikTok may have limited the search. You can try again.`,
+    groupLabel: 'Group', linksLabel: 'links',
+    loading: (count, user, group) => `Loading the last ${count} videos from @${user} in groups of ${group}...`,
+    copyGroupDone: '✓ Copied'
+  }
+};
+
+function applyLang() {
+  const t = T[lang];
+  document.getElementById('heroTitle').textContent = t.heroTitle;
+  document.getElementById('heroSub').textContent = t.heroSub;
+  document.getElementById('userInput').placeholder = t.placeholder[currentPlatform];
+  document.getElementById('lblCount').textContent = t.lblCount;
+  document.getElementById('lblGroup').textContent = t.lblGroup;
+  document.getElementById('fetchBtn').textContent = t.btnGet;
+  document.getElementById('lblTotal').textContent = t.lblTotal;
+  document.getElementById('lblGroups').textContent = t.lblGroups;
+  document.getElementById('lblUser').textContent = t.lblUser;
+  document.getElementById('footer').textContent = t.footer;
+  document.querySelector('.lang-select').value = lang;
 }
-function setLang(v){lang=v;applyLang();}
-function setPlatSide(el,p){
-  document.querySelectorAll('.side-item').forEach(function(b){b.classList.remove('active');});
-  el.classList.add('active');platform=p;
-  document.getElementById('userInp').placeholder=PH[lang][p];
-}
-function setOpt(el,type,val){
-  var id=type==='count'?'countOpts':'groupOpts';
-  document.querySelectorAll('#'+id+' .opt').forEach(function(b){b.classList.remove('active');});
+
+function setLang(l) { lang = l; applyLang(); }
+
+function setTab(el, platform) {
+  document.querySelectorAll('.plat').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  if(type==='count'){count=val;}else{group=val;}
+  currentPlatform = platform;
+  document.getElementById('userInput').placeholder = T[lang].placeholder[currentPlatform];
 }
-document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
-function fetchLinks(){
-  var user=document.getElementById('userInp').value.trim().replace('@','');
-  if(!user){return;}
-  document.getElementById('resultBox').style.display='none';
-  document.getElementById('warnBox').style.display='none';
-  document.getElementById('loadBox').style.display='block';
-  document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
-  fetch(API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count)
-  .then(function(res){return res.json();})
-  .then(function(data){
-    if(data.error){throw new Error(data.error);}
-    if(data.links.length<count){
-      var w=document.getElementById('warnBox');
-      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'. Try again if some are missing.');
-      w.style.display='block';
+
+function setCount(el, count) {
+  document.querySelectorAll('#countRow .opt-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedCount = count;
+}
+
+function setGroup(el, size) {
+  document.querySelectorAll('#groupRow .opt-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedGroup = size;
+}
+
+document.getElementById('userInput').addEventListener('keydown', e => { if(e.key==='Enter') fetchLinks(); });
+
+async function fetchLinks() {
+  const user = document.getElementById('userInput').value.trim().replace('@','');
+  if(!user) { showError(T[lang].error, true); return; }
+  hideError();
+  document.getElementById('resultsArea').innerHTML = '';
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('loadingText').textContent = T[lang].loading(selectedCount, user, selectedGroup);
+  document.getElementById('fetchBtn').disabled = true;
+  try {
+    const res = await fetch(`${API}/links?user=${encodeURIComponent(user)}&platform=${currentPlatform}&count=${selectedCount}`);
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Error');
+    if(data.links.length < selectedCount) {
+      showError(T[lang].warning(data.links.length, selectedCount), false);
     }
-    showResults(user,data.links);
-  })
-  .catch(function(){
-    var w=document.getElementById('warnBox');
-    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links. Make sure the user exists and is public.';
-    w.style.display='block';
-  })
-  .finally(function(){document.getElementById('loadBox').style.display='none';});
+    showResults(user, data.links);
+  } catch(err) {
+    showError(T[lang].error, true);
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('fetchBtn').disabled = false;
+  }
 }
-function showResults(user,links){
-  var groups=[];
-  for(var i=0;i<links.length;i+=group){groups.push(links.slice(i,i+group));}
-  document.getElementById('rAva').textContent=user.charAt(0).toUpperCase();
-  document.getElementById('rName').textContent='@'+user;
-  document.getElementById('rMeta').textContent=links.length+' links — '+groups.length+(lang==='es'?' grupos de ':' groups of ')+group;
-  var area=document.getElementById('grpsArea');
-  area.innerHTML='';
-  groups.forEach(function(g,gi){
-    var div=document.createElement('div');
-    div.className='grp';
-    var list='';
-    g.forEach(function(l,i){
-      list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>';
+
+function showResults(user, links) {
+  const t = T[lang];
+  const groups = [];
+  for(let i=0; i<links.length; i+=selectedGroup) groups.push(links.slice(i,i+selectedGroup));
+  document.getElementById('statTotal').textContent = links.length;
+  document.getElementById('statGroups').textContent = groups.length;
+  document.getElementById('statUser').textContent = '@'+user;
+  document.getElementById('statsRow').style.display = 'grid';
+  const area = document.getElementById('resultsArea');
+  area.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  const header = document.createElement('div');
+  header.className = 'result-header';
+  header.innerHTML = `<div class="result-info"><span>@${user}</span><small>${links.length} ${t.linksLabel} — ${groups.length} ${t.lblGroups.toLowerCase()}</small></div><button class="btn-copy-all" onclick="copyAll()">${t.copyAll}</button>`;
+  card.appendChild(header);
+  groups.forEach((group, gi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'group-wrap';
+    const list = group.map((l,i) => `<div class="link-item" id="link-${gi}-${i}">${l}${i < group.length-1 ? ',' : ''}</div>`).join('');
+    wrap.innerHTML = `<div class="group-label"><span>${t.groupLabel} ${gi+1} — ${group.length} ${t.linksLabel}</span><button class="btn-copy-group" id="btn-group-${gi}" onclick="copyGroup(${gi})">${t.copyGroup} ${gi+1}</button></div><div class="links-list" id="links${gi}">${list}</div>`;
+    card.appendChild(wrap);
+  });
+  area.appendChild(card);
+}
+
+function copyGroup(i) {
+  const items = document.querySelectorAll(`#links${i} .link-item`);
+  const text = Array.from(items).map(item => item.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(T[lang].toastCopied);
+    const btn = document.getElementById(`btn-group-${i}`);
+    if(btn) {
+      btn.textContent = T[lang].copyGroupDone;
+      btn.classList.add('copied');
+    }
+    items.forEach(item => item.classList.add('copied'));
+  }).catch(()=>{});
+}
+
+function copyAll() {
+  const items = document.querySelectorAll('.link-item');
+  const text = Array.from(items).map(i=>i.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(T[lang].toastAll);
+    items.forEach(item => item.classList.add('copied'));
+    document.querySelectorAll('.btn-copy-group').forEach(btn => {
+      btn.classList.add('copied');
     });
-    var gLabel=(lang==='es'?'Grupo ':'Group ')+(gi+1)+' — '+g.length+' links';
-    var cLabel=lang==='es'?'Copiar':'Copy';
-    div.innerHTML='<div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+cLabel+'</button></div><div class="lks">'+list+'</div>';
-    area.appendChild(div);
-  });
-  document.getElementById('resultBox').style.display='block';
+  }).catch(()=>{});
 }
-function copyGroup(gi){
-  var rows=document.querySelectorAll('[id^="lk-'+gi+'-"]');
-  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
-  navigator.clipboard.writeText(text).then(function(){
-    var btn=document.getElementById('gb-'+gi);
-    btn.textContent=lang==='es'?'✓ Copiado':'✓ Copied';
-    btn.classList.add('ok');
-    rows.forEach(function(r){r.classList.add('ok');});
-  });
+
+function showError(msg, isRed = false) {
+  const e = document.getElementById('errorBox');
+  e.textContent = msg;
+  e.className = isRed ? 'error red' : 'error';
+  e.style.display = 'block';
 }
-function copyAll(){
-  var rows=document.querySelectorAll('.lk');
-  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
-  navigator.clipboard.writeText(text).then(function(){
-    rows.forEach(function(r){r.classList.add('ok');});
-    document.querySelectorAll('.grp-btn').forEach(function(b){b.textContent='✓';b.classList.add('ok');});
-  });
-}
+function hideError() { document.getElementById('errorBox').style.display='none'; }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
 applyLang();
 </script>
 </body>
