@@ -35,26 +35,24 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .userpill button:hover { color: #fff; }
 .glogin { display: flex; align-items: center; gap: 9px; background: #fff; color: #3c4043; border: none; border-radius: 20px; padding: 8px 15px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: box-shadow 0.2s; }
 .glogin:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.35); }
-.layout { position: relative; z-index: 1; display: grid; grid-template-columns: 220px minmax(0, 760px); justify-content: center; gap: 0; min-height: calc(100vh - 60px); margin: 0 auto; }
-.sidebar-left { border-right: 1px solid rgba(255,255,255,0.05); padding: 1.8rem 1rem; }
-.side-title { font-size: 11px; font-weight: 600; color: #63666F; text-transform: uppercase; letter-spacing: 0.6px; padding: 0 10px; margin-bottom: 10px; }
-.side-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: #A9ADB8; cursor: pointer; margin-bottom: 4px; transition: all 0.18s; border: 1px solid transparent; }
-.side-item.active { background: rgba(88,101,242,0.13); color: #fff; border-color: rgba(88,101,242,0.35); }
-.side-item:hover:not(.active) { background: rgba(255,255,255,0.04); color: #E8E9ED; }
-.side-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-.center { padding: 1.9rem 1.8rem; min-width: 0; }
-.title { font-size: 25px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; }
-.subtitle { font-size: 13.5px; color: #8A8E99; margin-bottom: 1.5rem; }
-.card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 1.5rem; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+.wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 2.4rem 1.6rem 2rem; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; text-align: center; }
+.subtitle { font-size: 14px; color: #8A8E99; margin-bottom: 1.8rem; text-align: center; }
+.card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 1.7rem; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+.plat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.plat { display: flex; align-items: center; justify-content: center; gap: 9px; height: 48px; border: 1px solid rgba(255,255,255,0.09); border-radius: 13px; background: rgba(0,0,0,0.2); color: #A9ADB8; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.18s; }
+.plat svg { width: 19px; height: 19px; flex-shrink: 0; }
+.plat.active { background: rgba(88,101,242,0.15); color: #fff; border-color: rgba(88,101,242,0.55); box-shadow: 0 4px 16px rgba(88,101,242,0.2); }
+.plat:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #E8E9ED; }
 .field-label { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.field { width: 100%; height: 48px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; margin-bottom: 1.2rem; transition: all 0.2s; }
+.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; margin-bottom: 1.3rem; transition: all 0.2s; }
 .field::placeholder { color: #55585F; }
 .field:focus { border-color: #5865F2; box-shadow: 0 0 0 3px rgba(88,101,242,0.18); }
-.opts { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 1.2rem; }
-.opt { height: 34px; padding: 0 15px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; background: transparent; color: #A9ADB8; font-size: 12.5px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
+.opts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.3rem; }
+.opt { height: 36px; padding: 0 16px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; background: transparent; color: #A9ADB8; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
 .opt.active { background: rgba(88,101,242,0.16); color: #A5AEFF; border-color: rgba(88,101,242,0.55); }
 .opt:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #fff; }
-.go-btn { width: 100%; height: 50px; border: none; border-radius: 13px; background: linear-gradient(135deg, #5865F2, #6E79FF); color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(88,101,242,0.4); }
+.go-btn { width: 100%; height: 52px; border: none; border-radius: 13px; background: linear-gradient(135deg, #5865F2, #6E79FF); color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(88,101,242,0.4); }
 .go-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(88,101,242,0.5); }
 .go-btn:active { transform: translateY(0); }
 .loadbox { display: none; text-align: center; padding: 1.8rem; }
@@ -62,34 +60,33 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 @keyframes spin { to { transform: rotate(360deg); } }
 .loadmsg { font-size: 13px; color: #8A8E99; }
 .warnbox { display: none; background: rgba(240,178,50,0.08); border: 1px solid rgba(240,178,50,0.25); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #E8B33E; margin-bottom: 1.1rem; }
-.result { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; overflow: hidden; display: none; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: fadeUp 0.4s ease both; }
+.result { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; display: none; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: fadeUp 0.4s ease both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.result-head { padding: 15px 17px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 10px; }
-.ruser { display: flex; align-items: center; gap: 12px; }
-.rava { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #5865F2, #8B93FF); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; box-shadow: 0 4px 16px rgba(88,101,242,0.35); overflow: hidden; flex-shrink: 0; }
+.result-head { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 10px; }
+.ruser { display: flex; align-items: center; gap: 13px; }
+.rava { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #5865F2, #8B93FF); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; box-shadow: 0 4px 16px rgba(88,101,242,0.35); overflow: hidden; flex-shrink: 0; }
 .rava img { width: 100%; height: 100%; object-fit: cover; }
 .rname { font-size: 15px; font-weight: 600; color: #fff; }
 .rmeta { font-size: 12.5px; color: #8A8E99; margin-top: 1px; }
-.copyall { height: 35px; padding: 0 16px; border: 1px solid rgba(88,101,242,0.45); border-radius: 10px; background: rgba(88,101,242,0.12); color: #A5AEFF; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; }
+.copyall { height: 36px; padding: 0 17px; border: 1px solid rgba(88,101,242,0.45); border-radius: 10px; background: rgba(88,101,242,0.12); color: #A5AEFF; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; }
 .copyall:hover { background: rgba(88,101,242,0.22); }
 .copyall.ok { animation: pop 0.32s ease; border-color: rgba(35,165,90,0.5); background: rgba(35,165,90,0.14); color: #4CC97B; }
 .grp { border-bottom: 1px solid rgba(255,255,255,0.05); animation: fadeUp 0.4s ease both; }
 .grp:last-child { border-bottom: none; }
-.grp-head { padding: 10px 17px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.22); }
+.grp-head { padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.22); }
 .grp-t { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.4px; }
-.grp-btn { height: 27px; padding: 0 13px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: transparent; color: #A9ADB8; font-size: 11.5px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
+.grp-btn { height: 28px; padding: 0 14px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: transparent; color: #A9ADB8; font-size: 11.5px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
 .grp-btn:hover { border-color: #5865F2; color: #A5AEFF; }
 .grp-btn.ok { background: rgba(35,165,90,0.13); border-color: rgba(35,165,90,0.45); color: #4CC97B; animation: pop 0.32s ease; }
 @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.13); } 100% { transform: scale(1); } }
-.lks { padding: 9px 17px 13px; }
+.lks { padding: 10px 18px 14px; }
 .lk { font-size: 12.5px; color: #9A9EA9; padding: 3px 8px; border-radius: 6px; line-height: 1.6; font-family: 'SF Mono', Consolas, Menlo, monospace; word-break: break-all; transition: all 0.15s; }
 .lk:hover { background: rgba(255,255,255,0.04); color: #D5D7DE; }
 .lk.ok { color: #4CC97B; animation: flashGreen 0.6s ease; }
 @keyframes flashGreen { 0% { background: rgba(35,165,90,0.28); } 100% { background: transparent; } }
 .foot { text-align: center; padding: 1.6rem; font-size: 12px; color: #55585F; }
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar-left { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+@media (max-width: 560px) {
+  .plat-row { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -104,61 +101,59 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </select>
   </div>
 </nav>
-<div class="layout">
-  <div class="sidebar-left">
-    <div class="side-title" data-es="Plataformas" data-en="Platforms">Plataformas</div>
-    <div class="side-item active" onclick="setPlatSide(this,'tiktok')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-      TikTok
+<div class="wrap">
+  <div class="title" data-es="Extrae tus links" data-en="Extract your links">Extrae tus links</div>
+  <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para copiar.</div>
+  <div class="card">
+    <div class="field-label" data-es="Plataforma" data-en="Platform">Plataforma</div>
+    <div class="plat-row">
+      <button class="plat active" onclick="setPlat(this,'tiktok')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+        TikTok
+      </button>
+      <button class="plat" onclick="setPlat(this,'instagram')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58 0 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.16 15.58 2.16 15.2 2.16 12s0-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.16 8.8 2.16 12 2.16zM12 0C8.74 0 8.33 0 7.05.07c-4.35.2-6.78 2.62-6.98 6.98C0 8.33 0 8.74 0 12s0 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 24 8.74 24 12 24s3.67 0 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.07-1.28.07-1.69.07-4.95s0-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67 0 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>
+        Instagram
+      </button>
+      <button class="plat" onclick="setPlat(this,'youtube')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.08 0 12 0 12s0 3.92.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.92 24 12 24 12s0-3.92-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>
+        YouTube
+      </button>
     </div>
-    <div class="side-item" onclick="setPlatSide(this,'instagram')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58 0 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.16 15.58 2.16 15.2 2.16 12s0-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.16 8.8 2.16 12 2.16zM12 0C8.74 0 8.33 0 7.05.07c-4.35.2-6.78 2.62-6.98 6.98C0 8.33 0 8.74 0 12s0 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 24 8.74 24 12 24s3.67 0 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.07-1.28.07-1.69.07-4.95s0-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67 0 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>
-      Instagram
+    <div class="field-label" data-es="Usuario" data-en="Username">Usuario</div>
+    <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
+    <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
+    <div class="opts" id="countOpts">
+      <button class="opt active" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
+      <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
+      <button class="opt" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
+      <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
+      <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
+      <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
+      <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
     </div>
-    <div class="side-item" onclick="setPlatSide(this,'youtube')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.08 0 12 0 12s0 3.92.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.92 24 12 24 12s0-3.92-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>
-      YouTube
+    <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
+    <div class="opts" id="groupOpts">
+      <button class="opt active" onclick="setOpt(this,'group',10)">10</button>
+      <button class="opt" onclick="setOpt(this,'group',25)">25</button>
+      <button class="opt" onclick="setOpt(this,'group',50)">50</button>
+      <button class="opt" onclick="setOpt(this,'group',100)">100</button>
     </div>
+    <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
   </div>
-  <div class="center">
-    <div class="title" data-es="Extrae tus links" data-en="Extract your links">Extrae tus links</div>
-    <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para copiar.</div>
-    <div class="card">
-      <div class="field-label" data-es="Usuario" data-en="Username">Usuario</div>
-      <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
-      <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
-      <div class="opts" id="countOpts">
-        <button class="opt active" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
-        <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
-        <button class="opt" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
-        <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
-        <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
-        <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
-        <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
+  <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
+  <div class="warnbox" id="warnBox"></div>
+  <div class="result" id="resultBox">
+    <div class="result-head">
+      <div class="ruser">
+        <div class="rava" id="rAva">?</div>
+        <div><div class="rname" id="rName"></div><div class="rmeta" id="rMeta"></div></div>
       </div>
-      <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
-      <div class="opts" id="groupOpts">
-        <button class="opt active" onclick="setOpt(this,'group',10)">10</button>
-        <button class="opt" onclick="setOpt(this,'group',25)">25</button>
-        <button class="opt" onclick="setOpt(this,'group',50)">50</button>
-        <button class="opt" onclick="setOpt(this,'group',100)">100</button>
-      </div>
-      <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
+      <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
     </div>
-    <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
-    <div class="warnbox" id="warnBox"></div>
-    <div class="result" id="resultBox">
-      <div class="result-head">
-        <div class="ruser">
-          <div class="rava" id="rAva">?</div>
-          <div><div class="rname" id="rName"></div><div class="rmeta" id="rMeta"></div></div>
-        </div>
-        <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
-      </div>
-      <div id="grpsArea"></div>
-    </div>
-    <div class="foot">ClipLinks</div>
+    <div id="grpsArea"></div>
   </div>
+  <div class="foot">ClipLinks</div>
 </div>
 <script>
 var API='https://web-production-db182.up.railway.app';
@@ -215,8 +210,8 @@ function applyLang(){
   renderAuth();
 }
 function setLang(v){lang=v;applyLang();}
-function setPlatSide(el,p){
-  document.querySelectorAll('.side-item').forEach(function(b){b.classList.remove('active');});
+function setPlat(el,p){
+  document.querySelectorAll('.plat').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');platform=p;
   document.getElementById('userInp').placeholder=PH[lang][p];
 }
