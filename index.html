@@ -94,8 +94,6 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .lk:hover { background: rgba(255,255,255,0.04); color: #D5D7DE; }
 .lk.ok { color: #4CC97B; animation: flashGreen 0.6s ease; }
 @keyframes flashGreen { 0% { background: rgba(35,165,90,0.28); } 100% { background: transparent; } }
-.contact-btn { display: block; margin: 0 auto 1.2rem; height: 44px; padding: 0 24px; border: 1px solid rgba(255,255,255,0.12); border-radius: 22px; background: rgba(255,255,255,0.04); color: #C7CAD1; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; }
-.contact-btn:hover { border-color: rgba(88,101,242,0.5); color: #fff; background: rgba(88,101,242,0.1); }
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .modal-bg.open { display: flex; }
 .modal { background: #16161C; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 26px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
@@ -110,7 +108,10 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .modal-ok { text-align: center; padding: 10px 0; }
 .modal-ok .check { font-size: 40px; }
 .modal-ok h3 { color: #4CC97B; margin: 8px 0 4px; }
-.foot { text-align: center; padding: 1.6rem; font-size: 12px; color: #55585F; }
+.foot { text-align: center; padding: 2.4rem 1.6rem; font-size: 12px; color: #55585F; }
+.foot .contact-link { color: #55585F; text-decoration: none; cursor: pointer; border-bottom: 1px dotted rgba(255,255,255,0.15); transition: color 0.18s; }
+.foot .contact-link:hover { color: #8A8E99; }
+.foot .sep { margin: 0 8px; opacity: 0.5; }
 @media (max-width: 560px) { .plat-row { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -183,9 +184,8 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </div>
     <div id="grpsArea"></div>
   </div>
-  <button class="contact-btn" onclick="openContact()">✉️ Contacto</button>
-  <div class="foot">ClipLinks</div>
 </div>
+<div class="foot">ClipLinks<span class="sep">·</span><a class="contact-link" onclick="openContact()" data-es="Contacto" data-en="Contact">Contacto</a></div>
 
 <div class="modal-bg" id="contactModal">
   <div class="modal" id="contactInner">
