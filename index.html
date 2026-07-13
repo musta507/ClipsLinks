@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente. Perfecto para cliperos de Kick y Rainbet. Agrupa los links listos para pegar en tu bot de Discord.">
-<meta name="keywords" content="ClipLinks, Clip Links, Links Clips, linkclips, cliplinks, tiktok link extractor, kick clipper tool, rainbet clipper, extract video links, discord bot clip links, tiktok links discord, extraer links tiktok, links clipero, herramienta clipero, sacar links tiktok, copiar links tiktok, links bot discord, clipper kick links, rainbet links, tiktok links automatico, instagram links extractor, youtube shorts links, clipper tool, clip links discord, sacar links automaticamente, links cliperos kick, organizador de links, lista de links tiktok">
+<meta name="description" content="ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente.">
+<meta name="keywords" content="ClipLinks, tiktok link extractor, extraer links tiktok, links clipero, herramienta clipero, instagram links extractor, youtube shorts links">
 <meta property="og:title" content="ClipLinks — Extrae links de videos automáticamente">
 <meta property="og:description" content="Extrae links de TikTok, Instagram y YouTube automáticamente y agrúpalos listos para tu bot de Discord.">
 <meta name="robots" content="index, follow">
@@ -37,8 +37,6 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .usermenu.open { display: block; }
 .usermenu button { width: 100%; text-align: left; background: transparent; border: none; color: #E8E9ED; font-size: 13px; font-family: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
 .usermenu button:hover { background: rgba(255,255,255,0.06); }
-.glogin { display: flex; align-items: center; gap: 9px; background: #fff; color: #3c4043; border: none; border-radius: 20px; padding: 8px 15px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: box-shadow 0.2s; }
-.glogin:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.35); }
 .wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 2.4rem 1.6rem 2rem; }
 .title { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; text-align: center; }
 .subtitle { font-size: 14px; color: #8A8E99; margin-bottom: 1.8rem; text-align: center; }
@@ -113,9 +111,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .modal-ok .check { font-size: 40px; }
 .modal-ok h3 { color: #4CC97B; margin: 8px 0 4px; }
 .foot { text-align: center; padding: 1.6rem; font-size: 12px; color: #55585F; }
-@media (max-width: 560px) {
-  .plat-row { grid-template-columns: 1fr; }
-}
+@media (max-width: 560px) { .plat-row { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -187,14 +183,14 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </div>
     <div id="grpsArea"></div>
   </div>
-  <button class="contact-btn" onclick="openContact()" data-es="✉️ Contacto" data-en="✉️ Contact">✉️ Contacto</button>
+  <button class="contact-btn" onclick="openContact()">✉️ Contacto</button>
   <div class="foot">ClipLinks</div>
 </div>
 
 <div class="modal-bg" id="contactModal">
   <div class="modal" id="contactInner">
     <h3 data-es="Contacto" data-en="Contact">Contacto</h3>
-    <p data-es="¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h." data-en="Any questions or issues? Write to us and we'll reply within 24h.">¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h.</p>
+    <p data-es="¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h." data-en="Any questions? Write to us and we'll reply within 24h.">¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h.</p>
     <input type="email" id="contactEmail" placeholder="Tu email" />
     <textarea id="contactMsg" placeholder="Tu mensaje..."></textarea>
     <div class="modal-actions">
@@ -209,7 +205,6 @@ var API='https://web-production-db182.up.railway.app';
 var count=100,group=25,platform='tiktok';
 var lang=navigator.language.indexOf('en')===0?'en':'es';
 var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
-
 var GOOGLE_CLIENT_ID = "443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com";
 
 function parseJwt(token){
@@ -223,25 +218,13 @@ function handleCredential(resp){
   var d=parseJwt(resp.credential);
   if(!d)return;
   try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email}));}catch(e){}
-  try{
-    fetch(API+'/track-login',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})
-    });
-  }catch(e){}
+  try{fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})});}catch(e){}
   renderAuth();
 }
-function toggleMenu(e){
-  e.stopPropagation();
-  var m=document.getElementById('userMenu');
-  if(m){m.classList.toggle('open');}
-}
+function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById('userMenu'); if(m){m.classList.toggle('open');} }
 document.addEventListener('click',function(){
-  var m=document.getElementById('userMenu');
-  if(m){m.classList.remove('open');}
-  var r=document.getElementById('recentBox');
-  if(r){r.classList.remove('open');}
+  var m=document.getElementById('userMenu'); if(m){m.classList.remove('open');}
+  var r=document.getElementById('recentBox'); if(r){r.classList.remove('open');}
 });
 function logout(){
   try{localStorage.removeItem('clipuser');}catch(e){}
@@ -262,19 +245,13 @@ function renderAuth(){
       google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
       google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'filled_black',size:'medium',shape:'pill',text:'signin'});
     }
-  } else {
-    area.innerHTML='<button class="glogin" onclick="alert(\'Falta Client ID\')">'+(lang==='es'?'Iniciar sesión':'Sign in')+'</button>';
   }
 }
-
-function getRecent(){
-  try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; }
-}
+function getRecent(){ try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; } }
 function saveRecent(name){
   var list=getRecent();
   list=list.filter(function(n){ return n.toLowerCase()!==name.toLowerCase(); });
-  list.unshift(name);
-  list=list.slice(0,2);
+  list.unshift(name); list=list.slice(0,2);
   try{ localStorage.setItem('cliprecent',JSON.stringify(list)); }catch(e){}
 }
 function renderRecent(){
@@ -287,19 +264,13 @@ function renderRecent(){
     var d=document.createElement('div');
     d.className='recent-item';
     d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+name+'</span>';
-    d.onclick=function(){
-      document.getElementById('userInp').value=name;
-      box.classList.remove('open');
-    };
+    d.onclick=function(){ document.getElementById('userInp').value=name; box.classList.remove('open'); };
     listEl.appendChild(d);
   });
   box.classList.add('open');
 }
-document.getElementById('userInp').addEventListener('focus',function(){
-  if(this.value.trim()===''){ renderRecent(); }
-});
+document.getElementById('userInp').addEventListener('focus',function(){ if(this.value.trim()===''){ renderRecent(); } });
 document.getElementById('userInp').addEventListener('click',function(e){ e.stopPropagation(); });
-
 function applyLang(){
   document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
   document.getElementById('userInp').placeholder=PH[lang][platform];
@@ -320,7 +291,6 @@ function setOpt(el,type,val){
 }
 document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
 
-var usos = 0;
 function fetchLinks(){
   var user=document.getElementById('userInp').value.trim().replace('@','');
   if(!user){return;}
@@ -337,7 +307,7 @@ function fetchLinks(){
     if(data.error){throw new Error(data.error);}
     if(data.links.length<count){
       var w=document.getElementById('warnBox');
-      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'. Try again if some are missing.');
+      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'.');
       w.style.display='block';
     }
     showResults(user,data.links,data.avatar);
@@ -345,25 +315,19 @@ function fetchLinks(){
   })
   .catch(function(){
     var w=document.getElementById('warnBox');
-    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links. Make sure the user exists and is public.';
+    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links.';
     w.style.display='block';
   })
   .finally(function(){document.getElementById('loadBox').style.display='none';});
 }
-
 function checkLoginPrompt(){
   var logged=false; try{logged=!!localStorage.getItem('clipuser');}catch(e){}
   if(logged)return;
   var n=0; try{n=parseInt(localStorage.getItem('clipusos')||'0',10);}catch(e){}
   n++;
   try{localStorage.setItem('clipusos',String(n));}catch(e){}
-  if(n%10===0){
-    if(window.google&&google.accounts&&google.accounts.id){
-      google.accounts.id.prompt();
-    }
-  }
+  if(n%10===0){ if(window.google&&google.accounts&&google.accounts.id){ google.accounts.id.prompt(); } }
 }
-
 function showResults(user,links,avatar){
   var groups=[];
   for(var i=0;i<links.length;i+=group){groups.push(links.slice(i,i+group));}
@@ -379,9 +343,7 @@ function showResults(user,links,avatar){
     div.className='grp';
     div.style.animationDelay=Math.min(gi*0.05,1.2)+'s';
     var list='';
-    g.forEach(function(l,i){
-      list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>';
-    });
+    g.forEach(function(l,i){ list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>'; });
     var gLabel=(lang==='es'?'Grupo ':'Group ')+(gi+1)+' — '+g.length+' links';
     var cLabel=lang==='es'?'Copiar':'Copy';
     div.innerHTML='<div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+cLabel+'</button></div><div class="lks">'+list+'</div>';
@@ -410,30 +372,20 @@ function copyAll(){
     ca.classList.remove('ok'); void ca.offsetWidth; ca.classList.add('ok');
   });
 }
-
-// ===== CONTACTO =====
 function openContact(){ document.getElementById('contactModal').classList.add('open'); }
 function closeContact(){ document.getElementById('contactModal').classList.remove('open'); }
 function sendContact(){
   var email=document.getElementById('contactEmail').value.trim();
   var msg=document.getElementById('contactMsg').value.trim();
   if(!msg){ return; }
-  fetch(API+'/contact',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:email,message:msg})
-  })
+  fetch(API+'/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,message:msg})})
   .then(function(r){return r.json();})
   .then(function(){
-    document.getElementById('contactInner').innerHTML='<div class="modal-ok"><div class="check">✅</div><h3>'+(lang==='es'?'¡Mensaje enviado!':'Message sent!')+'</h3><p>'+(lang==='es'?'Tu mensaje será respondido en menos de 24h.':'Your message will be answered within 24h.')+'</p><button class="modal-send" onclick="closeContact()">'+(lang==='es'?'Cerrar':'Close')+'</button></div>';
+    document.getElementById('contactInner').innerHTML='<div class="modal-ok"><div class="check">✅</div><h3>'+(lang==='es'?'¡Mensaje enviado!':'Sent!')+'</h3><p>'+(lang==='es'?'Tu mensaje será respondido en menos de 24h.':'Your message will be answered within 24h.')+'</p><button class="modal-send" onclick="closeContact()">'+(lang==='es'?'Cerrar':'Close')+'</button></div>';
   })
-  .catch(function(){
-    alert(lang==='es'?'No se pudo enviar. Inténtalo de nuevo.':'Could not send. Try again.');
-  });
+  .catch(function(){ alert(lang==='es'?'No se pudo enviar. Inténtalo de nuevo.':'Could not send.'); });
 }
-document.getElementById('contactModal').addEventListener('click',function(e){
-  if(e.target===this){ closeContact(); }
-});
+document.getElementById('contactModal').addEventListener('click',function(e){ if(e.target===this){ closeContact(); } });
 
 window.addEventListener('load', renderAuth);
 applyLang();
