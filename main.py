@@ -9,6 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -17,7 +18,6 @@ def init_db():
     try:
         conn = get_db()
         cur = conn.cursor()
-        # Tabla de busquedas (ampliada)
         cur.execute('''
             CREATE TABLE IF NOT EXISTS searches (
                 id SERIAL PRIMARY KEY,
@@ -29,10 +29,8 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             )
         ''')
-        # Por si la tabla ya existia sin las columnas nuevas, las añadimos
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS count INTEGER")
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS user_email TEXT")
-        # Tabla de logins
         cur.execute('''
             CREATE TABLE IF NOT EXISTS logins (
                 id SERIAL PRIMARY KEY,
@@ -43,6 +41,16 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             )
         ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                email TEXT,
+                message TEXT,
+                ip TEXT,
+                replied BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
         conn.commit()
         cur.close()
         conn.close()
@@ -50,6 +58,10 @@ def init_db():
         pass
 
 init_db()
+
+def check_password():
+    pw = request.args.get('pw', '')
+    return PANEL_PASSWORD != '' and pw == PANEL_PASSWORD
 
 @app.route('/')
 def index():
@@ -78,13 +90,69 @@ def track_login():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/contact', methods=['POST'])
+def contact():
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()[:200]
+        message = (data.get('message', '') or '').strip()[:2000]
+        ip = request.remote_addr
+        if not message:
+            return jsonify({'error': 'Mensaje vacío'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO messages (email, message, ip) VALUES (%s, %s, %s)',
+                    (email, message, ip))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/messages')
+def get_messages():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT id, email, message, replied, created_at FROM messages ORDER BY created_at DESC LIMIT 200')
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'messages': [{
+            'id': r[0], 'email': r[1] or '', 'message': r[2] or '',
+            'replied': r[3], 'date': str(r[4])
+        } for r in rows]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/mark-replied', methods=['POST'])
+def mark_replied():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        mid = data.get('id')
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE messages SET replied = TRUE WHERE id = %s', (mid,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/stats')
 def stats():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
     try:
         conn = get_db()
         cur = conn.cursor()
 
-        # Totales
         cur.execute('SELECT COUNT(*) FROM searches')
         total = cur.fetchone()[0]
         cur.execute('SELECT COUNT(DISTINCT ip) FROM searches')
@@ -92,7 +160,6 @@ def stats():
         cur.execute('SELECT COUNT(DISTINCT user_email) FROM searches WHERE user_email IS NOT NULL AND user_email != %s', ('',))
         logged_users = cur.fetchone()[0]
 
-        # Busquedas hoy / semana / mes
         cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE")
         today = cur.fetchone()[0]
         cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'")
@@ -100,19 +167,15 @@ def stats():
         cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'")
         month = cur.fetchone()[0]
 
-        # Por plataforma
         cur.execute('SELECT platform, COUNT(*) FROM searches GROUP BY platform ORDER BY COUNT(*) DESC')
         platforms = cur.fetchall()
 
-        # Por dia (ultimos 30)
         cur.execute("SELECT DATE(created_at), COUNT(*) FROM searches GROUP BY DATE(created_at) ORDER BY DATE(created_at) DESC LIMIT 30")
         daily = cur.fetchall()
 
-        # Perfiles mas buscados
         cur.execute('SELECT username, platform, COUNT(*) FROM searches GROUP BY username, platform ORDER BY COUNT(*) DESC LIMIT 30')
         top_profiles = cur.fetchall()
 
-        # Cuentas logueadas (resumen: cuantas veces se ha logueado cada email + ultima vez)
         cur.execute('''
             SELECT email, MAX(name) as name, MAX(picture) as picture,
                    COUNT(*) as logins, MAX(created_at) as last_login
@@ -124,7 +187,6 @@ def stats():
         ''')
         accounts = cur.fetchall()
 
-        # Actividad de cada usuario logueado: cuantas busquedas y ultima
         cur.execute('''
             SELECT user_email, COUNT(*) as busquedas, MAX(created_at) as ultima
             FROM searches
@@ -135,7 +197,6 @@ def stats():
         ''')
         user_activity = cur.fetchall()
 
-        # Historial reciente (ultimas 100 busquedas con todo el detalle)
         cur.execute('''
             SELECT username, platform, count, user_email, ip, created_at
             FROM searches
@@ -143,6 +204,9 @@ def stats():
             LIMIT 100
         ''')
         history = cur.fetchall()
+
+        cur.execute("SELECT COUNT(*) FROM messages WHERE replied = FALSE")
+        pending_msgs = cur.fetchone()[0]
 
         cur.close()
         conn.close()
@@ -154,6 +218,7 @@ def stats():
             'today': today,
             'week': week,
             'month': month,
+            'pending_msgs': pending_msgs,
             'platforms': [{'name': p[0], 'count': p[1]} for p in platforms],
             'daily': [{'date': str(d[0]), 'count': d[1]} for d in daily],
             'top_profiles': [{'username': p[0], 'platform': p[1], 'count': p[2]} for p in top_profiles],
@@ -194,7 +259,6 @@ def create_checkout():
         return jsonify({'error': str(e)}), 500
 
 def get_avatar(user, platform):
-    """Saca la foto de perfil del usuario. Si falla, devuelve None."""
     try:
         if platform == 'tiktok':
             prof_url = f'https://www.tiktok.com/@{user}'
