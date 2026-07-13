@@ -13,11 +13,12 @@ h1{font-size:24px;margin-bottom:4px}
 .kpi{background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px}
 .kpi .num{font-size:30px;font-weight:700;color:#fff}
 .kpi .lbl{font-size:12.5px;color:#8A8E99;margin-top:4px}
+.kpi.alert .num{color:#E8B33E}
 .card{background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px}
 .card h2{font-size:16px;margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;color:#8A8E99;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05);vertical-align:top}
 tr:hover td{background:rgba(255,255,255,0.03)}
 .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(88,101,242,0.15);color:#A5AEFF}
 .email{color:#4CC97B}
@@ -32,21 +33,64 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 .tab.active{background:rgba(88,101,242,0.15);color:#fff;border-color:rgba(88,101,242,0.4)}
 .section{display:none}
 .section.active{display:block}
+.login{max-width:340px;margin:80px auto;background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:30px;text-align:center}
+.login h2{font-size:18px;margin-bottom:6px}
+.login p{color:#8A8E99;font-size:13px;margin-bottom:18px}
+.login input{width:100%;height:46px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:#0F0F14;color:#fff;padding:0 14px;font-size:15px;outline:none;margin-bottom:12px}
+.login input:focus{border-color:#5865F2}
+.login button{width:100%;height:46px;border:none;border-radius:10px;background:#5865F2;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.login .err{color:#E5484D;font-size:13px;margin-top:10px;display:none}
+.msg-item{border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:12px;background:#15151B}
+.msg-item.pending{border-color:rgba(232,179,62,0.35)}
+.msg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.msg-email{color:#4CC97B;font-size:14px;font-weight:600}
+.msg-date{color:#8A8E99;font-size:12px}
+.msg-body{color:#E8E9ED;font-size:14px;line-height:1.5;margin-bottom:12px;white-space:pre-wrap}
+.msg-actions{display:flex;gap:8px}
+.msg-reply{height:34px;padding:0 16px;border:none;border-radius:8px;background:#5865F2;color:#fff;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.msg-done{height:34px;padding:0 14px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:transparent;color:#A9ADB8;font-size:13px;cursor:pointer}
+.badge-pending{background:rgba(232,179,62,0.15);color:#E8B33E;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-done{background:rgba(35,165,90,0.15);color:#4CC97B;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
 </style>
 </head>
 <body>
-<h1>📊 Panel de ClipLinks</h1>
-<div class="sub">Estadísticas de uso en tiempo real</div>
 
-<div id="content" class="loading">Cargando estadísticas...</div>
+<div id="loginScreen" class="login">
+  <h2>🔒 Panel privado</h2>
+  <p>Introduce la contraseña para ver las estadísticas.</p>
+  <input type="password" id="pwInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')entrar()">
+  <button onclick="entrar()">Entrar</button>
+  <div class="err" id="pwErr">Contraseña incorrecta</div>
+</div>
+
+<div id="dashboard" style="display:none">
+  <h1>📊 Panel de ClipLinks</h1>
+  <div class="sub">Estadísticas de uso en tiempo real</div>
+  <div id="content" class="loading">Cargando estadísticas...</div>
+</div>
 
 <script>
 var API='https://web-production-db182.up.railway.app';
+var PW='';
 
-fetch(API+'/stats')
-  .then(function(r){return r.json();})
-  .then(render)
-  .catch(function(e){document.getElementById('content').innerHTML='<div class="loading">Error al cargar: '+e+'</div>';});
+function entrar(){
+  PW=document.getElementById('pwInput').value.trim();
+  if(!PW)return;
+  fetch(API+'/stats?pw='+encodeURIComponent(PW))
+    .then(function(r){
+      if(r.status===401){throw new Error('unauthorized');}
+      return r.json();
+    })
+    .then(function(d){
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('dashboard').style.display='block';
+      render(d);
+      loadMessages();
+    })
+    .catch(function(){
+      document.getElementById('pwErr').style.display='block';
+    });
+}
 
 function esc(s){return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s;return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
@@ -58,7 +102,6 @@ function render(d){
   var maxPlat=1; (d.platforms||[]).forEach(function(x){if(x.count>maxPlat)maxPlat=x.count;});
 
   var h='';
-  // KPIs
   h+='<div class="grid">';
   h+=kpi(d.total,'Búsquedas totales');
   h+=kpi(d.today,'Hoy');
@@ -66,17 +109,17 @@ function render(d){
   h+=kpi(d.month,'Últimos 30 días');
   h+=kpi(d.unique_ips,'IPs únicas');
   h+=kpi(d.logged_users,'Usuarios logueados');
+  h+=kpi(d.pending_msgs,'Mensajes sin leer',true);
   h+='</div>';
 
-  // Tabs
   h+='<div class="tabs">';
   h+='<div class="tab active" onclick="tab(0)">📜 Historial</div>';
   h+='<div class="tab" onclick="tab(1)">👤 Cuentas</div>';
   h+='<div class="tab" onclick="tab(2)">🔥 Rankings</div>';
   h+='<div class="tab" onclick="tab(3)">📈 Por día</div>';
+  h+='<div class="tab" onclick="tab(4)">✉️ Mensajes</div>';
   h+='</div>';
 
-  // 0 HISTORIAL
   h+='<div class="section active">';
   h+='<div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil buscado</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
   (d.history||[]).forEach(function(x){
@@ -84,7 +127,6 @@ function render(d){
   });
   h+='</table></div></div>';
 
-  // 1 CUENTAS
   h+='<div class="section">';
   h+='<div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
   (d.accounts||[]).forEach(function(a){
@@ -98,7 +140,6 @@ function render(d){
   });
   h+='</table></div></div>';
 
-  // 2 RANKINGS
   h+='<div class="section">';
   h+='<div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
   (d.top_profiles||[]).forEach(function(p){
@@ -111,7 +152,6 @@ function render(d){
   });
   h+='</div></div>';
 
-  // 3 POR DIA
   h+='<div class="section">';
   h+='<div class="card"><h2>Búsquedas por día (últimos 30)</h2>';
   (d.daily||[]).forEach(function(x){
@@ -119,11 +159,42 @@ function render(d){
   });
   h+='</div></div>';
 
+  h+='<div class="section"><div id="msgArea" class="loading">Cargando mensajes...</div></div>';
+
   document.getElementById('content').className='';
   document.getElementById('content').innerHTML=h;
 }
 
-function kpi(num,lbl){return '<div class="kpi"><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
+function loadMessages(){
+  fetch(API+'/messages?pw='+encodeURIComponent(PW))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var area=document.getElementById('msgArea');
+      if(!area)return;
+      if(!d.messages||d.messages.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">No hay mensajes todavía.</p></div>'; return; }
+      var h='<div class="card"><h2>Buzón de mensajes</h2>';
+      d.messages.forEach(function(m){
+        var badge=m.replied?'<span class="badge-done">Respondido</span>':'<span class="badge-pending">Pendiente</span>';
+        var mail=m.email?('<a class="msg-reply" href="mailto:'+esc(m.email)+'?subject=Respuesta%20de%20ClipLinks">Responder por email</a>'):'<span class="muted" style="font-size:12px">Sin email</span>';
+        var done=m.replied?'':'<button class="msg-done" onclick="markReplied('+m.id+')">Marcar como respondido</button>';
+        h+='<div class="msg-item '+(m.replied?'':'pending')+'"><div class="msg-top"><span class="msg-email">'+(m.email?esc(m.email):'(sin email)')+'</span><span>'+badge+' <span class="msg-date">'+fecha(m.date)+'</span></span></div><div class="msg-body">'+esc(m.message)+'</div><div class="msg-actions">'+mail+done+'</div></div>';
+      });
+      h+='</div>';
+      area.className='';
+      area.innerHTML=h;
+    })
+    .catch(function(){});
+}
+
+function markReplied(id){
+  fetch(API+'/mark-replied',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id,pw:PW})
+  }).then(function(){ loadMessages(); });
+}
+
+function kpi(num,lbl,alert){return '<div class="kpi'+(alert?' alert':'')+'"><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
 function tab(i){
   var tabs=document.querySelectorAll('.tab'), secs=document.querySelectorAll('.section');
   tabs.forEach(function(t,j){t.classList.toggle('active',j===i);});
