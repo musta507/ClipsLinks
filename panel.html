@@ -3,108 +3,132 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClipLinks — Panel</title>
+<title>ClipLinks — Panel de estadísticas</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, sans-serif; background: #f5f5f5; }
-.navbar { background: #0C447C; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.logo { font-size: 20px; font-weight: 500; color: #fff; }
-.nav-link { color: #B5D4F4; font-size: 13px; text-decoration: none; }
-.main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-h2 { font-size: 20px; font-weight: 500; color: #111; margin-bottom: 1rem; }
-.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-.stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.2rem; text-align: center; }
-.stat .val { font-size: 36px; font-weight: 500; color: #185FA5; }
-.stat .lbl { font-size: 13px; color: #888; margin-top: 4px; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; }
-.card h3 { font-size: 14px; font-weight: 500; color: #111; margin-bottom: 1rem; }
-.row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-.row:last-child { border-bottom: none; }
-.row .name { color: #333; }
-.row .count { color: #185FA5; font-weight: 500; white-space: nowrap; margin-left: 8px; }
-.bar-wrap { flex: 1; margin: 0 12px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
-.bar { height: 100%; background: #185FA5; border-radius: 3px; }
-.error { text-align: center; padding: 2rem; color: #A32D2D; font-size: 14px; }
-.refresh { height: 34px; padding: 0 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #185FA5; font-size: 13px; cursor: pointer; }
-.search-box { width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 13px; outline: none; margin-bottom: 1rem; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#0F0F14;color:#E8E9ED;padding:24px}
+h1{font-size:24px;margin-bottom:4px}
+.sub{color:#8A8E99;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.kpi{background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px}
+.kpi .num{font-size:30px;font-weight:700;color:#fff}
+.kpi .lbl{font-size:12.5px;color:#8A8E99;margin-top:4px}
+.card{background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px}
+.card h2{font-size:16px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#8A8E99;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+tr:hover td{background:rgba(255,255,255,0.03)}
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(88,101,242,0.15);color:#A5AEFF}
+.email{color:#4CC97B}
+.ip{color:#8A8E99;font-family:monospace;font-size:12px}
+.av{width:26px;height:26px;border-radius:50%;vertical-align:middle;margin-right:8px}
+.bar{height:8px;background:rgba(88,101,242,0.2);border-radius:4px;overflow:hidden;margin-top:4px}
+.bar span{display:block;height:100%;background:#5865F2}
+.loading{text-align:center;padding:40px;color:#8A8E99}
+.muted{color:#8A8E99}
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:10px;background:#1A1A22;border:1px solid rgba(255,255,255,0.08);color:#8A8E99;cursor:pointer;font-size:13px}
+.tab.active{background:rgba(88,101,242,0.15);color:#fff;border-color:rgba(88,101,242,0.4)}
+.section{display:none}
+.section.active{display:block}
 </style>
 </head>
 <body>
-<nav class="navbar">
-  <div class="logo">ClipLinks — Panel</div>
-  <a href="/" class="nav-link">← Volver a la web</a>
-</nav>
-<div class="main">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-    <h2>Estadísticas de uso</h2>
-    <button class="refresh" onclick="loadStats()">↻ Actualizar</button>
-  </div>
-  <div id="content"><div style="text-align:center;padding:2rem;color:#888">Cargando...</div></div>
-</div>
+<h1>📊 Panel de ClipLinks</h1>
+<div class="sub">Estadísticas de uso en tiempo real</div>
+
+<div id="content" class="loading">Cargando estadísticas...</div>
+
 <script>
-let allUsers = [];
+var API='https://web-production-db182.up.railway.app';
 
-async function loadStats() {
-  document.getElementById('content').innerHTML = '<div style="text-align:center;padding:2rem;color:#888">Cargando...</div>';
-  try {
-    const res = await fetch('/stats');
-    if(!res.ok) throw new Error('Error ' + res.status);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error);
-    allUsers = data.top_users || [];
-    const maxP = data.platforms.length ? Math.max(...data.platforms.map(p=>p.count)) : 1;
-    const maxD = data.daily.length ? Math.max(...data.daily.map(d=>d.count)) : 1;
-    document.getElementById('content').innerHTML = `
-      <div class="stats">
-        <div class="stat"><div class="val">${data.total}</div><div class="lbl">Búsquedas totales</div></div>
-        <div class="stat"><div class="val">${data.unique_users}</div><div class="lbl">Usuarios únicos</div></div>
-      </div>
-      <div class="card">
-        <h3>Por plataforma</h3>
-        ${data.platforms.length ? data.platforms.map(p=>`
-          <div class="row">
-            <span class="name">${p.name}</span>
-            <div class="bar-wrap"><div class="bar" style="width:${Math.round(p.count/maxP*100)}%"></div></div>
-            <span class="count">${p.count}</span>
-          </div>`).join('') : '<div style="color:#888;font-size:13px">Sin datos</div>'}
-      </div>
-      <div class="card">
-        <h3>Últimos 7 días</h3>
-        ${data.daily.length ? data.daily.map(d=>`
-          <div class="row">
-            <span class="name">${d.date}</span>
-            <div class="bar-wrap"><div class="bar" style="width:${Math.round(d.count/maxD*100)}%"></div></div>
-            <span class="count">${d.count}</span>
-          </div>`).join('') : '<div style="color:#888;font-size:13px">Sin datos</div>'}
-      </div>
-      <div class="card">
-        <h3>Todos los usuarios buscados (${allUsers.length})</h3>
-        <input class="search-box" type="text" placeholder="Buscar usuario..." oninput="filterUsers(this.value)" />
-        <div id="usersList">${renderUsers(allUsers)}</div>
-      </div>
-    `;
-  } catch(e) {
-    document.getElementById('content').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
-  }
+fetch(API+'/stats')
+  .then(function(r){return r.json();})
+  .then(render)
+  .catch(function(e){document.getElementById('content').innerHTML='<div class="loading">Error al cargar: '+e+'</div>';});
+
+function esc(s){return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s;return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
+
+function render(d){
+  if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+d.error+'</div>';return;}
+
+  var maxDay=1; (d.daily||[]).forEach(function(x){if(x.count>maxDay)maxDay=x.count;});
+  var maxPlat=1; (d.platforms||[]).forEach(function(x){if(x.count>maxPlat)maxPlat=x.count;});
+
+  var h='';
+  // KPIs
+  h+='<div class="grid">';
+  h+=kpi(d.total,'Búsquedas totales');
+  h+=kpi(d.today,'Hoy');
+  h+=kpi(d.week,'Últimos 7 días');
+  h+=kpi(d.month,'Últimos 30 días');
+  h+=kpi(d.unique_ips,'IPs únicas');
+  h+=kpi(d.logged_users,'Usuarios logueados');
+  h+='</div>';
+
+  // Tabs
+  h+='<div class="tabs">';
+  h+='<div class="tab active" onclick="tab(0)">📜 Historial</div>';
+  h+='<div class="tab" onclick="tab(1)">👤 Cuentas</div>';
+  h+='<div class="tab" onclick="tab(2)">🔥 Rankings</div>';
+  h+='<div class="tab" onclick="tab(3)">📈 Por día</div>';
+  h+='</div>';
+
+  // 0 HISTORIAL
+  h+='<div class="section active">';
+  h+='<div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil buscado</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
+  (d.history||[]).forEach(function(x){
+    h+='<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td class="muted">'+fecha(x.date)+'</td></tr>';
+  });
+  h+='</table></div></div>';
+
+  // 1 CUENTAS
+  h+='<div class="section">';
+  h+='<div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
+  (d.accounts||[]).forEach(function(a){
+    var pic=a.picture?'<img class="av" src="'+esc(a.picture)+'" referrerpolicy="no-referrer">':'';
+    h+='<tr><td>'+pic+esc(a.name||'—')+'</td><td class="email">'+esc(a.email)+'</td><td>'+a.logins+'</td><td class="muted">'+fecha(a.last_login)+'</td></tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="card"><h2>Actividad por usuario</h2><table><tr><th>Email</th><th>Búsquedas</th><th>Última búsqueda</th></tr>';
+  (d.user_activity||[]).forEach(function(u){
+    h+='<tr><td class="email">'+esc(u.email)+'</td><td>'+u.searches+'</td><td class="muted">'+fecha(u.last)+'</td></tr>';
+  });
+  h+='</table></div></div>';
+
+  // 2 RANKINGS
+  h+='<div class="section">';
+  h+='<div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
+  (d.top_profiles||[]).forEach(function(p){
+    h+='<tr><td>@'+esc(p.username)+'</td><td><span class="pill">'+esc(p.platform)+'</span></td><td>'+p.count+'</td></tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="card"><h2>Plataformas</h2>';
+  (d.platforms||[]).forEach(function(p){
+    h+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>'+esc(p.name)+'</span><span class="muted">'+p.count+'</span></div><div class="bar"><span style="width:'+Math.round(p.count/maxPlat*100)+'%"></span></div></div>';
+  });
+  h+='</div></div>';
+
+  // 3 POR DIA
+  h+='<div class="section">';
+  h+='<div class="card"><h2>Búsquedas por día (últimos 30)</h2>';
+  (d.daily||[]).forEach(function(x){
+    h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span class="muted">'+esc(x.date)+'</span><span>'+x.count+'</span></div><div class="bar"><span style="width:'+Math.round(x.count/maxDay*100)+'%"></span></div></div>';
+  });
+  h+='</div></div>';
+
+  document.getElementById('content').className='';
+  document.getElementById('content').innerHTML=h;
 }
 
-function renderUsers(users) {
-  if(!users.length) return '<div style="color:#888;font-size:13px">Sin datos</div>';
-  const max = Math.max(...users.map(u=>u.count));
-  return users.map(u=>`
-    <div class="row">
-      <span class="name">@${u.username}</span>
-      <div class="bar-wrap"><div class="bar" style="width:${Math.round(u.count/max*100)}%"></div></div>
-      <span class="count">${u.count} búsquedas</span>
-    </div>`).join('');
+function kpi(num,lbl){return '<div class="kpi"><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
+function tab(i){
+  var tabs=document.querySelectorAll('.tab'), secs=document.querySelectorAll('.section');
+  tabs.forEach(function(t,j){t.classList.toggle('active',j===i);});
+  secs.forEach(function(s,j){s.classList.toggle('active',j===i);});
 }
-
-function filterUsers(q) {
-  const filtered = allUsers.filter(u=>u.username.toLowerCase().includes(q.toLowerCase()));
-  document.getElementById('usersList').innerHTML = renderUsers(filtered);
-}
-
-loadStats();
 </script>
 </body>
 </html>
