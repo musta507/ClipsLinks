@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClipLinks — Panel de estadísticas</title>
+<title>ClipLinks — Panel</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#0F0F14;color:#E8E9ED;padding:24px}
@@ -54,7 +54,6 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 </style>
 </head>
 <body>
-
 <div id="loginScreen" class="login">
   <h2>🔒 Panel privado</h2>
   <p>Introduce la contraseña para ver las estadísticas.</p>
@@ -62,45 +61,32 @@ tr:hover td{background:rgba(255,255,255,0.03)}
   <button onclick="entrar()">Entrar</button>
   <div class="err" id="pwErr">Contraseña incorrecta</div>
 </div>
-
 <div id="dashboard" style="display:none">
   <h1>📊 Panel de ClipLinks</h1>
   <div class="sub">Estadísticas de uso en tiempo real</div>
   <div id="content" class="loading">Cargando estadísticas...</div>
 </div>
-
 <script>
 var API='https://web-production-db182.up.railway.app';
 var PW='';
-
 function entrar(){
   PW=document.getElementById('pwInput').value.trim();
   if(!PW)return;
   fetch(API+'/stats?pw='+encodeURIComponent(PW))
-    .then(function(r){
-      if(r.status===401){throw new Error('unauthorized');}
-      return r.json();
-    })
+    .then(function(r){ if(r.status===401){throw new Error('unauthorized');} return r.json(); })
     .then(function(d){
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('dashboard').style.display='block';
-      render(d);
-      loadMessages();
+      render(d); loadMessages();
     })
-    .catch(function(){
-      document.getElementById('pwErr').style.display='block';
-    });
+    .catch(function(){ document.getElementById('pwErr').style.display='block'; });
 }
-
 function esc(s){return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s;return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
-
 function render(d){
   if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+d.error+'</div>';return;}
-
   var maxDay=1; (d.daily||[]).forEach(function(x){if(x.count>maxDay)maxDay=x.count;});
   var maxPlat=1; (d.platforms||[]).forEach(function(x){if(x.count>maxPlat)maxPlat=x.count;});
-
   var h='';
   h+='<div class="grid">';
   h+=kpi(d.total,'Búsquedas totales');
@@ -111,7 +97,6 @@ function render(d){
   h+=kpi(d.logged_users,'Usuarios logueados');
   h+=kpi(d.pending_msgs,'Mensajes sin leer',true);
   h+='</div>';
-
   h+='<div class="tabs">';
   h+='<div class="tab active" onclick="tab(0)">📜 Historial</div>';
   h+='<div class="tab" onclick="tab(1)">👤 Cuentas</div>';
@@ -119,52 +104,39 @@ function render(d){
   h+='<div class="tab" onclick="tab(3)">📈 Por día</div>';
   h+='<div class="tab" onclick="tab(4)">✉️ Mensajes</div>';
   h+='</div>';
-
-  h+='<div class="section active">';
-  h+='<div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil buscado</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
+  h+='<div class="section active"><div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
   (d.history||[]).forEach(function(x){
     h+='<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td class="muted">'+fecha(x.date)+'</td></tr>';
   });
   h+='</table></div></div>';
-
-  h+='<div class="section">';
-  h+='<div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
+  h+='<div class="section"><div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
   (d.accounts||[]).forEach(function(a){
     var pic=a.picture?'<img class="av" src="'+esc(a.picture)+'" referrerpolicy="no-referrer">':'';
     h+='<tr><td>'+pic+esc(a.name||'—')+'</td><td class="email">'+esc(a.email)+'</td><td>'+a.logins+'</td><td class="muted">'+fecha(a.last_login)+'</td></tr>';
   });
-  h+='</table></div>';
-  h+='<div class="card"><h2>Actividad por usuario</h2><table><tr><th>Email</th><th>Búsquedas</th><th>Última búsqueda</th></tr>';
+  h+='</table></div><div class="card"><h2>Actividad por usuario</h2><table><tr><th>Email</th><th>Búsquedas</th><th>Última</th></tr>';
   (d.user_activity||[]).forEach(function(u){
     h+='<tr><td class="email">'+esc(u.email)+'</td><td>'+u.searches+'</td><td class="muted">'+fecha(u.last)+'</td></tr>';
   });
   h+='</table></div></div>';
-
-  h+='<div class="section">';
-  h+='<div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
+  h+='<div class="section"><div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
   (d.top_profiles||[]).forEach(function(p){
     h+='<tr><td>@'+esc(p.username)+'</td><td><span class="pill">'+esc(p.platform)+'</span></td><td>'+p.count+'</td></tr>';
   });
-  h+='</table></div>';
-  h+='<div class="card"><h2>Plataformas</h2>';
+  h+='</table></div><div class="card"><h2>Plataformas</h2>';
   (d.platforms||[]).forEach(function(p){
     h+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>'+esc(p.name)+'</span><span class="muted">'+p.count+'</span></div><div class="bar"><span style="width:'+Math.round(p.count/maxPlat*100)+'%"></span></div></div>';
   });
   h+='</div></div>';
-
-  h+='<div class="section">';
-  h+='<div class="card"><h2>Búsquedas por día (últimos 30)</h2>';
+  h+='<div class="section"><div class="card"><h2>Búsquedas por día (últimos 30)</h2>';
   (d.daily||[]).forEach(function(x){
     h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span class="muted">'+esc(x.date)+'</span><span>'+x.count+'</span></div><div class="bar"><span style="width:'+Math.round(x.count/maxDay*100)+'%"></span></div></div>';
   });
   h+='</div></div>';
-
   h+='<div class="section"><div id="msgArea" class="loading">Cargando mensajes...</div></div>';
-
   document.getElementById('content').className='';
   document.getElementById('content').innerHTML=h;
 }
-
 function loadMessages(){
   fetch(API+'/messages?pw='+encodeURIComponent(PW))
     .then(function(r){return r.json();})
@@ -180,20 +152,12 @@ function loadMessages(){
         h+='<div class="msg-item '+(m.replied?'':'pending')+'"><div class="msg-top"><span class="msg-email">'+(m.email?esc(m.email):'(sin email)')+'</span><span>'+badge+' <span class="msg-date">'+fecha(m.date)+'</span></span></div><div class="msg-body">'+esc(m.message)+'</div><div class="msg-actions">'+mail+done+'</div></div>';
       });
       h+='</div>';
-      area.className='';
-      area.innerHTML=h;
-    })
-    .catch(function(){});
+      area.className=''; area.innerHTML=h;
+    }).catch(function(){});
 }
-
 function markReplied(id){
-  fetch(API+'/mark-replied',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({id:id,pw:PW})
-  }).then(function(){ loadMessages(); });
+  fetch(API+'/mark-replied?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(){ loadMessages(); });
 }
-
 function kpi(num,lbl,alert){return '<div class="kpi'+(alert?' alert':'')+'"><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
 function tab(i){
   var tabs=document.querySelectorAll('.tab'), secs=document.querySelectorAll('.section');
