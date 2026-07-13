@@ -115,4 +115,256 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 </nav>
 <div class="wrap">
   <div class="title" data-es="Extrae tus links" data-en="Extract your links">Extrae tus links</div>
-  <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para
+  <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para copiar.</div>
+  <div class="card">
+    <div class="field-label" data-es="Plataforma" data-en="Platform">Plataforma</div>
+    <div class="plat-row">
+      <button class="plat active" onclick="setPlat(this,'tiktok')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+        TikTok
+      </button>
+      <button class="plat" onclick="setPlat(this,'instagram')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58 0 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.16 15.58 2.16 15.2 2.16 12s0-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.16 8.8 2.16 12 2.16zM12 0C8.74 0 8.33 0 7.05.07c-4.35.2-6.78 2.62-6.98 6.98C0 8.33 0 8.74 0 12s0 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 24 8.74 24 12 24s3.67 0 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.07-1.28.07-1.69.07-4.95s0-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67 0 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>
+        Instagram
+      </button>
+      <button class="plat" onclick="setPlat(this,'youtube')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.08 0 12 0 12s0 3.92.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.92 24 12 24 12s0-3.92-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>
+        YouTube
+      </button>
+    </div>
+    <div class="field-label" data-es="Usuario" data-en="Username">Usuario</div>
+    <div class="field-wrap">
+      <input class="field" id="userInp" placeholder="@usuario de TikTok" autocomplete="off" />
+      <div class="recent" id="recentBox">
+        <div class="recent-title" data-es="Búsquedas recientes" data-en="Recent searches">Búsquedas recientes</div>
+        <div id="recentList"></div>
+      </div>
+    </div>
+    <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
+    <div class="opts" id="countOpts">
+      <button class="opt active" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
+      <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
+      <button class="opt" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
+      <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
+      <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
+      <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
+      <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
+    </div>
+    <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
+    <div class="opts" id="groupOpts">
+      <button class="opt active" onclick="setOpt(this,'group',10)">10</button>
+      <button class="opt" onclick="setOpt(this,'group',25)">25</button>
+      <button class="opt" onclick="setOpt(this,'group',50)">50</button>
+      <button class="opt" onclick="setOpt(this,'group',100)">100</button>
+    </div>
+    <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
+  </div>
+  <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
+  <div class="warnbox" id="warnBox"></div>
+  <div class="result" id="resultBox">
+    <div class="result-head">
+      <div class="ruser">
+        <div class="rava" id="rAva">?</div>
+        <div><div class="rname" id="rName"></div><div class="rmeta" id="rMeta"></div></div>
+      </div>
+      <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
+    </div>
+    <div id="grpsArea"></div>
+  </div>
+  <div class="foot">ClipLinks</div>
+</div>
+<script>
+var API='https://web-production-db182.up.railway.app';
+var count=25,group=10,platform='tiktok';
+var lang=navigator.language.indexOf('en')===0?'en':'es';
+var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
+
+var GOOGLE_CLIENT_ID = "443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com";
+
+function parseJwt(token){
+  try{
+    var base=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    var json=decodeURIComponent(atob(base).split('').map(function(c){return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
+    return JSON.parse(json);
+  }catch(e){return null;}
+}
+function handleCredential(resp){
+  var d=parseJwt(resp.credential);
+  if(!d)return;
+  try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email}));}catch(e){}
+  try{
+    fetch(API+'/track-login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})
+    });
+  }catch(e){}
+  renderAuth();
+}
+function toggleMenu(e){
+  e.stopPropagation();
+  var m=document.getElementById('userMenu');
+  if(m){m.classList.toggle('open');}
+}
+document.addEventListener('click',function(){
+  var m=document.getElementById('userMenu');
+  if(m){m.classList.remove('open');}
+  var r=document.getElementById('recentBox');
+  if(r){r.classList.remove('open');}
+});
+function logout(){
+  try{localStorage.removeItem('clipuser');}catch(e){}
+  if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.disableAutoSelect();}
+  renderAuth();
+}
+function renderAuth(){
+  var area=document.getElementById('authArea');
+  var raw=null; try{raw=localStorage.getItem('clipuser');}catch(e){}
+  if(raw){
+    var u=JSON.parse(raw);
+    area.innerHTML='<div class="userwrap"><div class="userpill" onclick="toggleMenu(event)"><img src="'+u.picture+'" referrerpolicy="no-referrer"><span>'+u.name+'</span></div><div class="usermenu" id="userMenu"><button onclick="logout()">'+(lang==='es'?'Cerrar sesión':'Log out')+'</button></div></div>';
+    return;
+  }
+  if(GOOGLE_CLIENT_ID){
+    area.innerHTML='<div id="gbtn"></div>';
+    if(window.google&&google.accounts&&google.accounts.id){
+      google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
+      google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'filled_black',size:'medium',shape:'pill',text:'signin'});
+    }
+  } else {
+    area.innerHTML='<button class="glogin" onclick="alert(\'Falta Client ID\')">'+(lang==='es'?'Iniciar sesión':'Sign in')+'</button>';
+  }
+}
+
+function getRecent(){
+  try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; }
+}
+function saveRecent(name){
+  var list=getRecent();
+  list=list.filter(function(n){ return n.toLowerCase()!==name.toLowerCase(); });
+  list.unshift(name);
+  list=list.slice(0,2);
+  try{ localStorage.setItem('cliprecent',JSON.stringify(list)); }catch(e){}
+}
+function renderRecent(){
+  var box=document.getElementById('recentBox');
+  var listEl=document.getElementById('recentList');
+  var list=getRecent();
+  if(list.length===0){ box.classList.remove('open'); return; }
+  listEl.innerHTML='';
+  list.forEach(function(name){
+    var d=document.createElement('div');
+    d.className='recent-item';
+    d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+name+'</span>';
+    d.onclick=function(){
+      document.getElementById('userInp').value=name;
+      box.classList.remove('open');
+      fetchLinks();
+    };
+    listEl.appendChild(d);
+  });
+  box.classList.add('open');
+}
+document.getElementById('userInp').addEventListener('focus',function(){
+  if(this.value.trim()===''){ renderRecent(); }
+});
+document.getElementById('userInp').addEventListener('click',function(e){ e.stopPropagation(); });
+
+function applyLang(){
+  document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
+  document.getElementById('userInp').placeholder=PH[lang][platform];
+  document.getElementById('langSel').value=lang;
+  renderAuth();
+}
+function setLang(v){lang=v;applyLang();}
+function setPlat(el,p){
+  document.querySelectorAll('.plat').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');platform=p;
+  document.getElementById('userInp').placeholder=PH[lang][p];
+}
+function setOpt(el,type,val){
+  var id=type==='count'?'countOpts':'groupOpts';
+  document.querySelectorAll('#'+id+' .opt').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  if(type==='count'){count=val;}else{group=val;}
+}
+document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
+function fetchLinks(){
+  var user=document.getElementById('userInp').value.trim().replace('@','');
+  if(!user){return;}
+  document.getElementById('recentBox').classList.remove('open');
+  saveRecent(user);
+  document.getElementById('resultBox').style.display='none';
+  document.getElementById('warnBox').style.display='none';
+  document.getElementById('loadBox').style.display='block';
+  document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
+  var em=''; try{var cu=localStorage.getItem('clipuser'); if(cu)em=JSON.parse(cu).email||'';}catch(e){}
+  fetch(API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count+'&email='+encodeURIComponent(em))
+  .then(function(res){return res.json();})
+  .then(function(data){
+    if(data.error){throw new Error(data.error);}
+    if(data.links.length<count){
+      var w=document.getElementById('warnBox');
+      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'. Try again if some are missing.');
+      w.style.display='block';
+    }
+    showResults(user,data.links,data.avatar);
+  })
+  .catch(function(){
+    var w=document.getElementById('warnBox');
+    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links. Make sure the user exists and is public.';
+    w.style.display='block';
+  })
+  .finally(function(){document.getElementById('loadBox').style.display='none';});
+}
+function showResults(user,links,avatar){
+  var groups=[];
+  for(var i=0;i<links.length;i+=group){groups.push(links.slice(i,i+group));}
+  var ava=document.getElementById('rAva');
+  if(avatar){ ava.innerHTML='<img src="'+avatar+'" referrerpolicy="no-referrer" onerror="this.parentNode.textContent=\''+user.charAt(0).toUpperCase()+'\'">'; }
+  else { ava.textContent=user.charAt(0).toUpperCase(); }
+  document.getElementById('rName').textContent='@'+user;
+  document.getElementById('rMeta').textContent=links.length+' links — '+groups.length+(lang==='es'?' grupos de ':' groups of ')+group;
+  var area=document.getElementById('grpsArea');
+  area.innerHTML='';
+  groups.forEach(function(g,gi){
+    var div=document.createElement('div');
+    div.className='grp';
+    div.style.animationDelay=Math.min(gi*0.05,1.2)+'s';
+    var list='';
+    g.forEach(function(l,i){
+      list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>';
+    });
+    var gLabel=(lang==='es'?'Grupo ':'Group ')+(gi+1)+' — '+g.length+' links';
+    var cLabel=lang==='es'?'Copiar':'Copy';
+    div.innerHTML='<div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+cLabel+'</button></div><div class="lks">'+list+'</div>';
+    area.appendChild(div);
+  });
+  document.getElementById('resultBox').style.display='block';
+}
+function copyGroup(gi){
+  var rows=document.querySelectorAll('[id^="lk-'+gi+'-"]');
+  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
+  navigator.clipboard.writeText(text).then(function(){
+    var btn=document.getElementById('gb-'+gi);
+    btn.classList.remove('ok'); void btn.offsetWidth;
+    btn.textContent=lang==='es'?'✓ Copiado':'✓ Copied';
+    btn.classList.add('ok');
+    rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
+  });
+}
+function copyAll(){
+  var rows=document.querySelectorAll('.lk');
+  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
+  navigator.clipboard.writeText(text).then(function(){
+    rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
+    document.querySelectorAll('.grp-btn').forEach(function(b){b.textContent='✓';b.classList.add('ok');});
+    var ca=document.querySelector('.copyall');
+    ca.classList.remove('ok'); void ca.offsetWidth; ca.classList.add('ok');
+  });
+}
+window.addEventListener('load', renderAuth);
+applyLang();
+</script>
+</body>
+</html>
