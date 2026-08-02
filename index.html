@@ -21,22 +21,24 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Aria
 body::before { content: ''; position: fixed; top: -280px; left: 50%; transform: translateX(-50%); width: 1100px; height: 800px; background: radial-gradient(ellipse at center top, rgba(88,101,242,0.32), rgba(88,101,242,0.08) 45%, rgba(88,101,242,0) 70%); filter: blur(30px); z-index: 0; pointer-events: none; }
 body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%); width: 900px; height: 500px; background: radial-gradient(ellipse at center, rgba(88,101,242,0.10), rgba(88,101,242,0) 70%); filter: blur(40px); z-index: 0; pointer-events: none; }
 ::selection { background: rgba(88,101,242,0.35); }
-.nav { position: sticky; top: 0; z-index: 20; background: rgba(20,20,26,0.55); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 30px rgba(0,0,0,0.3); padding: 0 1.6rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.nav-logo { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 11px; letter-spacing: -0.2px; }
-.nav-icon { width: 33px; height: 33px; border-radius: 10px; background: linear-gradient(135deg, #5865F2, #8B93FF); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; box-shadow: 0 4px 16px rgba(88,101,242,0.45); }
-.nav-right { display: flex; align-items: center; gap: 12px; }
-.lang-sel { background: rgba(255,255,255,0.05); color: #A9ADB8; font-size: 13px; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; cursor: pointer; outline: none; transition: all 0.2s; }
+.nav { position: sticky; top: 0; z-index: 20; background: rgba(20,20,26,0.55); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 30px rgba(0,0,0,0.3); padding: 0 1.6rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nav-logo { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 11px; letter-spacing: -0.2px; flex-shrink: 0; }
+.nav-icon { width: 33px; height: 33px; border-radius: 10px; background: linear-gradient(135deg, #5865F2, #8B93FF); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; box-shadow: 0 4px 16px rgba(88,101,242,0.45); flex-shrink: 0; }
+.nav-right { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lang-sel { background: rgba(255,255,255,0.05); color: #A9ADB8; font-size: 13px; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; cursor: pointer; outline: none; transition: all 0.2s; flex-shrink: 0; }
 .lang-sel:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
 .lang-sel option { background: #16161C; color: #E8E9ED; }
 .userwrap { position: relative; }
 .userpill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px 4px 4px; border-radius: 22px; cursor: pointer; transition: all 0.18s; }
 .userpill:hover { background: rgba(255,255,255,0.1); }
-.userpill img { width: 28px; height: 28px; border-radius: 50%; }
+.userpill img { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
 .userpill span { font-size: 13px; font-weight: 500; color: #E8E9ED; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usermenu { position: absolute; top: 46px; right: 0; background: #1B1B22; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); padding: 6px; min-width: 160px; display: none; z-index: 30; }
 .usermenu.open { display: block; }
 .usermenu button { width: 100%; text-align: left; background: transparent; border: none; color: #E8E9ED; font-size: 13px; font-family: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
 .usermenu button:hover { background: rgba(255,255,255,0.06); }
+#authArea { display: flex; flex-shrink: 0; }
+#gbtn { overflow: visible; }
 .wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 2.4rem 1.6rem 2rem; }
 .title { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; text-align: center; }
 .subtitle { font-size: 14px; color: #8A8E99; margin-bottom: 1.8rem; text-align: center; }
@@ -48,7 +50,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .plat:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #E8E9ED; }
 .field-label { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .field-wrap { position: relative; margin-bottom: 1.3rem; }
-.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: all 0.2s; }
+.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 16px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: all 0.2s; }
 .field::placeholder { color: #55585F; }
 .field:focus { border-color: #5865F2; box-shadow: 0 0 0 3px rgba(88,101,242,0.18); }
 .recent { position: absolute; top: 56px; left: 0; right: 0; background: #1B1B22; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); padding: 6px; z-index: 15; display: none; }
@@ -73,12 +75,12 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .result { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; display: none; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: fadeUp 0.4s ease both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .result-head { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 10px; }
-.ruser { display: flex; align-items: center; gap: 13px; }
+.ruser { display: flex; align-items: center; gap: 13px; min-width: 0; }
 .rava { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #5865F2, #8B93FF); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; box-shadow: 0 4px 16px rgba(88,101,242,0.35); overflow: hidden; flex-shrink: 0; }
 .rava img { width: 100%; height: 100%; object-fit: cover; }
-.rname { font-size: 15px; font-weight: 600; color: #fff; }
+.rname { font-size: 15px; font-weight: 600; color: #fff; word-break: break-all; }
 .rmeta { font-size: 12.5px; color: #8A8E99; margin-top: 1px; }
-.copyall { height: 36px; padding: 0 17px; border: 1px solid rgba(88,101,242,0.45); border-radius: 10px; background: rgba(88,101,242,0.12); color: #A5AEFF; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; }
+.copyall { height: 36px; padding: 0 17px; border: 1px solid rgba(88,101,242,0.45); border-radius: 10px; background: rgba(88,101,242,0.12); color: #A5AEFF; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
 .copyall:hover { background: rgba(88,101,242,0.22); }
 .copyall.ok { animation: pop 0.32s ease; border-color: rgba(35,165,90,0.5); background: rgba(35,165,90,0.14); color: #4CC97B; }
 .grp { border-bottom: 1px solid rgba(255,255,255,0.05); animation: fadeUp 0.4s ease both; }
@@ -99,7 +101,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .modal { background: #16161C; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 26px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .modal h3 { font-size: 18px; color: #fff; margin-bottom: 6px; }
 .modal p { font-size: 13px; color: #8A8E99; margin-bottom: 18px; }
-.modal input, .modal textarea { width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(0,0,0,0.3); color: #fff; padding: 12px 14px; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 12px; }
+.modal input, .modal textarea { width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(0,0,0,0.3); color: #fff; padding: 12px 14px; font-size: 16px; font-family: inherit; outline: none; margin-bottom: 12px; }
 .modal input:focus, .modal textarea:focus { border-color: #5865F2; }
 .modal textarea { resize: vertical; min-height: 90px; }
 .modal-actions { display: flex; gap: 10px; }
@@ -112,7 +114,34 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .foot .contact-link { color: #55585F; text-decoration: none; cursor: pointer; border-bottom: 1px dotted rgba(255,255,255,0.15); transition: color 0.18s; }
 .foot .contact-link:hover { color: #8A8E99; }
 .foot .sep { margin: 0 8px; opacity: 0.5; }
-@media (max-width: 560px) { .plat-row { grid-template-columns: 1fr; } }
+
+/* ===== ADAPTACION MOVIL ===== */
+@media (max-width: 640px) {
+  .nav { padding: 0 0.9rem; height: 56px; gap: 8px; }
+  .nav-logo { font-size: 15px; gap: 8px; }
+  .nav-icon { width: 30px; height: 30px; font-size: 14px; }
+  .nav-right { gap: 7px; }
+  .lang-sel { padding: 7px 9px; font-size: 12px; }
+  .userpill span { max-width: 70px; }
+  .wrap { padding: 1.6rem 1rem 1.5rem; }
+  .title { font-size: 24px; }
+  .subtitle { font-size: 13px; margin-bottom: 1.4rem; }
+  .card { padding: 1.2rem; border-radius: 16px; }
+  .plat-row { grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 1.2rem; }
+  .plat { height: 48px; flex-direction: column; gap: 3px; font-size: 12px; }
+  .plat svg { width: 18px; height: 18px; }
+  .opts { gap: 7px; }
+  .opt { height: 38px; padding: 0 14px; }
+  .result-head { padding: 14px; }
+  .lks { padding: 8px 14px 12px; }
+  .grp-head { padding: 10px 14px; }
+}
+@media (max-width: 380px) {
+  .nav-logo span, .nav-logo { font-size: 14px; }
+  .lang-sel { padding: 6px 7px; font-size: 11px; }
+  .userpill span { max-width: 54px; }
+  .plat { font-size: 11px; }
+}
 </style>
 </head>
 <body>
@@ -157,238 +186,4 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     <div class="opts" id="countOpts">
       <button class="opt" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
       <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
-      <button class="opt active" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
-      <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
-      <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
-      <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
-      <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
-    </div>
-    <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
-    <div class="opts" id="groupOpts">
-      <button class="opt" onclick="setOpt(this,'group',10)">10</button>
-      <button class="opt active" onclick="setOpt(this,'group',25)">25</button>
-      <button class="opt" onclick="setOpt(this,'group',50)">50</button>
-      <button class="opt" onclick="setOpt(this,'group',100)">100</button>
-    </div>
-    <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
-  </div>
-  <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
-  <div class="warnbox" id="warnBox"></div>
-  <div class="result" id="resultBox">
-    <div class="result-head">
-      <div class="ruser">
-        <div class="rava" id="rAva">?</div>
-        <div><div class="rname" id="rName"></div><div class="rmeta" id="rMeta"></div></div>
-      </div>
-      <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
-    </div>
-    <div id="grpsArea"></div>
-  </div>
-</div>
-<div class="foot">ClipLinks<span class="sep">·</span><a class="contact-link" onclick="openContact()" data-es="Contacto" data-en="Contact">Contacto</a></div>
-
-<div class="modal-bg" id="contactModal">
-  <div class="modal" id="contactInner">
-    <h3 data-es="Contacto" data-en="Contact">Contacto</h3>
-    <p data-es="¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h." data-en="Any questions? Write to us and we'll reply within 24h.">¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h.</p>
-    <input type="email" id="contactEmail" placeholder="Tu email" />
-    <textarea id="contactMsg" placeholder="Tu mensaje..."></textarea>
-    <div class="modal-actions">
-      <button class="modal-send" onclick="sendContact()" data-es="Enviar" data-en="Send">Enviar</button>
-      <button class="modal-cancel" onclick="closeContact()" data-es="Cancelar" data-en="Cancel">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-var API='https://web-production-db182.up.railway.app';
-var count=100,group=25,platform='tiktok';
-var lang=navigator.language.indexOf('en')===0?'en':'es';
-var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
-var GOOGLE_CLIENT_ID = "443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com";
-
-function parseJwt(token){
-  try{
-    var base=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    var json=decodeURIComponent(atob(base).split('').map(function(c){return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
-    return JSON.parse(json);
-  }catch(e){return null;}
-}
-function handleCredential(resp){
-  var d=parseJwt(resp.credential);
-  if(!d)return;
-  try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email}));}catch(e){}
-  try{fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})});}catch(e){}
-  renderAuth();
-}
-function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById('userMenu'); if(m){m.classList.toggle('open');} }
-document.addEventListener('click',function(){
-  var m=document.getElementById('userMenu'); if(m){m.classList.remove('open');}
-  var r=document.getElementById('recentBox'); if(r){r.classList.remove('open');}
-});
-function logout(){
-  try{localStorage.removeItem('clipuser');}catch(e){}
-  if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.disableAutoSelect();}
-  renderAuth();
-}
-function renderAuth(){
-  var area=document.getElementById('authArea');
-  var raw=null; try{raw=localStorage.getItem('clipuser');}catch(e){}
-  if(raw){
-    var u=JSON.parse(raw);
-    area.innerHTML='<div class="userwrap"><div class="userpill" onclick="toggleMenu(event)"><img src="'+u.picture+'" referrerpolicy="no-referrer"><span>'+u.name+'</span></div><div class="usermenu" id="userMenu"><button onclick="logout()">'+(lang==='es'?'Cerrar sesión':'Log out')+'</button></div></div>';
-    return;
-  }
-  if(GOOGLE_CLIENT_ID){
-    area.innerHTML='<div id="gbtn"></div>';
-    if(window.google&&google.accounts&&google.accounts.id){
-      google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
-      google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'filled_black',size:'medium',shape:'pill',text:'signin'});
-    }
-  }
-}
-function getRecent(){ try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; } }
-function saveRecent(name){
-  var list=getRecent();
-  list=list.filter(function(n){ return n.toLowerCase()!==name.toLowerCase(); });
-  list.unshift(name); list=list.slice(0,2);
-  try{ localStorage.setItem('cliprecent',JSON.stringify(list)); }catch(e){}
-}
-function renderRecent(){
-  var box=document.getElementById('recentBox');
-  var listEl=document.getElementById('recentList');
-  var list=getRecent();
-  if(list.length===0){ box.classList.remove('open'); return; }
-  listEl.innerHTML='';
-  list.forEach(function(name){
-    var d=document.createElement('div');
-    d.className='recent-item';
-    d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+name+'</span>';
-    d.onclick=function(){ document.getElementById('userInp').value=name; box.classList.remove('open'); };
-    listEl.appendChild(d);
-  });
-  box.classList.add('open');
-}
-document.getElementById('userInp').addEventListener('focus',function(){ if(this.value.trim()===''){ renderRecent(); } });
-document.getElementById('userInp').addEventListener('click',function(e){ e.stopPropagation(); });
-function applyLang(){
-  document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
-  document.getElementById('userInp').placeholder=PH[lang][platform];
-  document.getElementById('langSel').value=lang;
-  renderAuth();
-}
-function setLang(v){lang=v;applyLang();}
-function setPlat(el,p){
-  document.querySelectorAll('.plat').forEach(function(b){b.classList.remove('active');});
-  el.classList.add('active');platform=p;
-  document.getElementById('userInp').placeholder=PH[lang][p];
-}
-function setOpt(el,type,val){
-  var id=type==='count'?'countOpts':'groupOpts';
-  document.querySelectorAll('#'+id+' .opt').forEach(function(b){b.classList.remove('active');});
-  el.classList.add('active');
-  if(type==='count'){count=val;}else{group=val;}
-}
-document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
-
-function fetchLinks(){
-  var user=document.getElementById('userInp').value.trim().replace('@','');
-  if(!user){return;}
-  document.getElementById('recentBox').classList.remove('open');
-  saveRecent(user);
-  document.getElementById('resultBox').style.display='none';
-  document.getElementById('warnBox').style.display='none';
-  document.getElementById('loadBox').style.display='block';
-  document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
-  var em=''; try{var cu=localStorage.getItem('clipuser'); if(cu)em=JSON.parse(cu).email||'';}catch(e){}
-  fetch(API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count+'&email='+encodeURIComponent(em))
-  .then(function(res){return res.json();})
-  .then(function(data){
-    if(data.error){throw new Error(data.error);}
-    if(data.links.length<count){
-      var w=document.getElementById('warnBox');
-      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'.');
-      w.style.display='block';
-    }
-    showResults(user,data.links,data.avatar);
-    checkLoginPrompt();
-  })
-  .catch(function(){
-    var w=document.getElementById('warnBox');
-    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links.';
-    w.style.display='block';
-  })
-  .finally(function(){document.getElementById('loadBox').style.display='none';});
-}
-function checkLoginPrompt(){
-  var logged=false; try{logged=!!localStorage.getItem('clipuser');}catch(e){}
-  if(logged)return;
-  var n=0; try{n=parseInt(localStorage.getItem('clipusos')||'0',10);}catch(e){}
-  n++;
-  try{localStorage.setItem('clipusos',String(n));}catch(e){}
-  if(n%10===0){ if(window.google&&google.accounts&&google.accounts.id){ google.accounts.id.prompt(); } }
-}
-function showResults(user,links,avatar){
-  var groups=[];
-  for(var i=0;i<links.length;i+=group){groups.push(links.slice(i,i+group));}
-  var ava=document.getElementById('rAva');
-  if(avatar){ ava.innerHTML='<img src="'+avatar+'" referrerpolicy="no-referrer" onerror="this.parentNode.textContent=\''+user.charAt(0).toUpperCase()+'\'">'; }
-  else { ava.textContent=user.charAt(0).toUpperCase(); }
-  document.getElementById('rName').textContent='@'+user;
-  document.getElementById('rMeta').textContent=links.length+' links — '+groups.length+(lang==='es'?' grupos de ':' groups of ')+group;
-  var area=document.getElementById('grpsArea');
-  area.innerHTML='';
-  groups.forEach(function(g,gi){
-    var div=document.createElement('div');
-    div.className='grp';
-    div.style.animationDelay=Math.min(gi*0.05,1.2)+'s';
-    var list='';
-    g.forEach(function(l,i){ list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>'; });
-    var gLabel=(lang==='es'?'Grupo ':'Group ')+(gi+1)+' — '+g.length+' links';
-    var cLabel=lang==='es'?'Copiar':'Copy';
-    div.innerHTML='<div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+cLabel+'</button></div><div class="lks">'+list+'</div>';
-    area.appendChild(div);
-  });
-  document.getElementById('resultBox').style.display='block';
-}
-function copyGroup(gi){
-  var rows=document.querySelectorAll('[id^="lk-'+gi+'-"]');
-  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
-  navigator.clipboard.writeText(text).then(function(){
-    var btn=document.getElementById('gb-'+gi);
-    btn.classList.remove('ok'); void btn.offsetWidth;
-    btn.textContent=lang==='es'?'✓ Copiado':'✓ Copied';
-    btn.classList.add('ok');
-    rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
-  });
-}
-function copyAll(){
-  var rows=document.querySelectorAll('.lk');
-  var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
-  navigator.clipboard.writeText(text).then(function(){
-    rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
-    document.querySelectorAll('.grp-btn').forEach(function(b){b.textContent='✓';b.classList.add('ok');});
-    var ca=document.querySelector('.copyall');
-    ca.classList.remove('ok'); void ca.offsetWidth; ca.classList.add('ok');
-  });
-}
-function openContact(){ document.getElementById('contactModal').classList.add('open'); }
-function closeContact(){ document.getElementById('contactModal').classList.remove('open'); }
-function sendContact(){
-  var email=document.getElementById('contactEmail').value.trim();
-  var msg=document.getElementById('contactMsg').value.trim();
-  if(!msg){ return; }
-  fetch(API+'/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,message:msg})})
-  .then(function(r){return r.json();})
-  .then(function(){
-    document.getElementById('contactInner').innerHTML='<div class="modal-ok"><div class="check">✅</div><h3>'+(lang==='es'?'¡Mensaje enviado!':'Sent!')+'</h3><p>'+(lang==='es'?'Tu mensaje será respondido en menos de 24h.':'Your message will be answered within 24h.')+'</p><button class="modal-send" onclick="closeContact()">'+(lang==='es'?'Cerrar':'Close')+'</button></div>';
-  })
-  .catch(function(){ alert(lang==='es'?'No se pudo enviar. Inténtalo de nuevo.':'Could not send.'); });
-}
-document.getElementById('contactModal').addEventListener('click',function(e){ if(e.target===this){ closeContact(); } });
-
-window.addEventListener('load', renderAuth);
-applyLang();
-</script>
-</body>
-</html>
+      <button class="opt active" onclick="setOpt(this,'count',100)"
