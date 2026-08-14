@@ -315,8 +315,6 @@ def get_links():
     if platform == 'tiktok':
         url = f'https://www.tiktok.com/@{user}'
     elif platform == 'instagram':
-        # yt-dlp NO soporta /{user}/reels/ (da "Unsupported URL").
-        # El extractor de perfil usa la URL del perfil normal.
         url = f'https://www.instagram.com/{user}/'
     elif platform == 'youtube':
         url = f'https://www.youtube.com/@{user}/shorts'
@@ -349,7 +347,16 @@ def get_links():
 
             return jsonify({'links': links, 'avatar': avatar})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # DIAGNOSTICO: mostrar version de yt-dlp y error completo
+        try:
+            ver = yt_dlp.version.__version__
+        except:
+            ver = 'desconocida'
+        return jsonify({
+            'error': str(e),
+            'ytdlp_version': ver,
+            'url_usada': url
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
