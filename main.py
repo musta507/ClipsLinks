@@ -315,7 +315,9 @@ def get_links():
     if platform == 'tiktok':
         url = f'https://www.tiktok.com/@{user}'
     elif platform == 'instagram':
-        url = f'https://www.instagram.com/{user}/reels/'
+        # yt-dlp NO soporta /{user}/reels/ (da "Unsupported URL").
+        # El extractor de perfil usa la URL del perfil normal.
+        url = f'https://www.instagram.com/{user}/'
     elif platform == 'youtube':
         url = f'https://www.youtube.com/@{user}/shorts'
     else:
