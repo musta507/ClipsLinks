@@ -114,6 +114,10 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .foot .contact-link { color: #55585F; text-decoration: none; cursor: pointer; border-bottom: 1px dotted rgba(255,255,255,0.15); transition: color 0.18s; }
 .foot .contact-link:hover { color: #8A8E99; }
 .foot .sep { margin: 0 8px; opacity: 0.5; }
+.contact-cta { display: flex; justify-content: center; margin-top: 1.4rem; }
+.contact-cta button { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.04); color: #B5B8C0; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 9px 18px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.18s; font-family: inherit; }
+.contact-cta button:hover { background: rgba(255,255,255,0.08); color: #FFF; border-color: rgba(255,255,255,0.22); }
+.contact-cta button svg { width: 15px; height: 15px; }
 
 /* ===== ADAPTACION MOVIL ===== */
 @media (max-width: 640px) {
@@ -202,6 +206,12 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </div>
     <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
   </div>
+  <div class="contact-cta">
+    <button onclick="openContact()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span data-es="¿Necesitas ayuda? Contáctanos" data-en="Need help? Contact us">¿Necesitas ayuda? Contáctanos</span>
+    </button>
+  </div>
   <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
   <div class="warnbox" id="warnBox"></div>
   <div class="result" id="resultBox">
@@ -215,7 +225,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     <div id="grpsArea"></div>
   </div>
 </div>
-<div class="foot">ClipLinks<span class="sep">·</span><a class="contact-link" onclick="openContact()" data-es="Contacto" data-en="Contact">Contacto</a></div>
+<div class="foot">ClipLinks</div>
 
 <div class="modal-bg" id="contactModal">
   <div class="modal" id="contactInner">
