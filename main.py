@@ -11,6 +11,23 @@ CORS(app)
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 
+# ===== COOKIES DE INSTAGRAM =====
+# Al arrancar, si existe la variable INSTAGRAM_COOKIES, creamos el archivo
+# de cookies que yt-dlp usara para entrar a Instagram con sesion iniciada.
+INSTAGRAM_COOKIES = os.environ.get('INSTAGRAM_COOKIES', '')
+COOKIES_PATH = '/tmp/ig_cookies.txt'
+COOKIES_READY = False
+if INSTAGRAM_COOKIES.strip():
+    try:
+        with open(COOKIES_PATH, 'w') as f:
+            f.write(INSTAGRAM_COOKIES)
+        COOKIES_READY = True
+    except:
+        COOKIES_READY = False
+
+# Limite maximo de links para Instagram (para no quemar la cuenta)
+INSTAGRAM_MAX = 50
+
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
 
@@ -275,6 +292,10 @@ def get_avatar(user, platform):
             'playlist_items': '0',
             'ignoreerrors': True,
         }
+        # Para Instagram, usar las cookies si estan disponibles
+        if platform == 'instagram' and COOKIES_READY:
+            opts['cookiefile'] = COOKIES_PATH
+
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(prof_url, download=False) or {}
 
@@ -301,6 +322,10 @@ def get_links():
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
 
+    # Cap para Instagram: nunca mas de INSTAGRAM_MAX links por busqueda
+    if platform == 'instagram' and count > INSTAGRAM_MAX:
+        count = INSTAGRAM_MAX
+
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -326,6 +351,9 @@ def get_links():
         'extract_flat': True,
         'playlistend': count,
     }
+    # Para Instagram, pasar las cookies a yt-dlp
+    if platform == 'instagram' and COOKIES_READY:
+        ydl_opts['cookiefile'] = COOKIES_PATH
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -347,16 +375,7 @@ def get_links():
 
             return jsonify({'links': links, 'avatar': avatar})
     except Exception as e:
-        # DIAGNOSTICO: mostrar version de yt-dlp y error completo
-        try:
-            ver = yt_dlp.version.__version__
-        except:
-            ver = 'desconocida'
-        return jsonify({
-            'error': str(e),
-            'ytdlp_version': ver,
-            'url_usada': url
-        }), 500
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
