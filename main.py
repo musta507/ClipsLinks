@@ -12,8 +12,6 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 
 # ===== COOKIES DE INSTAGRAM =====
-# Al arrancar, si existe la variable INSTAGRAM_COOKIES, creamos el archivo
-# de cookies que yt-dlp usara para entrar a Instagram con sesion iniciada.
 INSTAGRAM_COOKIES = os.environ.get('INSTAGRAM_COOKIES', '')
 COOKIES_PATH = '/tmp/ig_cookies.txt'
 COOKIES_READY = False
@@ -25,7 +23,6 @@ if INSTAGRAM_COOKIES.strip():
     except:
         COOKIES_READY = False
 
-# Limite maximo de links para Instagram (para no quemar la cuenta)
 INSTAGRAM_MAX = 50
 
 def get_db():
@@ -87,6 +84,35 @@ def index():
 @app.route('/panel')
 def panel():
     return send_from_directory('.', 'panel.html')
+
+@app.route('/diag-cookies')
+def diag_cookies():
+    """Diagnostico: verifica el estado de las cookies de Instagram."""
+    raw = os.environ.get('INSTAGRAM_COOKIES', '')
+    info = {
+        'variable_existe': bool(raw),
+        'longitud_variable': len(raw),
+        'cookies_ready': COOKIES_READY,
+        'archivo_creado': os.path.exists(COOKIES_PATH),
+    }
+    if raw:
+        lineas = raw.split('\n')
+        info['num_lineas'] = len(lineas)
+        info['tiene_tabulaciones'] = '\t' in raw
+        info['tiene_sessionid'] = 'sessionid' in raw
+    if os.path.exists(COOKIES_PATH):
+        try:
+            with open(COOKIES_PATH) as f:
+                contenido = f.read()
+            info['archivo_tiene_tabs'] = '\t' in contenido
+            info['archivo_longitud'] = len(contenido)
+        except:
+            pass
+    try:
+        info['ytdlp_version'] = yt_dlp.version.__version__
+    except:
+        info['ytdlp_version'] = 'desconocida'
+    return jsonify(info)
 
 @app.route('/track-login', methods=['POST'])
 def track_login():
@@ -292,7 +318,6 @@ def get_avatar(user, platform):
             'playlist_items': '0',
             'ignoreerrors': True,
         }
-        # Para Instagram, usar las cookies si estan disponibles
         if platform == 'instagram' and COOKIES_READY:
             opts['cookiefile'] = COOKIES_PATH
 
@@ -322,7 +347,6 @@ def get_links():
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
 
-    # Cap para Instagram: nunca mas de INSTAGRAM_MAX links por busqueda
     if platform == 'instagram' and count > INSTAGRAM_MAX:
         count = INSTAGRAM_MAX
 
@@ -351,7 +375,6 @@ def get_links():
         'extract_flat': True,
         'playlistend': count,
     }
-    # Para Instagram, pasar las cookies a yt-dlp
     if platform == 'instagram' and COOKIES_READY:
         ydl_opts['cookiefile'] = COOKIES_PATH
 
