@@ -1,5 +1,5 @@
 flask
 flask-cors
-yt-dlp>=2026.07.01
+yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 psycopg2-binary
 stripe
