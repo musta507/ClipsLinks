@@ -87,32 +87,54 @@ def panel():
 
 @app.route('/diag-cookies')
 def diag_cookies():
-    """Diagnostico: verifica el estado de las cookies de Instagram."""
-    raw = os.environ.get('INSTAGRAM_COOKIES', '')
-    info = {
-        'variable_existe': bool(raw),
-        'longitud_variable': len(raw),
+    """Diagnostico profundo: intenta Instagram con verbose y captura TODO el log."""
+    import io
+
+    test_user = request.args.get('user', 'instagram')
+
+    result = {
         'cookies_ready': COOKIES_READY,
-        'archivo_creado': os.path.exists(COOKIES_PATH),
+        'ytdlp_version': getattr(yt_dlp.version, '__version__', 'desconocida'),
     }
-    if raw:
-        lineas = raw.split('\n')
-        info['num_lineas'] = len(lineas)
-        info['tiene_tabulaciones'] = '\t' in raw
-        info['tiene_sessionid'] = 'sessionid' in raw
-    if os.path.exists(COOKIES_PATH):
-        try:
-            with open(COOKIES_PATH) as f:
-                contenido = f.read()
-            info['archivo_tiene_tabs'] = '\t' in contenido
-            info['archivo_longitud'] = len(contenido)
-        except:
-            pass
+
+    log_capture = io.StringIO()
+
+    class CapLogger:
+        def debug(self, msg):
+            log_capture.write('[debug] ' + str(msg) + '\n')
+        def info(self, msg):
+            log_capture.write('[info] ' + str(msg) + '\n')
+        def warning(self, msg):
+            log_capture.write('[warning] ' + str(msg) + '\n')
+        def error(self, msg):
+            log_capture.write('[error] ' + str(msg) + '\n')
+
+    url = f'https://www.instagram.com/{test_user}/'
+    opts = {
+        'quiet': False,
+        'verbose': True,
+        'extract_flat': True,
+        'playlistend': 5,
+        'logger': CapLogger(),
+        'skip_download': True,
+    }
+    if COOKIES_READY:
+        opts['cookiefile'] = COOKIES_PATH
+
     try:
-        info['ytdlp_version'] = yt_dlp.version.__version__
-    except:
-        info['ytdlp_version'] = 'desconocida'
-    return jsonify(info)
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            entries = info.get('entries', []) if info else []
+            result['exito'] = True
+            result['num_links'] = len(entries)
+    except Exception as e:
+        result['exito'] = False
+        result['error'] = str(e)
+
+    full_log = log_capture.getvalue()
+    result['log'] = full_log[-4000:] if len(full_log) > 4000 else full_log
+
+    return jsonify(result)
 
 @app.route('/track-login', methods=['POST'])
 def track_login():
@@ -226,7 +248,7 @@ def stats():
             WHERE email IS NOT NULL AND email != ''
             GROUP BY email
             ORDER BY last_login DESC
-            LIMIT 100
+            LIMIT 5000
         ''')
         accounts = cur.fetchall()
 
@@ -236,7 +258,7 @@ def stats():
             WHERE user_email IS NOT NULL AND user_email != ''
             GROUP BY user_email
             ORDER BY busquedas DESC
-            LIMIT 100
+            LIMIT 5000
         ''')
         user_activity = cur.fetchall()
 
@@ -244,7 +266,7 @@ def stats():
             SELECT username, platform, count, user_email, ip, created_at
             FROM searches
             ORDER BY created_at DESC
-            LIMIT 100
+            LIMIT 5000
         ''')
         history = cur.fetchall()
 
