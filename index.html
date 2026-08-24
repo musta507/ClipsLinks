@@ -206,12 +206,6 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </div>
     <button class="go-btn" onclick="fetchLinks()" data-es="Obtener links" data-en="Get links">Obtener links</button>
   </div>
-  <div class="contact-cta">
-    <button onclick="openContact()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span data-es="¿Necesitas ayuda? Contáctanos" data-en="Need help? Contact us">¿Necesitas ayuda? Contáctanos</span>
-    </button>
-  </div>
   <div class="loadbox" id="loadBox"><div class="spin"></div><div class="loadmsg" id="loadMsg"></div></div>
   <div class="warnbox" id="warnBox"></div>
   <div class="result" id="resultBox">
@@ -223,6 +217,12 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
       <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
     </div>
     <div id="grpsArea"></div>
+  </div>
+  <div class="contact-cta" id="contactCta">
+    <button onclick="openContact()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span data-es="¿Necesitas ayuda? Contáctanos" data-en="Need help? Contact us">¿Necesitas ayuda? Contáctanos</span>
+    </button>
   </div>
 </div>
 <div class="foot">ClipLinks</div>
