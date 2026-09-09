@@ -187,7 +187,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
         <div id="recentList"></div>
       </div>
     </div>
-    <div class="field-label" id="countLabel" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
+    <div class="field-label" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
     <div class="opts" id="countOpts">
       <button class="opt" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
       <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
@@ -196,16 +196,6 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
       <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
       <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
       <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
-    </div>
-    <div class="field-label" id="daysLabel" data-es="Reels de los últimos..." data-en="Reels from the last..." style="display:none;">Reels de los últimos...</div>
-    <div class="opts" id="daysOpts" style="display:none;">
-      <button class="opt active" onclick="setDays(this,1)" data-es="1 día" data-en="1 day">1 día</button>
-      <button class="opt" onclick="setDays(this,2)" data-es="2 días" data-en="2 days">2 días</button>
-      <button class="opt" onclick="setDays(this,3)" data-es="3 días" data-en="3 days">3 días</button>
-      <button class="opt" onclick="setDays(this,4)" data-es="4 días" data-en="4 days">4 días</button>
-      <button class="opt" onclick="setDays(this,5)" data-es="5 días" data-en="5 days">5 días</button>
-      <button class="opt" onclick="setDays(this,6)" data-es="6 días" data-en="6 days">6 días</button>
-      <button class="opt" onclick="setDays(this,7)" data-es="7 días (1 semana)" data-en="7 days (1 week)">7 días (1 semana)</button>
     </div>
     <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
     <div class="opts" id="groupOpts">
@@ -252,7 +242,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 
 <script>
 var API='https://web-production-db182.up.railway.app';
-var count=100,group=25,platform='tiktok',days=1;
+var count=100,group=25,platform='tiktok';
 var lang=navigator.language.indexOf('en')===0?'en':'es';
 var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
 var GOOGLE_CLIENT_ID = "443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com";
@@ -332,17 +322,6 @@ function setPlat(el,p){
   document.querySelectorAll('.plat').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');platform=p;
   document.getElementById('userInp').placeholder=PH[lang][p];
-  // Instagram usa dias; TikTok/YouTube usan cantidad
-  var esIG = (p==='instagram');
-  document.getElementById('countLabel').style.display = esIG?'none':'block';
-  document.getElementById('countOpts').style.display = esIG?'none':'flex';
-  document.getElementById('daysLabel').style.display = esIG?'block':'none';
-  document.getElementById('daysOpts').style.display = esIG?'flex':'none';
-}
-function setDays(el,val){
-  document.querySelectorAll('#daysOpts .opt').forEach(function(b){b.classList.remove('active');});
-  el.classList.add('active');
-  days=val;
 }
 function setOpt(el,type,val){
   var id=type==='count'?'countOpts':'groupOpts';
@@ -353,6 +332,14 @@ function setOpt(el,type,val){
 document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
 
 function fetchLinks(){
+  if(platform==='instagram'){
+    document.getElementById('resultBox').style.display='none';
+    document.getElementById('loadBox').style.display='none';
+    var wi=document.getElementById('warnBox');
+    wi.textContent=lang==='es'?'⚠️ Instagram no está disponible en estos momentos. Por ahora puedes usar TikTok o YouTube.':'⚠️ Instagram is not available right now. For now you can use TikTok or YouTube.';
+    wi.style.display='block';
+    return;
+  }
   var user=document.getElementById('userInp').value.trim().replace('@','');
   if(!user){return;}
   document.getElementById('recentBox').classList.remove('open');
@@ -360,26 +347,13 @@ function fetchLinks(){
   document.getElementById('resultBox').style.display='none';
   document.getElementById('warnBox').style.display='none';
   document.getElementById('loadBox').style.display='block';
+  document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
   var em=''; try{var cu=localStorage.getItem('clipuser'); if(cu)em=JSON.parse(cu).email||'';}catch(e){}
-
-  var apiUrl;
-  if(platform==='instagram'){
-    document.getElementById('loadMsg').textContent=lang==='es'?('Buscando reels de @'+user+' de los últimos '+days+(days===1?' día':' días')+'... (Instagram puede tardar un poco más, espera unos segundos)'):('Getting reels from @'+user+' from the last '+days+' day(s)... (Instagram may take a bit longer)');
-    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform=instagram&days='+days+'&email='+encodeURIComponent(em);
-  }else{
-    document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
-    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count+'&email='+encodeURIComponent(em);
-  }
-
-  fetch(apiUrl)
+  fetch(API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count+'&email='+encodeURIComponent(em))
   .then(function(res){return res.json();})
   .then(function(data){
     if(data.error){throw new Error(data.error);}
-    if(platform==='instagram' && data.links.length===0){
-      var wi=document.getElementById('warnBox');
-      wi.textContent=lang==='es'?('No se encontraron reels de @'+user+' en los últimos '+days+(days===1?' día':' días')+'. Prueba con más días.'):('No reels found for @'+user+' in the last '+days+' day(s). Try more days.');
-      wi.style.display='block';
-    }else if(platform!=='instagram' && data.links.length<count){
+    if(data.links.length<count){
       var w=document.getElementById('warnBox');
       w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'.');
       w.style.display='block';
