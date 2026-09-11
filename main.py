@@ -4,6 +4,8 @@ import yt_dlp
 import os
 import psycopg2
 import stripe
+import requests
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 CORS(app)
@@ -11,19 +13,12 @@ CORS(app)
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 
-# ===== COOKIES DE INSTAGRAM =====
-INSTAGRAM_COOKIES = os.environ.get('INSTAGRAM_COOKIES', '')
-COOKIES_PATH = '/tmp/ig_cookies.txt'
-COOKIES_READY = False
-if INSTAGRAM_COOKIES.strip():
-    try:
-        with open(COOKIES_PATH, 'w') as f:
-            f.write(INSTAGRAM_COOKIES)
-        COOKIES_READY = True
-    except:
-        COOKIES_READY = False
-
-INSTAGRAM_MAX = 50
+# ===== APIFY (Instagram) =====
+APIFY_TOKEN = os.environ.get('APIFY_TOKEN', '')
+# Actor: Instagram Reel Scraper (apify/instagram-reel-scraper)
+APIFY_ACTOR = 'apify~instagram-reel-scraper'
+# Tope de reels por busqueda (seguridad para no gastar de mas)
+INSTAGRAM_MAX_REELS = 1000
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -84,57 +79,6 @@ def index():
 @app.route('/panel')
 def panel():
     return send_from_directory('.', 'panel.html')
-
-@app.route('/diag-cookies')
-def diag_cookies():
-    """Diagnostico profundo: intenta Instagram con verbose y captura TODO el log."""
-    import io
-
-    test_user = request.args.get('user', 'instagram')
-
-    result = {
-        'cookies_ready': COOKIES_READY,
-        'ytdlp_version': getattr(yt_dlp.version, '__version__', 'desconocida'),
-    }
-
-    log_capture = io.StringIO()
-
-    class CapLogger:
-        def debug(self, msg):
-            log_capture.write('[debug] ' + str(msg) + '\n')
-        def info(self, msg):
-            log_capture.write('[info] ' + str(msg) + '\n')
-        def warning(self, msg):
-            log_capture.write('[warning] ' + str(msg) + '\n')
-        def error(self, msg):
-            log_capture.write('[error] ' + str(msg) + '\n')
-
-    url = f'https://www.instagram.com/{test_user}/'
-    opts = {
-        'quiet': False,
-        'verbose': True,
-        'extract_flat': True,
-        'playlistend': 5,
-        'logger': CapLogger(),
-        'skip_download': True,
-    }
-    if COOKIES_READY:
-        opts['cookiefile'] = COOKIES_PATH
-
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            entries = info.get('entries', []) if info else []
-            result['exito'] = True
-            result['num_links'] = len(entries)
-    except Exception as e:
-        result['exito'] = False
-        result['error'] = str(e)
-
-    full_log = log_capture.getvalue()
-    result['log'] = full_log[-4000:] if len(full_log) > 4000 else full_log
-
-    return jsonify(result)
 
 @app.route('/track-login', methods=['POST'])
 def track_login():
@@ -327,8 +271,6 @@ def get_avatar(user, platform):
     try:
         if platform == 'tiktok':
             prof_url = f'https://www.tiktok.com/@{user}'
-        elif platform == 'instagram':
-            prof_url = f'https://www.instagram.com/{user}/'
         elif platform == 'youtube':
             prof_url = f'https://www.youtube.com/@{user}'
         else:
@@ -340,9 +282,6 @@ def get_avatar(user, platform):
             'playlist_items': '0',
             'ignoreerrors': True,
         }
-        if platform == 'instagram' and COOKIES_READY:
-            opts['cookiefile'] = COOKIES_PATH
-
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(prof_url, download=False) or {}
 
@@ -358,35 +297,110 @@ def get_avatar(user, platform):
     except:
         return None
 
+def get_instagram_reels(user, days):
+    """Saca reels de Instagram via Apify, filtrados por fecha y perfil, ordenados."""
+    if not APIFY_TOKEN:
+        return None, 'Instagram no está configurado'
+
+    user = user.lower().lstrip('@')
+
+    # Llamar al Actor de Apify y esperar los resultados (run-sync-get-dataset-items)
+    api_url = f'https://api.apify.com/v2/acts/{APIFY_ACTOR}/run-sync-get-dataset-items?token={APIFY_TOKEN}'
+    payload = {
+        'username': [user],
+        'resultsLimit': INSTAGRAM_MAX_REELS,
+    }
+
+    try:
+        resp = requests.post(api_url, json=payload, timeout=280)
+    except requests.exceptions.Timeout:
+        return None, 'Instagram tardó demasiado, prueba de nuevo'
+    except Exception as e:
+        return None, f'Error de conexión: {e}'
+
+    if resp.status_code not in (200, 201):
+        return None, f'Instagram no disponible ({resp.status_code})'
+
+    try:
+        items = resp.json()
+    except:
+        return None, 'Respuesta inválida de Instagram'
+
+    if not isinstance(items, list) or len(items) == 0:
+        return [], None
+
+    # Fecha de corte
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    filtrados = []
+    for it in items:
+        # Filtro 1: solo del perfil buscado
+        owner = (it.get('ownerUsername') or '').lower()
+        if owner and owner != user:
+            continue
+        # Filtro 2: solo dentro del rango de fechas
+        ts = it.get('timestamp')
+        url = it.get('url')
+        if not url:
+            continue
+        keep = True
+        if ts:
+            try:
+                fecha = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                if fecha < cutoff:
+                    keep = False
+            except:
+                pass
+        if keep:
+            filtrados.append({'url': url, 'timestamp': ts or ''})
+
+    # Ordenar: mas reciente primero
+    filtrados.sort(key=lambda x: x['timestamp'], reverse=True)
+    links = [f['url'] for f in filtrados]
+    return links, None
+
 @app.route('/links')
 def get_links():
     user = request.args.get('user', '')
     platform = request.args.get('platform', 'tiktok')
     count = int(request.args.get('count', 25))
+    days = int(request.args.get('days', 1))
     user_email = request.args.get('email', '')
     ip = request.remote_addr
 
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
 
-    if platform == 'instagram' and count > INSTAGRAM_MAX:
-        count = INSTAGRAM_MAX
+    user = user.replace('@', '').strip()
 
+    # Guardar la busqueda (para Instagram guardamos 'days' en count)
     try:
         conn = get_db()
         cur = conn.cursor()
+        saved_count = days if platform == 'instagram' else count
         cur.execute('INSERT INTO searches (ip, platform, username, count, user_email) VALUES (%s, %s, %s, %s, %s)',
-                    (ip, platform, user, count, user_email))
+                    (ip, platform, user, saved_count, user_email))
         conn.commit()
         cur.close()
         conn.close()
     except:
         pass
 
+    # ===== INSTAGRAM via Apify =====
+    if platform == 'instagram':
+        if days < 1:
+            days = 1
+        if days > 7:
+            days = 7
+        links, err = get_instagram_reels(user, days)
+        if err:
+            return jsonify({'error': err}), 500
+        avatar = get_avatar(user, 'instagram')
+        return jsonify({'links': links, 'avatar': avatar})
+
+    # ===== TIKTOK y YOUTUBE via yt-dlp =====
     if platform == 'tiktok':
         url = f'https://www.tiktok.com/@{user}'
-    elif platform == 'instagram':
-        url = f'https://www.instagram.com/{user}/'
     elif platform == 'youtube':
         url = f'https://www.youtube.com/@{user}/shorts'
     else:
@@ -397,8 +411,6 @@ def get_links():
         'extract_flat': True,
         'playlistend': count,
     }
-    if platform == 'instagram' and COOKIES_READY:
-        ydl_opts['cookiefile'] = COOKIES_PATH
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
