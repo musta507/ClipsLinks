@@ -17,8 +17,8 @@ PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 APIFY_TOKEN = os.environ.get('APIFY_TOKEN', '')
 # Actor: Instagram Reel Scraper (apify/instagram-reel-scraper)
 APIFY_ACTOR = 'apify~instagram-reel-scraper'
-# Tope de reels por busqueda (seguridad para no gastar de mas)
-INSTAGRAM_MAX_REELS = 50
+# Sin tope de reels: el filtro de dias ya limita cuantos saca
+INSTAGRAM_MAX_REELS = 99999
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
