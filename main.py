@@ -18,7 +18,7 @@ APIFY_TOKEN = os.environ.get('APIFY_TOKEN', '')
 # Actor: Instagram Reel Scraper (apify/instagram-reel-scraper)
 APIFY_ACTOR = 'apify~instagram-reel-scraper'
 # Tope de reels por busqueda (seguridad para no gastar de mas)
-INSTAGRAM_MAX_REELS = 1000
+INSTAGRAM_MAX_REELS = 50
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -298,17 +298,26 @@ def get_avatar(user, platform):
         return None
 
 def get_instagram_reels(user, days):
-    """Saca reels de Instagram via Apify, filtrados por fecha y perfil, ordenados."""
+    """Saca reels de Instagram via Apify. Usa onlyPostsNewerThan para que
+    Apify filtre por fecha en origen (saca pocos = barato). Ordena por reciente."""
     if not APIFY_TOKEN:
         return None, 'Instagram no está configurado'
 
     user = user.lower().lstrip('@')
 
-    # Llamar al Actor de Apify y esperar los resultados (run-sync-get-dataset-items)
+    # Llamar al Actor de Apify y esperar los resultados
     api_url = f'https://api.apify.com/v2/acts/{APIFY_ACTOR}/run-sync-get-dataset-items?token={APIFY_TOKEN}'
+    # onlyPostsNewerThan: le decimos a Apify que SOLO saque los reels de los
+    # ultimos X dias. Formato correcto: "1 day" (singular) o "5 days" (plural).
+    if days == 1:
+        newer = '1 day'
+    else:
+        newer = f'{days} days'
     payload = {
         'username': [user],
         'resultsLimit': INSTAGRAM_MAX_REELS,
+        'onlyPostsNewerThan': newer,
+        'skipPinnedPosts': True,
     }
 
     try:
@@ -329,34 +338,18 @@ def get_instagram_reels(user, days):
     if not isinstance(items, list) or len(items) == 0:
         return [], None
 
-    # Fecha de corte
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-
-    filtrados = []
+    # Recoger links con su fecha (sin filtro de perfil: salen todos los del perfil buscado)
+    recogidos = []
     for it in items:
-        # Filtro 1: solo del perfil buscado
-        owner = (it.get('ownerUsername') or '').lower()
-        if owner and owner != user:
-            continue
-        # Filtro 2: solo dentro del rango de fechas
-        ts = it.get('timestamp')
         url = it.get('url')
         if not url:
             continue
-        keep = True
-        if ts:
-            try:
-                fecha = datetime.fromisoformat(ts.replace('Z', '+00:00'))
-                if fecha < cutoff:
-                    keep = False
-            except:
-                pass
-        if keep:
-            filtrados.append({'url': url, 'timestamp': ts or ''})
+        ts = it.get('timestamp') or ''
+        recogidos.append({'url': url, 'timestamp': ts})
 
     # Ordenar: mas reciente primero
-    filtrados.sort(key=lambda x: x['timestamp'], reverse=True)
-    links = [f['url'] for f in filtrados]
+    recogidos.sort(key=lambda x: x['timestamp'], reverse=True)
+    links = [f['url'] for f in recogidos]
     return links, None
 
 @app.route('/links')
