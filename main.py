@@ -20,6 +20,24 @@ APIFY_ACTOR = 'apify~instagram-reel-scraper'
 # Sin tope de reels: el filtro de dias ya limita cuantos saca
 INSTAGRAM_MAX_REELS = 99999
 
+# ===== SISTEMA DE CREDITOS (solo Instagram) =====
+# 1 credito = 1 video/reel de Instagram
+CREDITOS_GRATIS = 100        # al registrarse
+DIAS_MAX_GRATIS = 3          # el plan gratis solo llega a 3 dias
+PLANES = {
+    'gratis':  {'creditos': 100,   'dias_max': 3, 'precio': 0},
+    'starter': {'creditos': 1000,  'dias_max': 7, 'precio': 9},
+    'pro':     {'creditos': 5000,  'dias_max': 7, 'precio': 24},
+    'agency':  {'creditos': 15000, 'dias_max': 7, 'precio': 49},
+}
+PRECIO_POR_CREDITO = 0.006   # recarga personalizada: 0.006 USD por video
+RECARGA_MINIMA = 500         # creditos minimos por recarga
+
+# ===== PAGOS CON CRIPTO (NOWPayments) =====
+NOWPAY_API_KEY = os.environ.get('NOWPAY_API_KEY', '')
+NOWPAY_IPN_SECRET = os.environ.get('NOWPAY_IPN_SECRET', '')
+NOWPAY_API = 'https://api.nowpayments.io/v1'
+
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
 
@@ -60,6 +78,33 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             )
         ''')
+        # ===== Usuarios con creditos (solo para Instagram) =====
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                email TEXT PRIMARY KEY,
+                name TEXT,
+                picture TEXT,
+                creditos INTEGER DEFAULT 100,
+                plan TEXT DEFAULT 'gratis',
+                plan_renueva TIMESTAMP,
+                forzar_login BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
+        # ===== Pagos recibidos =====
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                email TEXT,
+                plan TEXT,
+                creditos INTEGER,
+                importe NUMERIC,
+                metodo TEXT,
+                estado TEXT DEFAULT 'pendiente',
+                ref TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
         conn.commit()
         cur.close()
         conn.close()
@@ -71,6 +116,201 @@ init_db()
 def check_password():
     pw = request.args.get('pw', '')
     return PANEL_PASSWORD != '' and pw == PANEL_PASSWORD
+
+# ===== FUNCIONES DE CREDITOS =====
+def get_user(email):
+    """Devuelve los datos del usuario; lo crea con creditos gratis si no existe."""
+    if not email:
+        return None
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT email, name, creditos, plan, forzar_login FROM users WHERE email = %s', (email,))
+        row = cur.fetchone()
+        if not row:
+            cur.execute(
+                'INSERT INTO users (email, creditos, plan) VALUES (%s, %s, %s) ON CONFLICT (email) DO NOTHING',
+                (email, CREDITOS_GRATIS, 'gratis'))
+            conn.commit()
+            cur.execute('SELECT email, name, creditos, plan, forzar_login FROM users WHERE email = %s', (email,))
+            row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return None
+        return {'email': row[0], 'name': row[1] or '', 'creditos': row[2] or 0,
+                'plan': row[3] or 'gratis', 'forzar_login': bool(row[4])}
+    except:
+        return None
+
+def restar_creditos(email, cantidad):
+    """Resta creditos al usuario. Nunca baja de 0."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET creditos = GREATEST(creditos - %s, 0) WHERE email = %s',
+                    (cantidad, email))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+    except:
+        return False
+
+@app.route('/mi-cuenta')
+def mi_cuenta():
+    """Devuelve los creditos y plan del usuario logueado (para la web)."""
+    email = request.args.get('email', '').strip()
+    if not email:
+        return jsonify({'logueado': False})
+    u = get_user(email)
+    if not u:
+        return jsonify({'logueado': False})
+    plan_info = PLANES.get(u['plan'], PLANES['gratis'])
+    return jsonify({
+        'logueado': True,
+        'email': u['email'],
+        'creditos': u['creditos'],
+        'plan': u['plan'],
+        'dias_max': plan_info['dias_max'],
+        'forzar_login': u['forzar_login'],
+    })
+
+# ===== PAGOS CON CRIPTO =====
+@app.route('/crear-pago', methods=['POST'])
+def crear_pago():
+    """Crea una factura en NOWPayments y devuelve el enlace de pago."""
+    if not NOWPAY_API_KEY:
+        return jsonify({'error': 'pagos_no_configurados',
+                        'mensaje': 'Los pagos aún no están activos. Contáctanos.'}), 503
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()
+        tipo = data.get('tipo', 'plan')        # 'plan' o 'recarga'
+        plan = data.get('plan', '')
+        creditos = int(data.get('creditos', 0) or 0)
+
+        if not email:
+            return jsonify({'error': 'login_requerido'}), 401
+
+        if tipo == 'plan':
+            if plan not in PLANES or plan == 'gratis':
+                return jsonify({'error': 'plan_invalido'}), 400
+            importe = PLANES[plan]['precio']
+            creditos = PLANES[plan]['creditos']
+            descripcion = f'ClipLinks {plan} - {creditos} creditos'
+        else:
+            if creditos < RECARGA_MINIMA:
+                return jsonify({'error': 'minimo',
+                                'mensaje': f'Mínimo {RECARGA_MINIMA} créditos'}), 400
+            importe = round(creditos * PRECIO_POR_CREDITO, 2)
+            plan = 'recarga'
+            descripcion = f'ClipLinks recarga - {creditos} creditos'
+
+        # Guardar el pago como pendiente y usar su id como referencia
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''INSERT INTO payments (email, plan, creditos, importe, metodo, estado)
+                       VALUES (%s, %s, %s, %s, 'cripto', 'pendiente') RETURNING id''',
+                    (email, plan, creditos, importe))
+        pago_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        # Crear la factura en NOWPayments
+        r = requests.post(
+            NOWPAY_API + '/invoice',
+            headers={'x-api-key': NOWPAY_API_KEY, 'Content-Type': 'application/json'},
+            json={
+                'price_amount': importe,
+                'price_currency': 'usd',
+                'order_id': str(pago_id),
+                'order_description': descripcion,
+                'ipn_callback_url': request.host_url.rstrip('/') + '/webhook-pago',
+                'success_url': request.host_url.rstrip('/') + '/?pago=ok',
+                'cancel_url': request.host_url.rstrip('/') + '/?pago=cancelado',
+            },
+            timeout=30)
+
+        if r.status_code not in (200, 201):
+            return jsonify({'error': 'error_pasarela', 'detalle': r.text[:200]}), 502
+
+        inv = r.json()
+        url_pago = inv.get('invoice_url')
+        if not url_pago:
+            return jsonify({'error': 'sin_url'}), 502
+
+        # Guardar la referencia de la factura
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('UPDATE payments SET ref = %s WHERE id = %s',
+                        (str(inv.get('id', '')), pago_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except:
+            pass
+
+        return jsonify({'url': url_pago, 'importe': importe, 'creditos': creditos})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/webhook-pago', methods=['POST'])
+def webhook_pago():
+    """NOWPayments avisa aqui cuando el pago se confirma -> sumamos creditos."""
+    try:
+        cuerpo = request.get_data()
+        datos = request.get_json(force=True, silent=True) or {}
+
+        # Comprobar la firma para asegurar que viene de NOWPayments
+        if NOWPAY_IPN_SECRET:
+            import hmac, hashlib, json as _json
+            firma = request.headers.get('x-nowpayments-sig', '')
+            ordenado = _json.dumps(datos, sort_keys=True, separators=(',', ':'))
+            esperada = hmac.new(NOWPAY_IPN_SECRET.encode(),
+                                ordenado.encode(), hashlib.sha512).hexdigest()
+            if not hmac.compare_digest(firma, esperada):
+                return jsonify({'error': 'firma_invalida'}), 401
+
+        estado = (datos.get('payment_status') or '').lower()
+        order_id = datos.get('order_id')
+
+        # Solo sumamos creditos cuando el pago esta confirmado
+        if estado not in ('finished', 'confirmed') or not order_id:
+            return jsonify({'ok': True, 'ignorado': estado})
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT email, plan, creditos, estado FROM payments WHERE id = %s', (int(order_id),))
+        fila = cur.fetchone()
+        if not fila:
+            cur.close(); conn.close()
+            return jsonify({'error': 'pago_no_encontrado'}), 404
+
+        email, plan, creditos, estado_actual = fila
+        # Evitar sumar dos veces si llegan avisos repetidos
+        if estado_actual == 'pagado':
+            cur.close(); conn.close()
+            return jsonify({'ok': True, 'ya_procesado': True})
+
+        cur.execute('UPDATE payments SET estado = %s WHERE id = %s', ('pagado', int(order_id)))
+        if plan in PLANES and plan != 'gratis':
+            # Plan mensual: fija los creditos del plan y renueva en 30 dias
+            cur.execute('''UPDATE users SET creditos = creditos + %s, plan = %s,
+                           plan_renueva = NOW() + INTERVAL '30 days' WHERE email = %s''',
+                        (creditos, plan, email))
+        else:
+            # Recarga suelta: solo suma creditos
+            cur.execute('UPDATE users SET creditos = creditos + %s WHERE email = %s',
+                        (creditos, email))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def index():
@@ -92,6 +332,12 @@ def track_login():
         cur = conn.cursor()
         cur.execute('INSERT INTO logins (email, name, picture, ip) VALUES (%s, %s, %s, %s)',
                     (email, name, picture, ip))
+        # Crear el usuario con sus creditos gratis si es la primera vez
+        if email:
+            cur.execute('''INSERT INTO users (email, name, picture, creditos, plan)
+                           VALUES (%s, %s, %s, %s, 'gratis')
+                           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, picture = EXCLUDED.picture''',
+                        (email, name, picture, CREDITOS_GRATIS))
         conn.commit()
         cur.close()
         conn.close()
@@ -297,9 +543,10 @@ def get_avatar(user, platform):
     except:
         return None
 
-def get_instagram_reels(user, days):
+def get_instagram_reels(user, days, limite=None):
     """Saca reels de Instagram via Apify. Usa onlyPostsNewerThan para que
-    Apify filtre por fecha en origen (saca pocos = barato). Ordena por reciente."""
+    Apify filtre por fecha en origen (saca pocos = barato). Ordena por reciente.
+    'limite' = maximo de reels a pedir (los creditos del usuario)."""
     if not APIFY_TOKEN:
         return None, 'Instagram no está configurado'
 
@@ -313,9 +560,10 @@ def get_instagram_reels(user, days):
         newer = '1 day'
     else:
         newer = f'{days} days'
+    tope = limite if limite else INSTAGRAM_MAX_REELS
     payload = {
         'username': [user],
-        'resultsLimit': INSTAGRAM_MAX_REELS,
+        'resultsLimit': tope,
         'onlyPostsNewerThan': newer,
         'skipPinnedPosts': True,
     }
@@ -336,7 +584,7 @@ def get_instagram_reels(user, days):
         return None, 'Respuesta inválida de Instagram'
 
     if not isinstance(items, list) or len(items) == 0:
-        return [], None
+        return {'links': [], 'stats': None}, None
 
     # Recoger links con su fecha (sin filtro de perfil: salen todos los del perfil buscado)
     recogidos = []
@@ -345,12 +593,32 @@ def get_instagram_reels(user, days):
         if not url:
             continue
         ts = it.get('timestamp') or ''
-        recogidos.append({'url': url, 'timestamp': ts})
+        recogidos.append({
+            'url': url,
+            'timestamp': ts,
+            'likes': it.get('likesCount') or 0,
+            'coment': it.get('commentsCount') or 0,
+        })
 
     # Ordenar: mas reciente primero
     recogidos.sort(key=lambda x: x['timestamp'], reverse=True)
     links = [f['url'] for f in recogidos]
-    return links, None
+
+    # ===== ESTADISTICAS del conjunto =====
+    stats = None
+    if recogidos:
+        likes_validos = [r['likes'] for r in recogidos if isinstance(r['likes'], int) and r['likes'] > 0]
+        coment_validos = [r['coment'] for r in recogidos if isinstance(r['coment'], int) and r['coment'] > 0]
+        top = sorted(recogidos, key=lambda r: (r['likes'] if isinstance(r['likes'], int) else 0), reverse=True)[:3]
+        stats = {
+            'total': len(recogidos),
+            'media_likes': int(sum(likes_validos) / len(likes_validos)) if likes_validos else 0,
+            'media_coment': int(sum(coment_validos) / len(coment_validos)) if coment_validos else 0,
+            'por_dia': round(len(recogidos) / days, 1) if days else len(recogidos),
+            'top': [{'url': r['url'], 'likes': r['likes']} for r in top if r['likes']],
+        }
+
+    return {'links': links, 'stats': stats}, None
 
 @app.route('/links')
 def get_links():
@@ -379,17 +647,59 @@ def get_links():
     except:
         pass
 
-    # ===== INSTAGRAM via Apify =====
+    # ===== INSTAGRAM via Apify (requiere login + creditos) =====
     if platform == 'instagram':
+        # 1) Login obligatorio
+        if not user_email:
+            return jsonify({'error': 'login_requerido',
+                            'mensaje': 'Inicia sesión para usar Instagram'}), 401
+
+        u = get_user(user_email)
+        if not u:
+            return jsonify({'error': 'login_requerido',
+                            'mensaje': 'Inicia sesión para usar Instagram'}), 401
+
+        plan_info = PLANES.get(u['plan'], PLANES['gratis'])
+
+        # 2) Limite de dias segun el plan
         if days < 1:
             days = 1
-        if days > 7:
-            days = 7
-        links, err = get_instagram_reels(user, days)
+        if days > plan_info['dias_max']:
+            return jsonify({'error': 'plan_insuficiente',
+                            'mensaje': f"Tu plan permite hasta {plan_info['dias_max']} días. Mejora tu plan para más.",
+                            'dias_max': plan_info['dias_max']}), 403
+
+        # 3) Sin creditos
+        if u['creditos'] <= 0:
+            return jsonify({'error': 'sin_creditos',
+                            'mensaje': 'Te has quedado sin créditos. Recarga para seguir usando Instagram.',
+                            'creditos': 0}), 402
+
+        # 4) Buscar, limitando a los creditos que tiene (no gasta de mas)
+        resultado, err = get_instagram_reels(user, days, limite=u['creditos'])
         if err:
             return jsonify({'error': err}), 500
+        links = resultado.get('links', [])
+        stats = resultado.get('stats')
+
+        # 5) Restar 1 credito por video
+        gastados = len(links)
+        if gastados > 0:
+            restar_creditos(user_email, gastados)
+        restantes = max(u['creditos'] - gastados, 0)
+
+        # 6) Si salieron exactamente sus creditos, es que se corto a mitad
+        cortado = (gastados > 0 and gastados >= u['creditos'])
+
         avatar = get_avatar(user, 'instagram')
-        return jsonify({'links': links, 'avatar': avatar})
+        return jsonify({
+            'links': links,
+            'avatar': avatar,
+            'stats': stats,
+            'creditos_gastados': gastados,
+            'creditos_restantes': restantes,
+            'cortado_por_creditos': cortado,
+        })
 
     # ===== TIKTOK y YOUTUBE via yt-dlp =====
     if platform == 'tiktok':
