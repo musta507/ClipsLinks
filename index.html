@@ -119,6 +119,80 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .contact-cta button:hover { background: rgba(255,255,255,0.08); color: #FFF; border-color: rgba(255,255,255,0.22); }
 .contact-cta button svg { width: 15px; height: 15px; }
 
+/* ===== CREDITOS / PRO / PLANES (solo Instagram) ===== */
+.opt.locked { opacity: 0.5; position: relative; padding-right: 22px; }
+.opt.locked .lock { position: absolute; top: 3px; right: 5px; font-size: 9px; line-height: 1; }
+.opt.locked:hover { opacity: 0.75; }
+/* Creditos discretos: una linea pequeña a un lado */
+.cred-mini { display: flex; align-items: baseline; gap: 5px; justify-content: flex-end; font-size: 11.5px; color: #6E7280; margin-top: 10px; flex-wrap: wrap; }
+.cred-mini #credNum { font-weight: 700; font-size: 13px; color: #9AA0AC; }
+.cred-mini #credNum.alto { color: #4CC97B; }
+.cred-mini #credNum.medio { color: #F5C451; }
+.cred-mini #credNum.bajo { color: #FF6B6B; }
+.cred-mini a { color: #F5C451; cursor: pointer; text-decoration: none; font-weight: 600; border: 1px solid rgba(245,196,81,0.4); border-radius: 999px; padding: 3px 11px; margin-left: 8px; font-size: 11.5px; transition: all 0.18s; }
+.cred-mini a:hover { background: #F5C451; color: #14151A; border-color: #F5C451; }
+/* Cuando se acaban los creditos: grande y visible */
+.cred-mini.vacio { justify-content: center; font-size: 14px; color: #E8C878; background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); border-radius: 12px; padding: 12px 14px; }
+.cred-mini.vacio #credNum { font-size: 20px; color: #F5C451; }
+.cred-mini.vacio a { color: #14151A; background: #F5C451; border: none; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 12.5px; margin-left: 8px; }
+.ig-warn { background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); color: #E8C878; border-radius: 12px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
+/* Botones del menu de pago */
+.cred-btn { background: #F5C451; color: #14151A; border: none; border-radius: 10px; padding: 10px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.18s; }
+.cred-btn:hover { background: #FFD76E; }
+#planesModal .modal-btns { display: flex; justify-content: center; margin-top: 22px; }
+#planesModal .mbtn.cancel { background: rgba(255,255,255,0.06); color: #C9CCD4; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 26px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; }
+#planesModal .mbtn.cancel:hover { background: rgba(255,255,255,0.12); color: #FFF; }
+.planes-modal { max-width: 780px; padding: 32px 30px 26px; }
+.planes-modal h3 { margin: 0 0 9px; font-size: 22px; }
+.planes-sub { font-size: 12.5px; color: #8A8E99; line-height: 1.6; margin: 0 0 26px; max-width: 540px; }
+.planes-grid { display: flex; gap: 16px; margin: 0 0 26px; }
+.planes-grid .plan-card { flex: 1 1 0; min-width: 0; }
+.plan-card { position: relative; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 26px 18px 20px; text-align: center; display: flex; flex-direction: column; transition: all 0.18s; }
+.plan-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); }
+.plan-card.destacado { border-color: rgba(245,196,81,0.55); background: rgba(245,196,81,0.07); transform: scale(1.03); }
+.plan-badge { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F5C451; color: #14151A; font-size: 9.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.plan-nom { font-size: 11.5px; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 2px; }
+.plan-precio { font-size: 34px; font-weight: 800; color: #FFF; margin: 9px 0 0; line-height: 1; }
+.plan-precio span { font-size: 12px; font-weight: 500; color: #8A8E99; }
+.plan-cred { font-size: 15px; color: #F5C451; font-weight: 700; margin-top: 14px; }
+.plan-det { font-size: 11px; color: #6E7280; margin-top: 4px; margin-bottom: 20px; }
+.plan-btn { width: 100%; margin-top: auto; background: rgba(255,255,255,0.08); color: #FFF; border: 1px solid rgba(255,255,255,0.16); border-radius: 11px; padding: 11px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.18s; }
+.plan-btn:hover { background: rgba(255,255,255,0.13); }
+.plan-card.destacado .plan-btn { background: #F5C451; color: #14151A; border-color: #F5C451; }
+.plan-card.destacado .plan-btn:hover { background: #FFD76E; }
+.recarga { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; }
+.recarga-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.recarga-t { font-size: 12.5px; font-weight: 600; color: #B5B8C0; line-height: 1.2; }
+.recarga-s { font-size: 11px; color: #6E7280; line-height: 1.2; }
+.recarga-grp { display: flex; align-items: stretch; height: 34px; flex-shrink: 0; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; transition: border-color 0.18s; }
+.recarga-grp:focus-within { border-color: rgba(245,196,81,0.6); }
+.recarga-grp > * { height: 32px; line-height: 32px; box-sizing: border-box; margin: 0; border: none; }
+.recarga-grp input, .modal .recarga-grp input, .modal .recarga-grp input:focus { width: 82px; text-align: center; background: transparent; padding: 0 6px; margin: 0; color: #FFF; font-size: 16px; font-weight: 600; font-family: inherit; outline: none; border: none; box-shadow: none; border-radius: 0; -moz-appearance: textfield; }
+.recarga-grp input::-webkit-outer-spin-button, .recarga-grp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.recarga-eq { padding: 0 8px; background: transparent; color: #6E7280; font-size: 13px; }
+.recarga-total { padding: 0 12px 0 2px; background: transparent; color: #F5C451; font-size: 13.5px; font-weight: 700; white-space: nowrap; min-width: 62px; }
+.recarga-pay { padding: 0 16px; background: #F5C451; color: #14151A; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.18s; }
+.recarga-pay:hover { background: #FFD76E; }
+@media (max-width: 560px) {
+  .recarga { flex-direction: column; align-items: stretch; }
+  .recarga-grp { width: 100%; }
+  .recarga-grp input { flex: 1; width: auto; }
+}
+@media (max-width: 560px) {
+  .planes-grid { flex-direction: column; gap: 14px; }
+  .plan-card { padding: 16px 14px; }
+}
+/* Estadisticas */
+.stats-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.stats-title { font-size: 12px; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(110px,1fr)); gap: 12px; }
+.stat-item { }
+.stat-val { font-size: 20px; font-weight: 700; color: #FFF; }
+.stat-lbl { font-size: 11.5px; color: #8A8E99; margin-top: 2px; }
+.stats-top { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); }
+.stats-top a { display: block; color: #C9CCD4; text-decoration: none; font-size: 12.5px; padding: 4px 0; }
+.stats-top a:hover { color: #F5C451; }
+
 /* ===== ADAPTACION MOVIL ===== */
 @media (max-width: 640px) {
   .nav { padding: 0 0.9rem; height: 56px; gap: 8px; }
@@ -202,10 +276,15 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
       <button class="opt active" onclick="setDays(this,1)" data-es="1 día" data-en="1 day">1 día</button>
       <button class="opt" onclick="setDays(this,2)" data-es="2 días" data-en="2 days">2 días</button>
       <button class="opt" onclick="setDays(this,3)" data-es="3 días" data-en="3 days">3 días</button>
-      <button class="opt" onclick="setDays(this,4)" data-es="4 días" data-en="4 days">4 días</button>
-      <button class="opt" onclick="setDays(this,5)" data-es="5 días" data-en="5 days">5 días</button>
-      <button class="opt" onclick="setDays(this,6)" data-es="6 días" data-en="6 days">6 días</button>
-      <button class="opt" onclick="setDays(this,7)" data-es="7 días (1 semana)" data-en="7 days (1 week)">7 días (1 semana)</button>
+      <button class="opt locked" onclick="setDays(this,4)" data-dias="4"><span data-es="4 días" data-en="4 days">4 días</span><span class="lock">🔒</span></button>
+      <button class="opt locked" onclick="setDays(this,5)" data-dias="5"><span data-es="5 días" data-en="5 days">5 días</span><span class="lock">🔒</span></button>
+      <button class="opt locked" onclick="setDays(this,6)" data-dias="6"><span data-es="6 días" data-en="6 days">6 días</span><span class="lock">🔒</span></button>
+      <button class="opt locked" onclick="setDays(this,7)" data-dias="7"><span data-es="7 días" data-en="7 days">7 días</span><span class="lock">🔒</span></button>
+    </div>
+    <div class="cred-mini" id="credBar" style="display:none;">
+      <span id="credNum">—</span>
+      <span data-es="créditos · 1 crédito = 1 vídeo" data-en="credits · 1 credit = 1 video">créditos · 1 crédito = 1 vídeo</span>
+      <a onclick="openPlanes()" data-es="Recargar" data-en="Top up">Recargar</a>
     </div>
     <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
     <div class="opts" id="groupOpts">
@@ -226,6 +305,11 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
       </div>
       <button class="copyall" onclick="copyAll()" data-es="Copiar todo" data-en="Copy all">Copiar todo</button>
     </div>
+    <div class="stats-box" id="statsBox" style="display:none;">
+      <div class="stats-title" data-es="Estadísticas del periodo" data-en="Period stats">Estadísticas del periodo</div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="stats-top" id="statsTop"></div>
+    </div>
     <div id="grpsArea"></div>
   </div>
   <div class="contact-cta" id="contactCta">
@@ -236,6 +320,52 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
   </div>
 </div>
 <div class="foot">ClipLinks</div>
+
+<div class="modal-bg" id="planesModal">
+  <div class="modal planes-modal">
+    <h3 data-es="Créditos de Instagram" data-en="Instagram credits">Créditos de Instagram</h3>
+    <p class="planes-sub" data-es="Instagram bloquea el acceso a sus datos, así que hay que extraerlos con un servicio de pago. Por eso tiene créditos: 1 crédito = 1 vídeo." data-en="Instagram blocks access to its data, so we extract it through a paid service. That is why it uses credits: 1 credit = 1 video.">Instagram bloquea el acceso a sus datos, así que hay que extraerlos con un servicio de pago. Por eso tiene créditos: 1 crédito = 1 vídeo.</p>
+    <div class="planes-grid">
+      <div class="plan-card">
+        <div class="plan-nom">Starter</div>
+        <div class="plan-precio">$9<span>/mes</span></div>
+        <div class="plan-cred">1.000 <span data-es="créditos" data-en="credits">créditos</span></div>
+        <div class="plan-det" data-es="1.000 vídeos al mes" data-en="1,000 videos per month">1.000 vídeos al mes</div>
+        <button class="plan-btn" onclick="pagarPlan('starter')" data-es="Elegir" data-en="Choose">Elegir</button>
+      </div>
+      <div class="plan-card destacado">
+        <div class="plan-badge" data-es="Popular" data-en="Popular">Popular</div>
+        <div class="plan-nom">Pro</div>
+        <div class="plan-precio">$24<span>/mes</span></div>
+        <div class="plan-cred">5.000 <span data-es="créditos" data-en="credits">créditos</span></div>
+        <div class="plan-det" data-es="5.000 vídeos al mes" data-en="5,000 videos per month">5.000 vídeos al mes</div>
+        <button class="plan-btn" onclick="pagarPlan('pro')" data-es="Elegir" data-en="Choose">Elegir</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-nom">Agency</div>
+        <div class="plan-precio">$49<span>/mes</span></div>
+        <div class="plan-cred">15.000 <span data-es="créditos" data-en="credits">créditos</span></div>
+        <div class="plan-det" data-es="15.000 vídeos al mes" data-en="15,000 videos per month">15.000 vídeos al mes</div>
+        <button class="plan-btn" onclick="pagarPlan('agency')" data-es="Elegir" data-en="Choose">Elegir</button>
+      </div>
+    </div>
+    <div class="recarga">
+      <div class="recarga-txt">
+        <div class="recarga-t" data-es="Recarga suelta" data-en="One-off top-up">Recarga suelta</div>
+        <div class="recarga-s" data-es="$0.006 por vídeo · mínimo 500" data-en="$0.006 per video · minimum 500">$0.006 por vídeo · mínimo 500</div>
+      </div>
+      <div class="recarga-grp">
+        <input type="number" id="recargaInp" min="500" step="100" value="500" oninput="calcRecarga()" aria-label="créditos">
+        <span class="recarga-eq">=</span>
+        <span class="recarga-total" id="recargaTotal">$3.00</span>
+        <button type="button" class="recarga-pay" onclick="pagarRecarga()" data-es="Pagar" data-en="Pay">Pagar</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closePlanes()" data-es="Cerrar" data-en="Close">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-bg" id="contactModal">
   <div class="modal" id="contactInner">
@@ -338,11 +468,112 @@ function setPlat(el,p){
   document.getElementById('countOpts').style.display = esIG?'none':'flex';
   document.getElementById('daysLabel').style.display = esIG?'block':'none';
   document.getElementById('daysOpts').style.display = esIG?'flex':'none';
+  // Lo de creditos y planes SOLO se ve en Instagram
+  document.getElementById('credBar').style.display = esIG?'flex':'none';
+  if(esIG){ cargarCuenta(); }
+}
+// ===== CREDITOS =====
+var miCuenta={logueado:false,creditos:0,plan:'gratis',dias_max:3};
+function getEmail(){
+  try{var cu=localStorage.getItem('clipuser'); if(cu)return JSON.parse(cu).email||'';}catch(e){}
+  return '';
+}
+function cargarCuenta(){
+  var em=getEmail();
+  if(!em){
+    miCuenta={logueado:false,creditos:0,plan:'gratis',dias_max:3};
+    pintarCreditos(null);
+    pintarCandados();
+    return;
+  }
+  fetch(API+'/mi-cuenta?email='+encodeURIComponent(em))
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.logueado){
+      miCuenta=d;
+      pintarCreditos(d.creditos);
+    }else{
+      pintarCreditos(null);
+    }
+    pintarCandados();
+  })
+  .catch(function(){});
+}
+function pintarCreditos(n){
+  var bar=document.getElementById('credBar');
+  var el=document.getElementById('credNum');
+  el.className='';
+  if(n===null||typeof n==='undefined'){
+    el.textContent='—';
+    bar.classList.remove('vacio');
+    return;
+  }
+  el.textContent=n;
+  if(n===0){ bar.classList.add('vacio'); }
+  else {
+    bar.classList.remove('vacio');
+    if(n>50){ el.className='alto'; }
+    else if(n>10){ el.className='medio'; }
+    else { el.className='bajo'; }
+  }
+}
+function pintarCandados(){
+  var max=miCuenta.logueado?(miCuenta.dias_max||3):3;
+  document.querySelectorAll('#daysOpts .opt').forEach(function(b){
+    var d=parseInt(b.getAttribute('data-dias')||'0',10);
+    if(!d){return;}
+    var lock=b.querySelector('.lock');
+    if(d<=max){ b.classList.remove('locked'); if(lock)lock.style.display='none'; }
+    else { b.classList.add('locked'); if(lock)lock.style.display='inline'; }
+  });
 }
 function setDays(el,val){
+  var max=miCuenta.logueado?(miCuenta.dias_max||3):3;
+  if(val>max){ openPlanes(); return; }
   document.querySelectorAll('#daysOpts .opt').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');
   days=val;
+}
+function openPlanes(){ document.getElementById('planesModal').classList.add('open'); calcRecarga(); }
+function closePlanes(){ document.getElementById('planesModal').classList.remove('open'); }
+function calcRecarga(){
+  var n=parseInt(document.getElementById('recargaInp').value||'0',10);
+  if(isNaN(n)||n<0)n=0;
+  var usd=(n*0.006).toFixed(2);
+  document.getElementById('recargaTotal').textContent='$'+usd;
+}
+function pagarPlan(plan){
+  iniciarPago({tipo:'plan',plan:plan});
+}
+function pagarRecarga(){
+  var n=parseInt(document.getElementById('recargaInp').value||'0',10);
+  if(isNaN(n)||n<500){ alert(lang==='es'?'Mínimo 500 créditos.':'Minimum 500 credits.'); return; }
+  iniciarPago({tipo:'recarga',creditos:n});
+}
+function iniciarPago(datos){
+  var em=getEmail();
+  if(!em){
+    alert(lang==='es'?'Inicia sesión con Google para poder pagar.':'Sign in with Google to pay.');
+    return;
+  }
+  datos.email=em;
+  fetch(API+'/crear-pago',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(datos)
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.url){ window.open(d.url,'_blank'); closePlanes(); return; }
+    if(d.error==='pagos_no_configurados'){
+      alert(lang==='es'?'Los pagos aún no están activos. Escríbenos desde el botón de contacto.':'Payments are not active yet. Contact us.');
+      return;
+    }
+    alert(lang==='es'?'No se pudo iniciar el pago. Inténtalo de nuevo.':'Could not start payment. Try again.');
+  })
+  .catch(function(){
+    alert(lang==='es'?'No se pudo iniciar el pago. Inténtalo de nuevo.':'Could not start payment. Try again.');
+  });
 }
 function setOpt(el,type,val){
   var id=type==='count'?'countOpts':'groupOpts';
@@ -351,20 +582,38 @@ function setOpt(el,type,val){
   if(type==='count'){count=val;}else{group=val;}
 }
 document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
+if(location.search.indexOf('pago=ok')>-1){
+  setTimeout(function(){
+    alert(lang==='es'?'¡Pago recibido! Tus créditos se añadirán en unos minutos, cuando la red confirme la transacción.':'Payment received! Your credits will be added in a few minutes once the network confirms.');
+    cargarCuenta();
+  },600);
+}
 
 function fetchLinks(){
   var user=document.getElementById('userInp').value.trim().replace('@','');
   if(!user){return;}
+  var em=getEmail();
+
+  // Instagram exige iniciar sesion
+  if(platform==='instagram' && !em){
+    var wl=document.getElementById('warnBox');
+    wl.textContent=lang==='es'?'🔒 Inicia sesión con Google para usar Instagram. TikTok y YouTube siguen siendo gratis.':'🔒 Sign in with Google to use Instagram. TikTok and YouTube remain free.';
+    wl.style.display='block';
+    document.getElementById('resultBox').style.display='none';
+    try{ if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.prompt();} }catch(e){}
+    return;
+  }
+
   document.getElementById('recentBox').classList.remove('open');
   saveRecent(user);
   document.getElementById('resultBox').style.display='none';
+  document.getElementById('statsBox').style.display='none';
   document.getElementById('warnBox').style.display='none';
   document.getElementById('loadBox').style.display='block';
-  var em=''; try{var cu=localStorage.getItem('clipuser'); if(cu)em=JSON.parse(cu).email||'';}catch(e){}
 
   var apiUrl;
   if(platform==='instagram'){
-    document.getElementById('loadMsg').textContent=lang==='es'?('Buscando reels de @'+user+' de los últimos '+days+(days===1?' día':' días')+'... (Instagram puede tardar un poco más, espera unos segundos)'):('Getting reels from @'+user+' from the last '+days+' day(s)... (Instagram may take a bit longer)');
+    document.getElementById('loadMsg').textContent=lang==='es'?('Buscando reels de @'+user+' de los últimos '+days+(days===1?' día':' días')+'. Instagram tarda bastante más: esto puede llevar varios minutos. No cierres la página.'):('Getting reels from @'+user+' from the last '+days+' day(s). Instagram is much slower: this can take several minutes. Do not close the page.');
     apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform=instagram&days='+days+'&email='+encodeURIComponent(em);
   }else{
     document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
@@ -372,14 +621,50 @@ function fetchLinks(){
   }
 
   fetch(apiUrl)
-  .then(function(res){return res.json();})
-  .then(function(data){
+  .then(function(res){return res.json().then(function(d){return {ok:res.ok,data:d};});})
+  .then(function(r){
+    var data=r.data;
+    // Errores de creditos / plan / login
+    if(data.error==='sin_creditos'){
+      var wc=document.getElementById('warnBox');
+      wc.textContent=lang==='es'?'Te has quedado sin créditos de Instagram. Recarga para seguir.':'You have run out of Instagram credits. Top up to continue.';
+      wc.style.display='block';
+      pintarCreditos(0);
+      openPlanes();
+      return;
+    }
+    if(data.error==='plan_insuficiente'){
+      var wp=document.getElementById('warnBox');
+      wp.textContent=data.mensaje||'Mejora tu plan para más días.';
+      wp.style.display='block';
+      openPlanes();
+      return;
+    }
+    if(data.error==='login_requerido'){
+      var wq=document.getElementById('warnBox');
+      wq.textContent=lang==='es'?'🔒 Inicia sesión con Google para usar Instagram.':'🔒 Sign in with Google to use Instagram.';
+      wq.style.display='block';
+      return;
+    }
     if(data.error){throw new Error(data.error);}
-    if(platform==='instagram' && data.links.length===0){
-      var wi=document.getElementById('warnBox');
-      wi.textContent=lang==='es'?('No se encontraron reels de @'+user+' en los últimos '+days+(days===1?' día':' días')+'. Prueba con más días.'):('No reels found for @'+user+' in the last '+days+' day(s). Try more days.');
-      wi.style.display='block';
-    }else if(platform!=='instagram' && data.links.length<count){
+
+    if(platform==='instagram'){
+      // Actualizar creditos
+      if(typeof data.creditos_restantes!=='undefined'){
+        miCuenta.creditos=data.creditos_restantes;
+        pintarCreditos(data.creditos_restantes);
+      }
+      if(data.links.length===0){
+        var wi=document.getElementById('warnBox');
+        wi.textContent=lang==='es'?('No se encontraron reels de @'+user+' en los últimos '+days+(days===1?' día':' días')+'. Prueba con más días.'):('No reels found for @'+user+' in the last '+days+' day(s). Try more days.');
+        wi.style.display='block';
+      }else if(data.cortado_por_creditos){
+        var wx=document.getElementById('warnBox');
+        wx.textContent=lang==='es'?('⚠️ Se agotaron tus créditos a mitad de la búsqueda: puede que haya más reels. Recarga para obtenerlos todos.'):('⚠️ Your credits ran out mid-search: there may be more reels. Top up to get them all.');
+        wx.style.display='block';
+      }
+      mostrarStats(data.stats);
+    }else if(data.links.length<count){
       var w=document.getElementById('warnBox');
       w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'.');
       w.style.display='block';
@@ -393,6 +678,33 @@ function fetchLinks(){
     w.style.display='block';
   })
   .finally(function(){document.getElementById('loadBox').style.display='none';});
+}
+function mostrarStats(s){
+  if(!s){ document.getElementById('statsBox').style.display='none'; return; }
+  var g=document.getElementById('statsGrid');
+  var items=[
+    {v:s.total, l:lang==='es'?'Reels':'Reels'},
+    {v:fmtNum(s.media_likes), l:lang==='es'?'Media de likes':'Avg. likes'},
+    {v:fmtNum(s.media_coment), l:lang==='es'?'Media comentarios':'Avg. comments'},
+    {v:s.por_dia, l:lang==='es'?'Reels por día':'Reels per day'}
+  ];
+  g.innerHTML=items.map(function(i){
+    return '<div class="stat-item"><div class="stat-val">'+i.v+'</div><div class="stat-lbl">'+i.l+'</div></div>';
+  }).join('');
+  var t=document.getElementById('statsTop');
+  if(s.top && s.top.length){
+    t.innerHTML='<div class="stats-title" style="margin-bottom:6px;">'+(lang==='es'?'Más virales':'Most viral')+'</div>'+
+      s.top.map(function(r,i){
+        return '<a href="'+r.url+'" target="_blank" rel="noopener">'+(i+1)+'. '+fmtNum(r.likes)+' likes</a>';
+      }).join('');
+  }else{ t.innerHTML=''; }
+  document.getElementById('statsBox').style.display='block';
+}
+function fmtNum(n){
+  n=parseInt(n||0,10);
+  if(n>=1000000)return (n/1000000).toFixed(1).replace('.',',')+'M';
+  if(n>=1000)return (n/1000).toFixed(1).replace('.',',')+'K';
+  return n;
 }
 function checkLoginPrompt(){
   var logged=false; try{logged=!!localStorage.getItem('clipuser');}catch(e){}
