@@ -142,6 +142,14 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 #planesModal .modal-btns { display: flex; justify-content: center; margin-top: 22px; }
 #planesModal .mbtn.cancel { background: rgba(255,255,255,0.06); color: #C9CCD4; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 26px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; }
 #planesModal .mbtn.cancel:hover { background: rgba(255,255,255,0.12); color: #FFF; }
+.login-modal { max-width: 380px; text-align: center; padding: 30px 26px 24px; }
+.login-modal h3 { margin: 0 0 8px; font-size: 18px; }
+.login-sub { font-size: 13px; color: #8A8E99; line-height: 1.55; margin: 0 0 20px; }
+.login-slot { display: block; width: 100%; min-height: 44px; }
+.login-slot > div, .login-slot iframe { width: 100% !important; margin: 0 auto !important; }
+.login-slot [role="button"] { width: 100% !important; height: 46px !important; border-radius: 999px !important; }
+.login-cerrar { margin-top: 16px; background: none; border: none; color: #6E7280; font-size: 12.5px; cursor: pointer; font-family: inherit; text-decoration: underline; }
+.login-cerrar:hover { color: #9AA0AC; }
 .planes-modal { max-width: 780px; padding: 32px 30px 26px; }
 .planes-modal h3 { margin: 0 0 9px; font-size: 22px; }
 .planes-sub { font-size: 12.5px; color: #8A8E99; line-height: 1.6; margin: 0 0 26px; max-width: 540px; }
@@ -321,6 +329,15 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 </div>
 <div class="foot">ClipLinks</div>
 
+<div class="modal-bg" id="loginModal">
+  <div class="modal login-modal">
+    <h3 data-es="Inicia sesión para usar Instagram" data-en="Sign in to use Instagram">Inicia sesión para usar Instagram</h3>
+    <p class="login-sub" data-es="Necesitas una cuenta para extraer reels de Instagram." data-en="You need an account to extract Instagram reels.">Necesitas una cuenta para extraer reels de Instagram.</p>
+    <div class="login-slot" id="loginSlot"></div>
+    <button class="login-cerrar" onclick="closeLogin()" data-es="Ahora no" data-en="Not now">Ahora no</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="planesModal">
   <div class="modal planes-modal">
     <h3 data-es="Créditos de Instagram" data-en="Instagram credits">Créditos de Instagram</h3>
@@ -400,6 +417,8 @@ function handleCredential(resp){
   try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email}));}catch(e){}
   try{fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})});}catch(e){}
   renderAuth();
+  closeLogin();
+  if(platform==='instagram'){ setTimeout(cargarCuenta,400); }
 }
 function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById('userMenu'); if(m){m.classList.toggle('open');} }
 document.addEventListener('click',function(){
@@ -534,6 +553,19 @@ function setDays(el,val){
   el.classList.add('active');
   days=val;
 }
+function openLogin(){
+  document.getElementById('loginModal').classList.add('open');
+  try{
+    var slot=document.getElementById('loginSlot');
+    slot.innerHTML='';
+    if(window.google&&google.accounts&&google.accounts.id){
+      var ancho=Math.min(slot.offsetWidth||300,360);
+      google.accounts.id.renderButton(slot,{theme:'outline',size:'large',text:'continue_with',shape:'pill',width:ancho,logo_alignment:'left'});
+      google.accounts.id.prompt();
+    }
+  }catch(e){}
+}
+function closeLogin(){ document.getElementById('loginModal').classList.remove('open'); }
 function openPlanes(){ document.getElementById('planesModal').classList.add('open'); calcRecarga(); }
 function closePlanes(){ document.getElementById('planesModal').classList.remove('open'); }
 function calcRecarga(){
@@ -596,11 +628,7 @@ function fetchLinks(){
 
   // Instagram exige iniciar sesion
   if(platform==='instagram' && !em){
-    var wl=document.getElementById('warnBox');
-    wl.textContent=lang==='es'?'🔒 Inicia sesión con Google para usar Instagram. TikTok y YouTube siguen siendo gratis.':'🔒 Sign in with Google to use Instagram. TikTok and YouTube remain free.';
-    wl.style.display='block';
-    document.getElementById('resultBox').style.display='none';
-    try{ if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.prompt();} }catch(e){}
+    openLogin();
     return;
   }
 
@@ -641,9 +669,7 @@ function fetchLinks(){
       return;
     }
     if(data.error==='login_requerido'){
-      var wq=document.getElementById('warnBox');
-      wq.textContent=lang==='es'?'🔒 Inicia sesión con Google para usar Instagram.':'🔒 Sign in with Google to use Instagram.';
-      wq.style.display='block';
+      openLogin();
       return;
     }
     if(data.error){throw new Error(data.error);}
@@ -772,6 +798,7 @@ function sendContact(){
   .catch(function(){ alert(lang==='es'?'No se pudo enviar. Inténtalo de nuevo.':'Could not send.'); });
 }
 document.getElementById('contactModal').addEventListener('click',function(e){ if(e.target===this){ closeContact(); } });
+document.getElementById('loginModal').addEventListener('click',function(e){ if(e.target===this){ closeLogin(); } });
 
 window.addEventListener('load', renderAuth);
 applyLang();
