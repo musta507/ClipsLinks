@@ -103,7 +103,9 @@ function entrar(){
 }
 function esc(s){return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s;return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
+var IPS_FORZADAS=[];
 function render(d){
+  IPS_FORZADAS=d.forced_ips||[];
   if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+d.error+'</div>';return;}
   var maxDay=1; (d.daily||[]).forEach(function(x){if(x.count>maxDay)maxDay=x.count;});
   var maxPlat=1; (d.platforms||[]).forEach(function(x){if(x.count>maxPlat)maxPlat=x.count;});
@@ -127,9 +129,15 @@ function render(d){
   h+='<div class="tab" onclick="tab(5)">📈 Por día</div>';
   h+='<div class="tab" onclick="tab(6)">✉️ Mensajes</div>';
   h+='</div>';
-  h+='<div class="section active"><div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
+  h+='<div class="section active"><div class="card"><h2>Últimas búsquedas</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Pulsa «Forzar login» junto a una IP anónima para obligarle a iniciar sesión.</p><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Login obligatorio</th><th>Fecha</th></tr>';
   (d.history||[]).forEach(function(x){
-    h+='<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td class="muted">'+fecha(x.date)+'</td></tr>';
+    var anon=!x.user_email;
+    var ipx=esc(x.ip||'');
+    var yaF=IPS_FORZADAS.indexOf(x.ip)>-1;
+    var btn=anon&&ipx
+      ? '<button class="mini '+(yaF?'on':'')+'" onclick="toggleIP(\''+ipx+'\','+(yaF?'false':'true')+')">'+(yaF?'Activado':'Forzar login')+'</button>'
+      : '<span class="muted" style="font-size:11px">—</span>';
+    h+='<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+ipx+'</td><td>'+btn+'</td><td class="muted">'+fecha(x.date)+'</td></tr>';
   });
   h+='</table></div></div>';
   h+='<div class="section"><div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
@@ -163,6 +171,14 @@ function render(d){
   document.getElementById('content').innerHTML=h;
   loadUsuarios(); loadPagos();
 }
+function toggleIP(ip,activar){
+  fetch(API+'/forzar-ip?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip:ip,activar:(activar==='true'||activar===true)})})
+    .then(function(r){return r.json();})
+    .then(function(){ recargarStats(); });
+}
+function recargarStats(){
+  fetch(API+'/stats?pw='+encodeURIComponent(PW)).then(function(r){return r.json();}).then(function(d){ render(d); loadMessages(); });
+}
 /* ===== USUARIOS Y CREDITOS ===== */
 function claseCred(n){ if(n>50)return 'alto'; if(n>10)return 'medio'; return 'bajo'; }
 function loadUsuarios(){
@@ -173,7 +189,7 @@ function loadUsuarios(){
       if(!area)return;
       if(!d.usuarios||d.usuarios.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
       var h='<div class="card"><h2>Usuarios registrados ('+d.usuarios.length+')</h2><table>';
-      h+='<tr><th>Usuario</th><th>Créditos</th><th>Plan</th><th>Búsquedas</th><th>Créditos</th><th>Plan</th><th>Login obligatorio</th></tr>';
+      h+='<tr><th>Usuario</th><th>Créditos</th><th>Plan</th><th>Búsquedas</th><th>Dar créditos</th><th>Cambiar plan</th></tr>';
       d.usuarios.forEach(function(u){
         var pic=u.picture?'<img class="av" src="'+esc(u.picture)+'" referrerpolicy="no-referrer">':'';
         var em=esc(u.email);
@@ -190,8 +206,6 @@ function loadUsuarios(){
         h+='<td><select class="sel" onchange="cambiarPlan(\''+em+'\',this.value)">'
           +opt('gratis',u.plan)+opt('starter',u.plan)+opt('pro',u.plan)+opt('agency',u.plan)
           +'</select></td>';
-        h+='<td><button class="mini '+(u.forzar_login?'on':'')+'" onclick="toggleForzar(\''+em+'\','+(u.forzar_login?'false':'true')+')">'
-          +(u.forzar_login?'Activado':'Forzar login')+'</button></td>';
         h+='</tr>';
       });
       h+='</table></div>';
