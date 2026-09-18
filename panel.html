@@ -14,11 +14,12 @@ h1{font-size:24px;margin-bottom:4px}
 .kpi .num{font-size:30px;font-weight:700;color:#fff}
 .kpi .lbl{font-size:12.5px;color:#8A8E99;margin-top:4px}
 .kpi.alert .num{color:#E8B33E}
+.kpi.money .num{color:#4CC97B}
 .card{background:#1A1A22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px}
 .card h2{font-size:16px;margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;color:#8A8E99;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05);vertical-align:top}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05);vertical-align:middle}
 tr:hover td{background:rgba(255,255,255,0.03)}
 .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(88,101,242,0.15);color:#A5AEFF}
 .email{color:#4CC97B}
@@ -51,6 +52,25 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 .msg-done{height:34px;padding:0 14px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:transparent;color:#A9ADB8;font-size:13px;cursor:pointer}
 .badge-pending{background:rgba(232,179,62,0.15);color:#E8B33E;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .badge-done{background:rgba(35,165,90,0.15);color:#4CC97B;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+/* Usuarios y pagos */
+.cred{font-weight:700;font-size:14px}
+.cred.alto{color:#4CC97B}
+.cred.medio{color:#E8B33E}
+.cred.bajo{color:#E5484D}
+.plan-tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.plan-gratis{background:rgba(255,255,255,0.07);color:#8A8E99}
+.plan-starter{background:rgba(88,101,242,0.15);color:#A5AEFF}
+.plan-pro{background:rgba(232,179,62,0.15);color:#E8B33E}
+.plan-agency{background:rgba(35,165,90,0.15);color:#4CC97B}
+.acc{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mini{height:28px;padding:0 10px;border:1px solid rgba(255,255,255,0.12);border-radius:7px;background:transparent;color:#A9ADB8;font-size:12px;cursor:pointer;white-space:nowrap}
+.mini:hover{background:rgba(255,255,255,0.06);color:#fff}
+.mini.on{background:rgba(229,72,77,0.15);border-color:rgba(229,72,77,0.4);color:#E5484D}
+.mini.give{border-color:rgba(76,201,123,0.35);color:#4CC97B}
+.sel{height:28px;border:1px solid rgba(255,255,255,0.12);border-radius:7px;background:#0F0F14;color:#A9ADB8;font-size:12px;padding:0 6px;cursor:pointer}
+.est{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.est-pagado{background:rgba(35,165,90,0.15);color:#4CC97B}
+.est-pendiente{background:rgba(232,179,62,0.15);color:#E8B33E}
 </style>
 </head>
 <body>
@@ -77,7 +97,7 @@ function entrar(){
     .then(function(d){
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('dashboard').style.display='block';
-      render(d); loadMessages();
+      render(d); loadMessages(); loadUsuarios(); loadPagos();
     })
     .catch(function(){ document.getElementById('pwErr').style.display='block'; });
 }
@@ -96,13 +116,16 @@ function render(d){
   h+=kpi(d.unique_ips,'IPs únicas');
   h+=kpi(d.logged_users,'Usuarios logueados');
   h+=kpi(d.pending_msgs,'Mensajes sin leer',true);
+  h+='<div class="kpi money" id="kpiDinero"><div class="num">—</div><div class="lbl">Cobrado ($)</div></div>';
   h+='</div>';
   h+='<div class="tabs">';
   h+='<div class="tab active" onclick="tab(0)">📜 Historial</div>';
   h+='<div class="tab" onclick="tab(1)">👤 Cuentas</div>';
-  h+='<div class="tab" onclick="tab(2)">🔥 Rankings</div>';
-  h+='<div class="tab" onclick="tab(3)">📈 Por día</div>';
-  h+='<div class="tab" onclick="tab(4)">✉️ Mensajes</div>';
+  h+='<div class="tab" onclick="tab(2)">💳 Usuarios y créditos</div>';
+  h+='<div class="tab" onclick="tab(3)">💰 Pagos</div>';
+  h+='<div class="tab" onclick="tab(4)">🔥 Rankings</div>';
+  h+='<div class="tab" onclick="tab(5)">📈 Por día</div>';
+  h+='<div class="tab" onclick="tab(6)">✉️ Mensajes</div>';
   h+='</div>';
   h+='<div class="section active"><div class="card"><h2>Últimas búsquedas</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>';
   (d.history||[]).forEach(function(x){
@@ -119,6 +142,8 @@ function render(d){
     h+='<tr><td class="email">'+esc(u.email)+'</td><td>'+u.searches+'</td><td class="muted">'+fecha(u.last)+'</td></tr>';
   });
   h+='</table></div></div>';
+  h+='<div class="section"><div id="usrArea" class="loading">Cargando usuarios...</div></div>';
+  h+='<div class="section"><div id="pagArea" class="loading">Cargando pagos...</div></div>';
   h+='<div class="section"><div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
   (d.top_profiles||[]).forEach(function(p){
     h+='<tr><td>@'+esc(p.username)+'</td><td><span class="pill">'+esc(p.platform)+'</span></td><td>'+p.count+'</td></tr>';
@@ -136,6 +161,85 @@ function render(d){
   h+='<div class="section"><div id="msgArea" class="loading">Cargando mensajes...</div></div>';
   document.getElementById('content').className='';
   document.getElementById('content').innerHTML=h;
+  loadUsuarios(); loadPagos();
+}
+/* ===== USUARIOS Y CREDITOS ===== */
+function claseCred(n){ if(n>50)return 'alto'; if(n>10)return 'medio'; return 'bajo'; }
+function loadUsuarios(){
+  fetch(API+'/usuarios?pw='+encodeURIComponent(PW))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var area=document.getElementById('usrArea');
+      if(!area)return;
+      if(!d.usuarios||d.usuarios.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
+      var h='<div class="card"><h2>Usuarios registrados ('+d.usuarios.length+')</h2><table>';
+      h+='<tr><th>Usuario</th><th>Créditos</th><th>Plan</th><th>Búsquedas</th><th>Créditos</th><th>Plan</th><th>Login obligatorio</th></tr>';
+      d.usuarios.forEach(function(u){
+        var pic=u.picture?'<img class="av" src="'+esc(u.picture)+'" referrerpolicy="no-referrer">':'';
+        var em=esc(u.email);
+        h+='<tr>';
+        h+='<td>'+pic+'<span class="email">'+em+'</span></td>';
+        h+='<td><span class="cred '+claseCred(u.creditos)+'">'+u.creditos+'</span></td>';
+        h+='<td><span class="plan-tag plan-'+esc(u.plan)+'">'+esc(u.plan)+'</span></td>';
+        h+='<td class="muted">'+u.busquedas+'</td>';
+        h+='<td><div class="acc">'
+          +'<button class="mini give" onclick="darCreditos(\''+em+'\',500)">+500</button>'
+          +'<button class="mini give" onclick="darCreditos(\''+em+'\',1000)">+1000</button>'
+          +'<button class="mini" onclick="pedirCreditos(\''+em+'\')">Otro</button>'
+          +'</div></td>';
+        h+='<td><select class="sel" onchange="cambiarPlan(\''+em+'\',this.value)">'
+          +opt('gratis',u.plan)+opt('starter',u.plan)+opt('pro',u.plan)+opt('agency',u.plan)
+          +'</select></td>';
+        h+='<td><button class="mini '+(u.forzar_login?'on':'')+'" onclick="toggleForzar(\''+em+'\','+(u.forzar_login?'false':'true')+')">'
+          +(u.forzar_login?'Activado':'Forzar login')+'</button></td>';
+        h+='</tr>';
+      });
+      h+='</table></div>';
+      area.className=''; area.innerHTML=h;
+    }).catch(function(){});
+}
+function opt(v,actual){ return '<option value="'+v+'"'+(v===actual?' selected':'')+'>'+v+'</option>'; }
+function darCreditos(email,cantidad){
+  fetch(API+'/dar-creditos?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,cantidad:cantidad})})
+    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
+}
+function pedirCreditos(email){
+  var n=prompt('¿Cuántos créditos? (pon un número negativo para quitar)','500');
+  if(n===null)return;
+  n=parseInt(n,10); if(isNaN(n))return;
+  darCreditos(email,n);
+}
+function cambiarPlan(email,plan){
+  if(!confirm('¿Cambiar a '+email+' al plan '+plan+'?')){ loadUsuarios(); return; }
+  fetch(API+'/cambiar-plan?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
+    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
+}
+function toggleForzar(email,activar){
+  fetch(API+'/forzar-login?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,activar:activar==='true'||activar===true})})
+    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
+}
+/* ===== PAGOS ===== */
+function loadPagos(){
+  fetch(API+'/pagos?pw='+encodeURIComponent(PW))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var k=document.getElementById('kpiDinero');
+      if(k){ k.querySelector('.num').textContent='$'+(d.total_cobrado||0).toFixed(2); }
+      var area=document.getElementById('pagArea');
+      if(!area)return;
+      if(!d.pagos||d.pagos.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">Todavía no hay pagos.</p></div>'; return; }
+      var h='<div class="card"><h2>Pagos recibidos — total cobrado: $'+(d.total_cobrado||0).toFixed(2)+'</h2><table>';
+      h+='<tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Créditos</th><th>Importe</th><th>Método</th><th>Estado</th></tr>';
+      d.pagos.forEach(function(p){
+        h+='<tr><td class="muted">'+fecha(p.fecha)+'</td><td class="email">'+esc(p.email)+'</td>'
+          +'<td><span class="plan-tag plan-'+esc(p.plan)+'">'+esc(p.plan)+'</span></td>'
+          +'<td>'+p.creditos+'</td><td>$'+p.importe.toFixed(2)+'</td>'
+          +'<td class="muted">'+esc(p.metodo)+'</td>'
+          +'<td><span class="est est-'+(p.estado==='pagado'?'pagado':'pendiente')+'">'+esc(p.estado)+'</span></td></tr>';
+      });
+      h+='</table></div>';
+      area.className=''; area.innerHTML=h;
+    }).catch(function(){});
 }
 function loadMessages(){
   fetch(API+'/messages?pw='+encodeURIComponent(PW))
