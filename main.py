@@ -400,6 +400,131 @@ def mark_replied():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/usuarios')
+def usuarios_panel():
+    """Lista de usuarios con sus creditos y plan (para el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''SELECT u.email, u.name, u.picture, u.creditos, u.plan,
+                              u.plan_renueva, u.forzar_login, u.created_at,
+                              (SELECT COUNT(*) FROM searches s WHERE s.user_email = u.email) as busquedas
+                       FROM users u ORDER BY u.created_at DESC LIMIT 5000''')
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'usuarios': [{
+            'email': f[0], 'name': f[1] or '', 'picture': f[2] or '',
+            'creditos': f[3] or 0, 'plan': f[4] or 'gratis',
+            'renueva': str(f[5]) if f[5] else '',
+            'forzar_login': bool(f[6]),
+            'alta': str(f[7]) if f[7] else '',
+            'busquedas': f[8] or 0,
+        } for f in filas]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/dar-creditos', methods=['POST'])
+def dar_creditos():
+    """Suma o resta creditos a un usuario a mano (desde el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()
+        cantidad = int(data.get('cantidad', 0) or 0)
+        if not email:
+            return jsonify({'error': 'falta_email'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET creditos = GREATEST(creditos + %s, 0) WHERE email = %s RETURNING creditos',
+                    (cantidad, email))
+        fila = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not fila:
+            return jsonify({'error': 'usuario_no_encontrado'}), 404
+        return jsonify({'ok': True, 'creditos': fila[0]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/cambiar-plan', methods=['POST'])
+def cambiar_plan():
+    """Cambia el plan de un usuario a mano (desde el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()
+        plan = (data.get('plan', '') or '').strip()
+        if not email or plan not in PLANES:
+            return jsonify({'error': 'datos_invalidos'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        if plan == 'gratis':
+            cur.execute("UPDATE users SET plan = 'gratis', plan_renueva = NULL WHERE email = %s", (email,))
+        else:
+            cur.execute("""UPDATE users SET plan = %s, creditos = creditos + %s,
+                           plan_renueva = NOW() + INTERVAL '30 days' WHERE email = %s""",
+                        (plan, PLANES[plan]['creditos'], email))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/forzar-login', methods=['POST'])
+def forzar_login():
+    """Activa o desactiva el login obligatorio para un usuario (desde el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()
+        activar = bool(data.get('activar', True))
+        if not email:
+            return jsonify({'error': 'falta_email'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET forzar_login = %s WHERE email = %s', (activar, email))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True, 'forzar_login': activar})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/pagos')
+def pagos_panel():
+    """Lista de pagos recibidos (para el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''SELECT id, email, plan, creditos, importe, metodo, estado, created_at
+                       FROM payments ORDER BY created_at DESC LIMIT 500''')
+        filas = cur.fetchall()
+        cur.execute("SELECT COALESCE(SUM(importe),0) FROM payments WHERE estado = 'pagado'")
+        total = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'total_cobrado': float(total or 0),
+            'pagos': [{
+                'id': f[0], 'email': f[1] or '', 'plan': f[2] or '',
+                'creditos': f[3] or 0, 'importe': float(f[4] or 0),
+                'metodo': f[5] or '', 'estado': f[6] or '',
+                'fecha': str(f[7]) if f[7] else '',
+            } for f in filas]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/stats')
 def stats():
     if not check_password():
@@ -633,6 +758,28 @@ def get_links():
         return jsonify({'error': 'Usuario requerido'}), 400
 
     user = user.replace('@', '').strip()
+
+    # Si el admin ha forzado el login a este usuario, se le exige sesion
+    if user_email:
+        _u = get_user(user_email)
+        if _u and _u.get('forzar_login'):
+            pass  # ya tiene sesion iniciada, adelante
+    else:
+        # Sin sesion: comprobar si su IP esta marcada como forzada
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('''SELECT 1 FROM users u
+                           JOIN logins l ON l.email = u.email
+                           WHERE u.forzar_login = TRUE AND l.ip = %s LIMIT 1''', (ip,))
+            forzado = cur.fetchone() is not None
+            cur.close()
+            conn.close()
+        except:
+            forzado = False
+        if forzado:
+            return jsonify({'error': 'login_requerido',
+                            'mensaje': 'Inicia sesión para seguir usando ClipLinks'}), 401
 
     # Guardar la busqueda (para Instagram guardamos 'days' en count)
     try:
