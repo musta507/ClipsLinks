@@ -331,8 +331,8 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 
 <div class="modal-bg" id="loginModal">
   <div class="modal login-modal">
-    <h3 data-es="Inicia sesión para usar Instagram" data-en="Sign in to use Instagram">Inicia sesión para usar Instagram</h3>
-    <p class="login-sub" data-es="Necesitas una cuenta para extraer reels de Instagram." data-en="You need an account to extract Instagram reels.">Necesitas una cuenta para extraer reels de Instagram.</p>
+    <h3 id="loginTit">Inicia sesión para continuar</h3>
+    <p class="login-sub" id="loginSub">Necesitas una cuenta para seguir usando ClipLinks.</p>
     <div class="login-slot" id="loginSlot"></div>
     <button class="login-cerrar" onclick="closeLogin()" data-es="Ahora no" data-en="Not now">Ahora no</button>
   </div>
@@ -553,7 +553,15 @@ function setDays(el,val){
   el.classList.add('active');
   days=val;
 }
-function openLogin(){
+function openLogin(motivo){
+  var t=document.getElementById('loginTit'), sb=document.getElementById('loginSub');
+  if(motivo==='instagram'){
+    t.textContent = lang==='es' ? 'Inicia sesión para usar Instagram' : 'Sign in to use Instagram';
+    sb.textContent = lang==='es' ? 'Necesitas una cuenta para extraer reels de Instagram.' : 'You need an account to extract Instagram reels.';
+  }else{
+    t.textContent = lang==='es' ? 'Inicia sesión para continuar' : 'Sign in to continue';
+    sb.textContent = lang==='es' ? 'Necesitas una cuenta para seguir usando ClipLinks.' : 'You need an account to keep using ClipLinks.';
+  }
   document.getElementById('loginModal').classList.add('open');
   try{
     var slot=document.getElementById('loginSlot');
@@ -628,7 +636,7 @@ function fetchLinks(){
 
   // Instagram exige iniciar sesion
   if(platform==='instagram' && !em){
-    openLogin();
+    openLogin('instagram');
     return;
   }
 
@@ -669,7 +677,7 @@ function fetchLinks(){
       return;
     }
     if(data.error==='login_requerido'){
-      openLogin();
+      openLogin(platform==='instagram'?'instagram':'forzado');
       return;
     }
     if(data.error){throw new Error(data.error);}
