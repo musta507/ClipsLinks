@@ -125,7 +125,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .opt.locked:hover { opacity: 0.75; }
 /* Creditos discretos: una linea pequeña a un lado */
 .cred-mini { display: flex; align-items: baseline; gap: 5px; justify-content: flex-end; font-size: 11.5px; color: #6E7280; margin-top: 10px; flex-wrap: wrap; }
-.cred-mini #credNum { font-weight: 700; font-size: 13px; color: #9AA0AC; }
+.cred-mini #credNum { font-weight: 700; font-size: 13px; color: #9AA0AC; margin-right: 4px; }
 .cred-mini #credNum.alto { color: #4CC97B; }
 .cred-mini #credNum.medio { color: #F5C451; }
 .cred-mini #credNum.bajo { color: #FF6B6B; }
@@ -133,7 +133,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .cred-mini a:hover { background: #F5C451; color: #14151A; border-color: #F5C451; }
 /* Cuando se acaban los creditos: grande y visible */
 .cred-mini.vacio { justify-content: center; font-size: 14px; color: #E8C878; background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); border-radius: 12px; padding: 12px 14px; }
-.cred-mini.vacio #credNum { font-size: 20px; color: #F5C451; }
+.cred-mini.vacio #credNum { font-size: 20px; color: #F5C451; margin-right: 6px; }
 .cred-mini.vacio a { color: #14151A; background: #F5C451; border: none; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 12.5px; margin-left: 8px; }
 .ig-warn { background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); color: #E8C878; border-radius: 12px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
 /* Botones del menu de pago */
@@ -186,9 +186,41 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
   .recarga-grp { width: 100%; }
   .recarga-grp input { flex: 1; width: auto; }
 }
-@media (max-width: 560px) {
-  .planes-grid { flex-direction: column; gap: 14px; }
-  .plan-card { padding: 16px 14px; }
+@media (max-width: 620px) {
+  .planes-modal { max-width: 100%; padding: 22px 16px 18px; border-radius: 16px; }
+  .planes-modal h3 { font-size: 18px; }
+  .planes-sub { font-size: 12px; margin-bottom: 18px; }
+  .planes-grid { flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .plan-card { padding: 16px 14px 14px; }
+  .plan-card.destacado { transform: none; }
+  .plan-badge { top: -8px; }
+  .plan-precio { font-size: 27px; margin-top: 6px; }
+  .plan-cred { margin-top: 8px; font-size: 14px; }
+  .plan-det { margin-bottom: 12px; }
+  .plan-btn { padding: 12px; }
+  .recarga { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .recarga-txt { align-items: flex-start; }
+  .recarga-grp { width: 100%; height: 40px; }
+  .recarga-grp > * { height: 38px; line-height: 38px; }
+  .recarga-grp input { flex: 1; width: auto; min-width: 0; }
+  .recarga-total { flex: 0 0 auto; }
+  .recarga-pay { flex: 0 0 auto; padding: 0 18px; font-size: 13px; }
+  #planesModal .modal-btns { margin-top: 16px; }
+  /* Creditos y dias */
+  .cred-mini { justify-content: center; font-size: 11px; }
+  .cred-mini.vacio { font-size: 13px; padding: 12px; }
+  .cred-mini.vacio a { display: block; margin: 8px auto 0; width: fit-content; }
+  .opt.locked { padding-right: 18px; }
+  .opt.locked .lock { top: 2px; right: 3px; font-size: 8px; }
+  /* Ventana de login */
+  .login-modal { max-width: 100%; padding: 26px 20px 20px; }
+  .login-modal h3 { font-size: 17px; }
+  .login-sub { font-size: 12.5px; }
+  /* Estadisticas */
+  .stats-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .stat-val { font-size: 17px; }
+  .stat-lbl { font-size: 10.5px; }
+  .stats-box { padding: 14px; }
 }
 /* Estadisticas */
 .stats-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
