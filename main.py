@@ -105,6 +105,14 @@ def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             )
         ''')
+        # ===== IPs forzadas a iniciar sesion (elegidas desde el panel) =====
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS forced_ips (
+                ip TEXT PRIMARY KEY,
+                nota TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
         conn.commit()
         cur.close()
         conn.close()
@@ -400,6 +408,46 @@ def mark_replied():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/forzar-ip', methods=['POST'])
+def forzar_ip():
+    """Activa o quita el login obligatorio para una IP concreta (desde el panel)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        ip_obj = (data.get('ip', '') or '').strip()
+        activar = bool(data.get('activar', True))
+        if not ip_obj:
+            return jsonify({'error': 'falta_ip'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        if activar:
+            cur.execute('INSERT INTO forced_ips (ip) VALUES (%s) ON CONFLICT (ip) DO NOTHING', (ip_obj,))
+        else:
+            cur.execute('DELETE FROM forced_ips WHERE ip = %s', (ip_obj,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True, 'ip': ip_obj, 'forzada': activar})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ips-forzadas')
+def ips_forzadas():
+    """Lista de IPs a las que se les exige iniciar sesion."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT ip, created_at FROM forced_ips ORDER BY created_at DESC LIMIT 1000')
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'ips': [{'ip': f[0], 'fecha': str(f[1]) if f[1] else ''} for f in filas]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/usuarios')
 def usuarios_panel():
     """Lista de usuarios con sus creditos y plan (para el panel)."""
@@ -588,6 +636,9 @@ def stats():
         cur.execute("SELECT COUNT(*) FROM messages WHERE replied = FALSE")
         pending_msgs = cur.fetchone()[0]
 
+        cur.execute("SELECT ip FROM forced_ips")
+        forced = [f[0] for f in cur.fetchall()]
+
         cur.close()
         conn.close()
 
@@ -599,6 +650,7 @@ def stats():
             'week': week,
             'month': month,
             'pending_msgs': pending_msgs,
+            'forced_ips': forced,
             'platforms': [{'name': p[0], 'count': p[1]} for p in platforms],
             'daily': [{'date': str(d[0]), 'count': d[1]} for d in daily],
             'top_profiles': [{'username': p[0], 'platform': p[1], 'count': p[2]} for p in top_profiles],
@@ -759,19 +811,12 @@ def get_links():
 
     user = user.replace('@', '').strip()
 
-    # Si el admin ha forzado el login a este usuario, se le exige sesion
-    if user_email:
-        _u = get_user(user_email)
-        if _u and _u.get('forzar_login'):
-            pass  # ya tiene sesion iniciada, adelante
-    else:
-        # Sin sesion: comprobar si su IP esta marcada como forzada
+    # Si no hay sesion y su IP esta en la lista de forzadas, se exige login
+    if not user_email:
         try:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute('''SELECT 1 FROM users u
-                           JOIN logins l ON l.email = u.email
-                           WHERE u.forzar_login = TRUE AND l.ip = %s LIMIT 1''', (ip,))
+            cur.execute('SELECT 1 FROM forced_ips WHERE ip = %s LIMIT 1', (ip,))
             forzado = cur.fetchone() is not None
             cur.close()
             conn.close()
