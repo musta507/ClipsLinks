@@ -53,24 +53,42 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 .badge-pending{background:rgba(232,179,62,0.15);color:#E8B33E;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .badge-done{background:rgba(35,165,90,0.15);color:#4CC97B;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
 /* Usuarios y pagos */
-.cred{font-weight:700;font-size:14px}
-.cred.alto{color:#4CC97B}
-.cred.medio{color:#E8B33E}
-.cred.bajo{color:#E5484D}
-.plan-tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-.plan-gratis{background:rgba(255,255,255,0.07);color:#8A8E99}
-.plan-starter{background:rgba(88,101,242,0.15);color:#A5AEFF}
-.plan-pro{background:rgba(232,179,62,0.15);color:#E8B33E}
-.plan-agency{background:rgba(35,165,90,0.15);color:#4CC97B}
 .acc{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .mini{height:28px;padding:0 10px;border:1px solid rgba(255,255,255,0.12);border-radius:7px;background:transparent;color:#A9ADB8;font-size:12px;cursor:pointer;white-space:nowrap}
 .mini:hover{background:rgba(255,255,255,0.06);color:#fff}
 .mini.on{background:rgba(229,72,77,0.15);border-color:rgba(229,72,77,0.4);color:#E5484D}
 .mini.give{border-color:rgba(76,201,123,0.35);color:#4CC97B}
-.sel{height:28px;border:1px solid rgba(255,255,255,0.12);border-radius:7px;background:#0F0F14;color:#A9ADB8;font-size:12px;padding:0 6px;cursor:pointer}
-.est{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.est-pagado{background:rgba(35,165,90,0.15);color:#4CC97B}
-.est-pendiente{background:rgba(232,179,62,0.15);color:#E8B33E}
+.est{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.est-pagado,.est-activa{background:rgba(35,165,90,0.15);color:#4CC97B}
+.est-pendiente,.est-debe{background:rgba(232,179,62,0.15);color:#E8B33E}
+.est-gratis{background:rgba(255,255,255,0.07);color:#8A8E99}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.inp{height:36px;padding:0 12px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:#0F0F14;color:#fff;font-size:14px;outline:none}
+.inp:focus{border-color:#5865F2}
+.btn{height:36px;padding:0 16px;border:none;border-radius:8px;background:#5865F2;color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.tab .cnt{display:inline-block;min-width:18px;margin-left:6px;padding:0 6px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;text-align:center}
+.tblwrap{overflow-x:auto}
+.chat{display:flex;height:560px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;background:#1A1A22}
+.convs{width:300px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.08);overflow-y:auto}
+.conv{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer}
+.conv:hover{background:rgba(255,255,255,0.03)}
+.conv.sel{background:rgba(88,101,242,0.15)}
+.conv img,.conv .ph{width:34px;height:34px;border-radius:50%;margin-right:10px;flex-shrink:0;background:#2A2A35}
+.conv-txt{flex:1;min-width:0}
+.conv-n{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-l{font-size:12px;color:#8A8E99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .cnt{min-width:20px;height:20px;margin-left:8px;padding:0 6px;border-radius:10px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.hilo{flex:1;display:flex;flex-direction:column;min-width:0}
+.hilo-head{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:14px;font-weight:600}
+.hilo-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column}
+.b{max-width:75%;margin-bottom:8px;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.b small{display:block;margin-top:3px;font-size:10.5px;opacity:.6}
+.b.user{align-self:flex-start;background:#2A2A35}
+.b.admin{align-self:flex-end;background:#5865F2;color:#fff}
+.hilo-form{display:flex;padding:10px;border-top:1px solid rgba(255,255,255,0.08)}
+.hilo-form textarea{flex:1;height:44px;margin-right:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:#0F0F14;color:#fff;font-size:14px;font-family:inherit;resize:none;outline:none}
+.vacio{margin:auto;color:#8A8E99;font-size:14px;text-align:center}
+@media (max-width:700px){body{padding:14px}.chat{flex-direction:column;height:auto}.convs{width:auto;max-height:220px;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}.hilo{height:460px}}
 </style>
 </head>
 <body>
@@ -89,199 +107,264 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 <script>
 var API='https://web-production-db182.up.railway.app';
 var PW='';
+var TAB=0;
+var S={}; // ultimas stats
+function q(path){ return API+path+(path.indexOf('?')>-1?'&':'?')+'pw='+encodeURIComponent(PW); }
+function post(path,body){
+  return fetch(q(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json();});
+}
 function entrar(){
   PW=document.getElementById('pwInput').value.trim();
   if(!PW)return;
-  fetch(API+'/stats?pw='+encodeURIComponent(PW))
+  fetch(q('/stats'))
     .then(function(r){ if(r.status===401){throw new Error('unauthorized');} return r.json(); })
     .then(function(d){
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('dashboard').style.display='block';
-      render(d); loadMessages(); loadUsuarios(); loadPagos();
+      render(d);
+      setInterval(refrescarChat,10000);
     })
     .catch(function(){ document.getElementById('pwErr').style.display='block'; });
 }
-function esc(s){return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function js(s){return esc(String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"));}
 function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s;return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
-var IPS_FORZADAS=[];
+function dia(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s.slice(0,10);return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});}
+function kpi(num,lbl,cls,id){return '<div class="kpi'+(cls?' '+cls:'')+'"'+(id?' id="'+id+'"':'')+'><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
+
+var TABS=['📜 Historial','💬 Chat soporte','💳 Usuarios y suscripciones','⛔ Perfiles bloqueados','💰 Pagos y planes','👤 Cuentas','🔥 Rankings','📈 Por día','✉️ Mensajes antiguos'];
+
 function render(d){
-  IPS_FORZADAS=d.forced_ips||[];
-  if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+d.error+'</div>';return;}
+  if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+esc(d.error)+'</div>';return;}
+  S=d;
+  var IPS=d.forced_ips||[], BLOQ=d.blocked_profiles||[];
   var maxDay=1; (d.daily||[]).forEach(function(x){if(x.count>maxDay)maxDay=x.count;});
   var maxPlat=1; (d.platforms||[]).forEach(function(x){if(x.count>maxPlat)maxPlat=x.count;});
-  var h='';
-  h+='<div class="grid">';
+  var h='<div class="grid">';
   h+=kpi(d.total,'Búsquedas totales');
   h+=kpi(d.today,'Hoy');
   h+=kpi(d.week,'Últimos 7 días');
-  h+=kpi(d.month,'Últimos 30 días');
   h+=kpi(d.unique_ips,'IPs únicas');
   h+=kpi(d.logged_users,'Usuarios logueados');
-  h+=kpi(d.pending_msgs,'Mensajes sin leer',true);
+  h+=kpi(d.suscritos,'Suscripciones activas','money');
+  h+=kpi(d.chat_no_leidos,'Chats sin leer','alert');
   h+='<div class="kpi money" id="kpiDinero"><div class="num">—</div><div class="lbl">Cobrado ($)</div></div>';
+  h+='</div><div class="tabs">';
+  TABS.forEach(function(t,i){
+    var extra=(i===1&&d.chat_no_leidos)?'<span class="cnt">'+d.chat_no_leidos+'</span>':'';
+    h+='<div class="tab'+(i===TAB?' active':'')+'" onclick="tab('+i+')">'+t+extra+'</div>';
+  });
   h+='</div>';
-  h+='<div class="tabs">';
-  h+='<div class="tab active" onclick="tab(0)">📜 Historial</div>';
-  h+='<div class="tab" onclick="tab(1)">👤 Cuentas</div>';
-  h+='<div class="tab" onclick="tab(2)">💳 Usuarios y créditos</div>';
-  h+='<div class="tab" onclick="tab(3)">💰 Pagos</div>';
-  h+='<div class="tab" onclick="tab(4)">🔥 Rankings</div>';
-  h+='<div class="tab" onclick="tab(5)">📈 Por día</div>';
-  h+='<div class="tab" onclick="tab(6)">✉️ Mensajes</div>';
-  h+='</div>';
-  h+='<div class="section active"><div class="card"><h2>Últimas búsquedas</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Pulsa «Forzar login» junto a una IP anónima para obligarle a iniciar sesión.</p><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Login obligatorio</th><th>Fecha</th></tr>';
-  (d.history||[]).forEach(function(x){
-    var anon=!x.user_email;
-    var ipx=esc(x.ip||'');
-    var yaF=IPS_FORZADAS.indexOf(x.ip)>-1;
-    var btn=anon&&ipx
-      ? '<button class="mini '+(yaF?'on':'')+'" onclick="toggleIP(\''+ipx+'\','+(yaF?'false':'true')+')">'+(yaF?'Activado':'Forzar login')+'</button>'
-      : '<span class="muted" style="font-size:11px">—</span>';
-    h+='<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+ipx+'</td><td>'+btn+'</td><td class="muted">'+fecha(x.date)+'</td></tr>';
-  });
-  h+='</table></div></div>';
-  h+='<div class="section"><div class="card"><h2>Cuentas que han iniciado sesión</h2><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>';
-  (d.accounts||[]).forEach(function(a){
-    var pic=a.picture?'<img class="av" src="'+esc(a.picture)+'" referrerpolicy="no-referrer">':'';
-    h+='<tr><td>'+pic+esc(a.name||'—')+'</td><td class="email">'+esc(a.email)+'</td><td>'+a.logins+'</td><td class="muted">'+fecha(a.last_login)+'</td></tr>';
-  });
-  h+='</table></div><div class="card"><h2>Actividad por usuario</h2><table><tr><th>Email</th><th>Búsquedas</th><th>Última</th></tr>';
-  (d.user_activity||[]).forEach(function(u){
-    h+='<tr><td class="email">'+esc(u.email)+'</td><td>'+u.searches+'</td><td class="muted">'+fecha(u.last)+'</td></tr>';
-  });
-  h+='</table></div></div>';
-  h+='<div class="section"><div id="usrArea" class="loading">Cargando usuarios...</div></div>';
-  h+='<div class="section"><div id="pagArea" class="loading">Cargando pagos...</div></div>';
-  h+='<div class="section"><div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>';
-  (d.top_profiles||[]).forEach(function(p){
-    h+='<tr><td>@'+esc(p.username)+'</td><td><span class="pill">'+esc(p.platform)+'</span></td><td>'+p.count+'</td></tr>';
-  });
-  h+='</table></div><div class="card"><h2>Plataformas</h2>';
-  (d.platforms||[]).forEach(function(p){
-    h+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>'+esc(p.name)+'</span><span class="muted">'+p.count+'</span></div><div class="bar"><span style="width:'+Math.round(p.count/maxPlat*100)+'%"></span></div></div>';
-  });
-  h+='</div></div>';
-  h+='<div class="section"><div class="card"><h2>Búsquedas por día (últimos 30)</h2>';
-  (d.daily||[]).forEach(function(x){
-    h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span class="muted">'+esc(x.date)+'</span><span>'+x.count+'</span></div><div class="bar"><span style="width:'+Math.round(x.count/maxDay*100)+'%"></span></div></div>';
-  });
-  h+='</div></div>';
-  h+='<div class="section"><div id="msgArea" class="loading">Cargando mensajes...</div></div>';
+
+  // 0 Historial
+  h+=sec(0,'<div class="card"><h2>Últimas búsquedas</h2><p class="muted" style="font-size:12px;margin-bottom:12px">«Forzar login» obliga a esa IP anónima a entrar. «Bloquear @» hace que quien busque ese perfil tenga que entrar y pagar.</p><div class="tblwrap"><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Acciones</th><th>Fecha</th></tr>'+
+    (d.history||[]).map(function(x){
+      var anon=!x.user_email, yaF=IPS.indexOf(x.ip)>-1, yaB=BLOQ.indexOf((x.username||'').toLowerCase())>-1;
+      var b1=anon&&x.ip?'<button class="mini '+(yaF?'on':'')+'" onclick="toggleIP(\''+js(x.ip)+'\','+(!yaF)+')">'+(yaF?'Login forzado':'Forzar login')+'</button>':'';
+      var b2='<button class="mini '+(yaB?'on':'')+'" onclick="bloquear(\''+js(x.username)+'\','+(!yaB)+')">'+(yaB?'@ bloqueado':'Bloquear @')+'</button>';
+      return '<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td><div class="acc">'+b1+b2+'</div></td><td class="muted">'+fecha(x.date)+'</td></tr>';
+    }).join('')+'</table></div></div>');
+
+  // 1 Chat
+  h+=sec(1,'<div class="chat"><div class="convs" id="convs"><div class="vacio" style="padding:30px 10px">Cargando...</div></div><div class="hilo"><div class="hilo-head" id="hiloHead">Elige una conversación</div><div class="hilo-msgs" id="hiloMsgs"><div class="vacio">Aquí verás los mensajes.</div></div><div class="hilo-form"><textarea id="hiloInp" placeholder="Escribe tu respuesta... (Enter para enviar)"></textarea><button class="btn" onclick="responder()">Enviar</button></div></div></div>');
+
+  // 2 Usuarios
+  h+=sec(2,'<div id="usrArea" class="loading">Cargando usuarios...</div>');
+
+  // 3 Perfiles bloqueados
+  h+=sec(3,'<div class="card"><h2>Bloquear perfiles (@)</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Quien busque estos perfiles: si es anónimo, tendrá que iniciar sesión; si ya ha iniciado sesión, tendrá que pagar la suscripción.</p><div class="toolbar"><input class="inp" id="bloqInp" placeholder="@usuario" onkeydown="if(event.key===\'Enter\')bloquearInput()"><button class="btn" onclick="bloquearInput()">Bloquear</button></div><div id="bloqArea" class="muted">Cargando...</div></div>');
+
+  // 4 Pagos
+  h+=sec(4,'<div class="card"><h2>Planes</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Links al mes de cada plan. Deja vacío = ilimitados. Solo el plan Ilimitado incluye Instagram.</p><div id="ajPlanes" class="muted">Cargando...</div><div class="toolbar" style="margin-top:12px"><span class="muted">Cada pago dura</span><input class="inp" id="ajDias" type="number" min="1" style="width:80px"><span class="muted">días</span><button class="btn" onclick="guardarAjustes()">Guardar</button><span id="ajOk" class="email" style="font-size:13px"></span></div></div><div id="pagArea" class="loading">Cargando pagos...</div>');
+
+  // 5 Cuentas
+  h+=sec(5,'<div class="card"><h2>Cuentas que han iniciado sesión</h2><div class="tblwrap"><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>'+
+    (d.accounts||[]).map(function(a){
+      var pic=a.picture?'<img class="av" src="'+esc(a.picture)+'" referrerpolicy="no-referrer">':'';
+      return '<tr><td>'+pic+esc(a.name||'—')+'</td><td class="email">'+esc(a.email)+'</td><td>'+a.logins+'</td><td class="muted">'+fecha(a.last_login)+'</td></tr>';
+    }).join('')+'</table></div></div>');
+
+  // 6 Rankings
+  h+=sec(6,'<div class="card"><h2>Perfiles más buscados</h2><table><tr><th>Perfil</th><th>Plataforma</th><th>Veces</th></tr>'+
+    (d.top_profiles||[]).map(function(p){ return '<tr><td>@'+esc(p.username)+'</td><td><span class="pill">'+esc(p.platform)+'</span></td><td>'+p.count+'</td></tr>'; }).join('')+
+    '</table></div><div class="card"><h2>Plataformas</h2>'+
+    (d.platforms||[]).map(function(p){ return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>'+esc(p.name)+'</span><span class="muted">'+p.count+'</span></div><div class="bar"><span style="width:'+Math.round(p.count/maxPlat*100)+'%"></span></div></div>'; }).join('')+'</div>');
+
+  // 7 Por dia
+  h+=sec(7,'<div class="card"><h2>Búsquedas por día (últimos 30)</h2>'+
+    (d.daily||[]).map(function(x){ return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span class="muted">'+esc(x.date)+'</span><span>'+x.count+'</span></div><div class="bar"><span style="width:'+Math.round(x.count/maxDay*100)+'%"></span></div></div>'; }).join('')+'</div>');
+
+  // 8 Mensajes antiguos
+  h+=sec(8,'<div id="msgArea" class="loading">Cargando mensajes...</div>');
+
   document.getElementById('content').className='';
   document.getElementById('content').innerHTML=h;
-  loadUsuarios(); loadPagos();
+  document.getElementById('hiloInp').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();responder();} });
+  loadUsuarios(); loadPagos(); loadBloqueados(); loadMessages(); loadAjustes(); loadConvs();
+  if(CONV) abrirConv(CONV);
 }
-function toggleIP(ip,activar){
-  fetch(API+'/forzar-ip?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip:ip,activar:(activar==='true'||activar===true)})})
-    .then(function(r){return r.json();})
-    .then(function(){ recargarStats(); });
-}
-function recargarStats(){
-  fetch(API+'/stats?pw='+encodeURIComponent(PW)).then(function(r){return r.json();}).then(function(d){ render(d); loadMessages(); });
-}
-/* ===== USUARIOS Y CREDITOS ===== */
-function claseCred(n){ if(n>50)return 'alto'; if(n>10)return 'medio'; return 'bajo'; }
-function loadUsuarios(){
-  fetch(API+'/usuarios?pw='+encodeURIComponent(PW))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      var area=document.getElementById('usrArea');
-      if(!area)return;
-      if(!d.usuarios||d.usuarios.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
-      var h='<div class="card"><h2>Usuarios registrados ('+d.usuarios.length+')</h2><table>';
-      h+='<tr><th>Usuario</th><th>Créditos</th><th>Plan</th><th>Búsquedas</th><th>Dar créditos</th><th>Cambiar plan</th></tr>';
-      d.usuarios.forEach(function(u){
-        var pic=u.picture?'<img class="av" src="'+esc(u.picture)+'" referrerpolicy="no-referrer">':'';
-        var em=esc(u.email);
-        h+='<tr>';
-        h+='<td>'+pic+'<span class="email">'+em+'</span></td>';
-        h+='<td><span class="cred '+claseCred(u.creditos)+'">'+u.creditos+'</span></td>';
-        h+='<td><span class="plan-tag plan-'+esc(u.plan)+'">'+esc(u.plan)+'</span></td>';
-        h+='<td class="muted">'+u.busquedas+'</td>';
-        h+='<td><div class="acc">'
-          +'<button class="mini give" onclick="darCreditos(\''+em+'\',500)">+500</button>'
-          +'<button class="mini give" onclick="darCreditos(\''+em+'\',1000)">+1000</button>'
-          +'<button class="mini" onclick="pedirCreditos(\''+em+'\')">Otro</button>'
-          +'</div></td>';
-        h+='<td><select class="sel" onchange="cambiarPlan(\''+em+'\',this.value)">'
-          +opt('gratis',u.plan)+opt('starter',u.plan)+opt('pro',u.plan)+opt('agency',u.plan)
-          +'</select></td>';
-        h+='</tr>';
-      });
-      h+='</table></div>';
-      area.className=''; area.innerHTML=h;
-    }).catch(function(){});
-}
-function opt(v,actual){ return '<option value="'+v+'"'+(v===actual?' selected':'')+'>'+v+'</option>'; }
-function darCreditos(email,cantidad){
-  fetch(API+'/dar-creditos?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,cantidad:cantidad})})
-    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
-}
-function pedirCreditos(email){
-  var n=prompt('¿Cuántos créditos? (pon un número negativo para quitar)','500');
-  if(n===null)return;
-  n=parseInt(n,10); if(isNaN(n))return;
-  darCreditos(email,n);
-}
-function cambiarPlan(email,plan){
-  if(!confirm('¿Cambiar a '+email+' al plan '+plan+'?')){ loadUsuarios(); return; }
-  fetch(API+'/cambiar-plan?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
-    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
-}
-function toggleForzar(email,activar){
-  fetch(API+'/forzar-login?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,activar:activar==='true'||activar===true})})
-    .then(function(r){return r.json();}).then(function(){ loadUsuarios(); });
-}
-/* ===== PAGOS ===== */
-function loadPagos(){
-  fetch(API+'/pagos?pw='+encodeURIComponent(PW))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      var k=document.getElementById('kpiDinero');
-      if(k){ k.querySelector('.num').textContent='$'+(d.total_cobrado||0).toFixed(2); }
-      var area=document.getElementById('pagArea');
-      if(!area)return;
-      if(!d.pagos||d.pagos.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">Todavía no hay pagos.</p></div>'; return; }
-      var h='<div class="card"><h2>Pagos recibidos — total cobrado: $'+(d.total_cobrado||0).toFixed(2)+'</h2><table>';
-      h+='<tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Créditos</th><th>Importe</th><th>Método</th><th>Estado</th></tr>';
-      d.pagos.forEach(function(p){
-        h+='<tr><td class="muted">'+fecha(p.fecha)+'</td><td class="email">'+esc(p.email)+'</td>'
-          +'<td><span class="plan-tag plan-'+esc(p.plan)+'">'+esc(p.plan)+'</span></td>'
-          +'<td>'+p.creditos+'</td><td>$'+p.importe.toFixed(2)+'</td>'
-          +'<td class="muted">'+esc(p.metodo)+'</td>'
-          +'<td><span class="est est-'+(p.estado==='pagado'?'pagado':'pendiente')+'">'+esc(p.estado)+'</span></td></tr>';
-      });
-      h+='</table></div>';
-      area.className=''; area.innerHTML=h;
-    }).catch(function(){});
-}
-function loadMessages(){
-  fetch(API+'/messages?pw='+encodeURIComponent(PW))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      var area=document.getElementById('msgArea');
-      if(!area)return;
-      if(!d.messages||d.messages.length===0){ area.className=''; area.innerHTML='<div class="card"><p class="muted">No hay mensajes todavía.</p></div>'; return; }
-      var h='<div class="card"><h2>Buzón de mensajes</h2>';
-      d.messages.forEach(function(m){
-        var badge=m.replied?'<span class="badge-done">Respondido</span>':'<span class="badge-pending">Pendiente</span>';
-        var mail=m.email?('<a class="msg-reply" href="mailto:'+esc(m.email)+'?subject=Respuesta%20de%20ClipLinks">Responder por email</a>'):'<span class="muted" style="font-size:12px">Sin email</span>';
-        var done=m.replied?'':'<button class="msg-done" onclick="markReplied('+m.id+')">Marcar como respondido</button>';
-        h+='<div class="msg-item '+(m.replied?'':'pending')+'"><div class="msg-top"><span class="msg-email">'+(m.email?esc(m.email):'(sin email)')+'</span><span>'+badge+' <span class="msg-date">'+fecha(m.date)+'</span></span></div><div class="msg-body">'+esc(m.message)+'</div><div class="msg-actions">'+mail+done+'</div></div>';
-      });
-      h+='</div>';
-      area.className=''; area.innerHTML=h;
-    }).catch(function(){});
-}
-function markReplied(id){
-  fetch(API+'/mark-replied?pw='+encodeURIComponent(PW),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(){ loadMessages(); });
-}
-function kpi(num,lbl,alert){return '<div class="kpi'+(alert?' alert':'')+'"><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
+function sec(i,html){ return '<div class="section'+(i===TAB?' active':'')+'">'+html+'</div>'; }
 function tab(i){
-  var tabs=document.querySelectorAll('.tab'), secs=document.querySelectorAll('.section');
-  tabs.forEach(function(t,j){t.classList.toggle('active',j===i);});
-  secs.forEach(function(s,j){s.classList.toggle('active',j===i);});
+  TAB=i;
+  document.querySelectorAll('.tab').forEach(function(t,j){t.classList.toggle('active',j===i);});
+  document.querySelectorAll('.section').forEach(function(s,j){s.classList.toggle('active',j===i);});
 }
+function recargarStats(){ fetch(q('/stats')).then(function(r){return r.json();}).then(render); }
+
+/* ===== HISTORIAL ===== */
+function toggleIP(ip,activar){ post('/forzar-ip',{ip:ip,activar:activar}).then(recargarStats); }
+
+/* ===== PERFILES BLOQUEADOS ===== */
+function bloquear(u,activar){
+  if(activar && !confirm('¿Bloquear @'+u+'? Quien lo busque tendrá que entrar y pagar.'))return;
+  post('/bloquear-perfil',{username:u,activar:activar}).then(recargarStats);
+}
+function bloquearInput(){
+  var v=document.getElementById('bloqInp').value.trim().replace(/^@/,'');
+  if(!v)return;
+  post('/bloquear-perfil',{username:v,activar:true}).then(recargarStats);
+}
+function loadBloqueados(){
+  fetch(q('/perfiles-bloqueados')).then(function(r){return r.json();}).then(function(d){
+    var a=document.getElementById('bloqArea'); if(!a)return;
+    if(!d.perfiles||!d.perfiles.length){ a.innerHTML='No hay perfiles bloqueados.'; return; }
+    a.className='';
+    a.innerHTML='<table><tr><th>Perfil</th><th>Veces buscado</th><th>Bloqueado el</th><th></th></tr>'+
+      d.perfiles.map(function(p){ return '<tr><td>@'+esc(p.username)+'</td><td>'+p.busquedas+'</td><td class="muted">'+fecha(p.fecha)+'</td><td><button class="mini" onclick="bloquear(\''+js(p.username)+'\',false)">Desbloquear</button></td></tr>'; }).join('')+'</table>';
+  }).catch(function(){});
+}
+
+/* ===== USUARIOS Y SUSCRIPCIONES ===== */
+function loadUsuarios(){
+  fetch(q('/usuarios')).then(function(r){return r.json();}).then(function(d){
+    var area=document.getElementById('usrArea'); if(!area)return;
+    area.className='';
+    if(!d.usuarios||!d.usuarios.length){ area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
+    var h='<div class="card"><h2>Usuarios ('+d.usuarios.length+')</h2><p class="muted" style="font-size:12px;margin-bottom:12px">«Obligar a pagar» bloquea a esa cuenta hasta que se suscriba. Ordenados por búsquedas.</p><div class="tblwrap"><table>';
+    h+='<tr><th>Usuario</th><th>Búsquedas</th><th>Última</th><th>Estado</th><th>Obligar a pagar</th><th>Suscripción manual</th></tr>';
+    d.usuarios.forEach(function(u,i){
+      var pic=u.picture?'<img class="av" src="'+esc(u.picture)+'" referrerpolicy="no-referrer">':'';
+      var em=js(u.email);
+      var uso=u.limite?' · '+u.usados+'/'+u.limite+' links':'';
+      var est=u.activo?'<span class="est est-activa">'+esc(u.plan_nombre)+' hasta '+dia(u.sub_hasta)+uso+'</span>'
+             :(u.debe_pagar?'<span class="est est-debe">Debe pagar</span>':'<span class="est est-gratis">Gratis</span>');
+      h+='<tr><td>'+pic+'<span class="email">'+esc(u.email)+'</span></td><td>'+u.busquedas+'</td><td class="muted">'+fecha(u.ultima)+'</td><td>'+est+'</td>';
+      h+='<td><button class="mini '+(u.debe_pagar?'on':'')+'" onclick="marcarPago(\''+em+'\','+(!u.debe_pagar)+')">'+(u.debe_pagar?'Sí — quitar':'Obligar a pagar')+'</button></td>';
+      h+='<td><div class="acc"><select class="inp" style="height:28px;font-size:12px;padding:0 6px" id="sp_'+i+'"><option value="basico">Básico</option><option value="pro">Pro</option><option value="ilimitado" selected>Ilimitado</option></select><button class="mini give" onclick="darDias(\''+em+'\',30,'+i+')">+30 días</button><button class="mini" onclick="pedirDias(\''+em+'\','+i+')">Otro</button>'+(u.activo?'<button class="mini" onclick="quitarSub(\''+em+'\')">Quitar</button>':'')+'</div></td></tr>';
+    });
+    area.innerHTML=h+'</table></div></div>';
+  }).catch(function(){});
+}
+function marcarPago(email,activar){ post('/marcar-pago',{email:email,activar:activar}).then(recargarStats); }
+function darDias(email,dias,i){ var sel=document.getElementById('sp_'+i); post('/dar-dias',{email:email,dias:dias,plan:sel?sel.value:'ilimitado'}).then(recargarStats); }
+function pedirDias(email,i){ var n=parseInt(prompt('¿Cuántos días de suscripción le das?','30'),10); if(n>0)darDias(email,n,i); }
+function quitarSub(email){ if(confirm('¿Quitar la suscripción a '+email+'?')) darDias(email,0); }
+
+/* ===== PAGOS Y PRECIO ===== */
+var PLANES=[];
+function loadAjustes(){
+  fetch(q('/ajustes')).then(function(r){return r.json();}).then(function(d){
+    var a=document.getElementById('ajPlanes'); if(!a||!d.planes)return;
+    PLANES=d.planes;
+    a.className='';
+    a.innerHTML='<table><tr><th>Plan</th><th>Precio ($)</th><th>Links al mes</th><th>Instagram</th></tr>'+d.planes.map(function(p){
+      return '<tr><td><b>'+esc(p.nombre)+'</b></td><td><input class="inp" id="pp_'+p.id+'" type="number" step="0.5" min="1" style="width:90px" value="'+p.precio+'"></td><td><input class="inp" id="pl_'+p.id+'" type="number" min="0" style="width:110px" placeholder="ilimitados" value="'+(p.links===null?'':p.links)+'"></td><td>'+(p.instagram?'<span class="est est-activa">Sí</span>':'<span class="est est-gratis">No</span>')+'</td></tr>';
+    }).join('')+'</table>';
+    document.getElementById('ajDias').value=d.dias;
+  }).catch(function(){});
+}
+function guardarAjustes(){
+  var planes={}, ok=true;
+  PLANES.forEach(function(p){
+    var pr=parseFloat(document.getElementById('pp_'+p.id).value), l=document.getElementById('pl_'+p.id).value.trim();
+    if(!(pr>0))ok=false;
+    planes[p.id]={precio:pr,links:l===''?null:parseInt(l,10)};
+  });
+  var dd=parseInt(document.getElementById('ajDias').value,10);
+  if(!ok||!(dd>0)){ alert('Revisa los precios y los días.'); return; }
+  post('/ajustes',{planes:planes,dias:dd}).then(function(d){
+    if(d.error){ alert('Error: '+d.error); return; }
+    document.getElementById('ajOk').textContent='✓ Guardado';
+    loadAjustes();
+  });
+}
+function loadPagos(){
+  fetch(q('/pagos')).then(function(r){return r.json();}).then(function(d){
+    var k=document.getElementById('kpiDinero');
+    if(k){ k.querySelector('.num').textContent='$'+(d.total_cobrado||0).toFixed(2); }
+    var area=document.getElementById('pagArea'); if(!area)return;
+    area.className='';
+    if(!d.pagos||!d.pagos.length){ area.innerHTML='<div class="card"><p class="muted">Todavía no hay pagos.</p></div>'; return; }
+    var h='<div class="card"><h2>Pagos — total cobrado: $'+(d.total_cobrado||0).toFixed(2)+'</h2><div class="tblwrap"><table>';
+    h+='<tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Importe</th><th>Método</th><th>Estado</th></tr>';
+    d.pagos.forEach(function(p){
+      var nom={basico:'Básico',pro:'Pro',ilimitado:'Ilimitado',suscripcion:'Suscripción'}[p.plan]||esc(p.plan);
+      var con=nom+' · '+p.dias+' días';
+      h+='<tr><td class="muted">'+fecha(p.fecha)+'</td><td class="email">'+esc(p.email)+'</td><td>'+con+'</td><td>$'+p.importe.toFixed(2)+'</td><td class="muted">'+esc(p.metodo)+'</td><td><span class="est est-'+(p.estado==='pagado'?'pagado':'pendiente')+'">'+esc(p.estado)+'</span></td></tr>';
+    });
+    area.innerHTML=h+'</table></div></div>';
+  }).catch(function(){});
+}
+
+/* ===== CHAT DE SOPORTE ===== */
+var CONV='', CONV_N=-1;
+function loadConvs(){
+  fetch(q('/chat-admin')).then(function(r){return r.json();}).then(function(d){
+    var a=document.getElementById('convs'); if(!a)return;
+    var cs=d.conversaciones||[];
+    if(!cs.length){ a.innerHTML='<div class="vacio" style="padding:30px 10px">Aún no hay chats.</div>'; return; }
+    a.innerHTML=cs.map(function(c){
+      var img=c.picture?'<img src="'+esc(c.picture)+'" referrerpolicy="no-referrer">':'<div class="ph"></div>';
+      var n=c.no_leidos&&c.email!==CONV?'<span class="cnt">'+c.no_leidos+'</span>':'';
+      return '<div class="conv'+(c.email===CONV?' sel':'')+'" onclick="abrirConv(\''+js(c.email)+'\')">'+img+'<div class="conv-txt"><div class="conv-n">'+esc(c.name||c.email)+'</div><div class="conv-l">'+esc(c.ultimo_texto)+'</div></div>'+n+'</div>';
+    }).join('');
+  }).catch(function(){});
+}
+function pintarHilo(msgs){
+  var box=document.getElementById('hiloMsgs'); if(!box)return;
+  if(msgs.length===CONV_N)return;
+  CONV_N=msgs.length;
+  box.innerHTML=msgs.length?msgs.map(function(m){ return '<div class="b '+(m.de==='admin'?'admin':'user')+'">'+esc(m.texto)+'<small>'+fecha(m.fecha)+'</small></div>'; }).join(''):'<div class="vacio">Sin mensajes.</div>';
+  box.scrollTop=box.scrollHeight;
+}
+function abrirConv(email){
+  if(email!==CONV){ CONV_N=-1; }
+  CONV=email;
+  var hh=document.getElementById('hiloHead'); if(hh) hh.textContent=email;
+  fetch(q('/chat-admin/conversacion?email='+encodeURIComponent(email))).then(function(r){return r.json();}).then(function(d){
+    if(d.mensajes) pintarHilo(d.mensajes);
+    loadConvs();
+  }).catch(function(){});
+}
+function responder(){
+  var inp=document.getElementById('hiloInp'), t=inp.value.trim();
+  if(!t||!CONV){ if(!CONV)alert('Elige primero una conversación.'); return; }
+  inp.value='';
+  post('/chat-admin/conversacion',{email:CONV,texto:t}).then(function(d){ if(d.mensajes)pintarHilo(d.mensajes); else inp.value=t; loadConvs(); })
+    .catch(function(){ inp.value=t; alert('No se pudo enviar.'); });
+}
+function refrescarChat(){
+  loadConvs();
+  if(CONV && TAB===1) abrirConv(CONV);
+}
+
+/* ===== MENSAJES ANTIGUOS (formulario de contacto) ===== */
+function loadMessages(){
+  fetch(q('/messages')).then(function(r){return r.json();}).then(function(d){
+    var area=document.getElementById('msgArea'); if(!area)return;
+    area.className='';
+    if(!d.messages||!d.messages.length){ area.innerHTML='<div class="card"><p class="muted">No hay mensajes antiguos.</p></div>'; return; }
+    var h='<div class="card"><h2>Mensajes del formulario antiguo</h2>';
+    d.messages.forEach(function(m){
+      var badge=m.replied?'<span class="badge-done">Respondido</span>':'<span class="badge-pending">Pendiente</span>';
+      var mail=m.email?('<a class="msg-reply" href="mailto:'+esc(m.email)+'?subject=Respuesta%20de%20ClipLinks">Responder por email</a>'):'<span class="muted" style="font-size:12px">Sin email</span>';
+      var done=m.replied?'':'<button class="msg-done" onclick="markReplied('+m.id+')">Marcar como respondido</button>';
+      h+='<div class="msg-item '+(m.replied?'':'pending')+'"><div class="msg-top"><span class="msg-email">'+(m.email?esc(m.email):'(sin email)')+'</span><span>'+badge+' <span class="msg-date">'+fecha(m.date)+'</span></span></div><div class="msg-body">'+esc(m.message)+'</div><div class="msg-actions">'+mail+done+'</div></div>';
+    });
+    area.innerHTML=h+'</div>';
+  }).catch(function(){});
+}
+function markReplied(id){ post('/mark-replied',{id:id}).then(loadMessages); }
 </script>
 </body>
 </html>

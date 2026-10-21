@@ -2,290 +2,397 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import yt_dlp
 import os
+import secrets
 import psycopg2
-import stripe
 import requests
-from datetime import datetime, timedelta, timezone
+import json
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
 
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
+GOOGLE_CLIENT_ID = '443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com'
 
 # ===== APIFY (Instagram) =====
 APIFY_TOKEN = os.environ.get('APIFY_TOKEN', '')
-# Actor: Instagram Reel Scraper (apify/instagram-reel-scraper)
 APIFY_ACTOR = 'apify~instagram-reel-scraper'
-# Sin tope de reels: el filtro de dias ya limita cuantos saca
 INSTAGRAM_MAX_REELS = 99999
 
-# ===== SISTEMA DE CREDITOS (solo Instagram) =====
-# 1 credito = 1 video/reel de Instagram
-CREDITOS_GRATIS = 100        # al registrarse
-DIAS_MAX_GRATIS = 3          # el plan gratis solo llega a 3 dias
-PLANES = {
-    'gratis':  {'creditos': 100,   'dias_max': 3, 'precio': 0},
-    'starter': {'creditos': 1000,  'dias_max': 7, 'precio': 9},
-    'pro':     {'creditos': 5000,  'dias_max': 7, 'precio': 24},
-    'agency':  {'creditos': 15000, 'dias_max': 7, 'precio': 49},
+# ===== SUSCRIPCIONES (valores por defecto; se cambian desde el panel) =====
+# links = links al mes (None = ilimitados). instagram = si incluye Instagram
+PLANES_DEFECTO = {
+    'basico':    {'nombre': 'Básico',    'precio': 9,  'links': 300,  'instagram': False},
+    'pro':       {'nombre': 'Pro',       'precio': 27, 'links': 3000, 'instagram': False},
+    'ilimitado': {'nombre': 'Ilimitado', 'precio': 56, 'links': None, 'instagram': True},
 }
-PRECIO_POR_CREDITO = 0.006   # recarga personalizada: 0.006 USD por video
-RECARGA_MINIMA = 500         # creditos minimos por recarga
+ORDEN_PLANES = ['basico', 'pro', 'ilimitado']
+DIAS_DEFECTO = 30       # dias de acceso por cada pago
 
 # ===== PAGOS CON CRIPTO (NOWPayments) =====
 NOWPAY_API_KEY = os.environ.get('NOWPAY_API_KEY', '')
 NOWPAY_IPN_SECRET = os.environ.get('NOWPAY_IPN_SECRET', '')
 NOWPAY_API = 'https://api.nowpayments.io/v1'
 
+
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
+
 
 def init_db():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS searches (
-                id SERIAL PRIMARY KEY,
-                ip TEXT,
-                platform TEXT,
-                username TEXT,
-                count INTEGER,
-                user_email TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS searches (
+            id SERIAL PRIMARY KEY, ip TEXT, platform TEXT, username TEXT,
+            count INTEGER, user_email TEXT, created_at TIMESTAMP DEFAULT NOW())''')
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS count INTEGER")
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS user_email TEXT")
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS logins (
-                id SERIAL PRIMARY KEY,
-                email TEXT,
-                name TEXT,
-                picture TEXT,
-                ip TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS messages (
-                id SERIAL PRIMARY KEY,
-                email TEXT,
-                message TEXT,
-                ip TEXT,
-                replied BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
-        # ===== Usuarios con creditos (solo para Instagram) =====
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                email TEXT PRIMARY KEY,
-                name TEXT,
-                picture TEXT,
-                creditos INTEGER DEFAULT 100,
-                plan TEXT DEFAULT 'gratis',
-                plan_renueva TIMESTAMP,
-                forzar_login BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
-        # ===== Pagos recibidos =====
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS payments (
-                id SERIAL PRIMARY KEY,
-                email TEXT,
-                plan TEXT,
-                creditos INTEGER,
-                importe NUMERIC,
-                metodo TEXT,
-                estado TEXT DEFAULT 'pendiente',
-                ref TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
-        # ===== IPs forzadas a iniciar sesion (elegidas desde el panel) =====
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS forced_ips (
-                ip TEXT PRIMARY KEY,
-                nota TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        ''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS logins (
+            id SERIAL PRIMARY KEY, email TEXT, name TEXT, picture TEXT, ip TEXT,
+            created_at TIMESTAMP DEFAULT NOW())''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY, email TEXT, message TEXT, ip TEXT,
+            replied BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS users (
+            email TEXT PRIMARY KEY, name TEXT, picture TEXT,
+            created_at TIMESTAMP DEFAULT NOW())''')
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS debe_pagar BOOLEAN DEFAULT FALSE")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_hasta TIMESTAMP")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_plan TEXT")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS links_usados INTEGER DEFAULT 0")
+        cur.execute('''CREATE TABLE IF NOT EXISTS payments (
+            id SERIAL PRIMARY KEY, email TEXT, plan TEXT, creditos INTEGER,
+            importe NUMERIC, metodo TEXT, estado TEXT DEFAULT 'pendiente', ref TEXT,
+            created_at TIMESTAMP DEFAULT NOW())''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS forced_ips (
+            ip TEXT PRIMARY KEY, nota TEXT, created_at TIMESTAMP DEFAULT NOW())''')
+        # Sesiones de login verificadas con Google
+        cur.execute('''CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY, email TEXT, created_at TIMESTAMP DEFAULT NOW())''')
+        # Perfiles (@) bloqueados: quien los busque tendra que entrar y pagar
+        cur.execute('''CREATE TABLE IF NOT EXISTS blocked_profiles (
+            username TEXT PRIMARY KEY, created_at TIMESTAMP DEFAULT NOW())''')
+        # Chat de soporte
+        cur.execute('''CREATE TABLE IF NOT EXISTS chat (
+            id SERIAL PRIMARY KEY, email TEXT, de TEXT, texto TEXT,
+            leido BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())''')
+        # Ajustes editables desde el panel
+        cur.execute('''CREATE TABLE IF NOT EXISTS ajustes (
+            clave TEXT PRIMARY KEY, valor TEXT)''')
         conn.commit()
         cur.close()
         conn.close()
-    except:
-        pass
+    except Exception as e:
+        print('init_db error:', e)
+
 
 init_db()
+
+
+# ===================== UTILIDADES =====================
 
 def check_password():
     pw = request.args.get('pw', '')
     return PANEL_PASSWORD != '' and pw == PANEL_PASSWORD
 
-# ===== FUNCIONES DE CREDITOS =====
+
+def get_ajuste(clave, defecto):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT valor FROM ajustes WHERE clave = %s', (clave,))
+        f = cur.fetchone()
+        cur.close()
+        conn.close()
+        return f[0] if f else defecto
+    except:
+        return defecto
+
+
+def get_planes():
+    """Planes con los precios/links guardados desde el panel."""
+    planes = {k: dict(v) for k, v in PLANES_DEFECTO.items()}
+    try:
+        guardado = json.loads(get_ajuste('planes', '{}') or '{}')
+        for k, v in guardado.items():
+            if k in planes:
+                if 'precio' in v:
+                    planes[k]['precio'] = round(float(v['precio']), 2)
+                if 'links' in v:
+                    planes[k]['links'] = None if v['links'] in (None, '', 0) else int(v['links'])
+    except:
+        pass
+    return planes
+
+
+def dias_sub():
+    try:
+        return int(get_ajuste('dias', DIAS_DEFECTO))
+    except:
+        return DIAS_DEFECTO
+
+
+def leer_token():
+    t = request.args.get('token', '')
+    if not t:
+        data = request.get_json(force=True, silent=True) or {}
+        t = data.get('token', '') or ''
+    return (t or '').strip()
+
+
+def email_de_sesion():
+    """Email del usuario segun su sesion verificada. '' si no hay sesion valida."""
+    token = leer_token()
+    if not token:
+        return ''
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT email FROM sessions WHERE token = %s', (token,))
+        f = cur.fetchone()
+        cur.close()
+        conn.close()
+        return f[0] if f else ''
+    except:
+        return ''
+
+
 def get_user(email):
-    """Devuelve los datos del usuario; lo crea con creditos gratis si no existe."""
+    """Datos del usuario. Lo crea si no existe."""
     if not email:
         return None
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT email, name, creditos, plan, forzar_login FROM users WHERE email = %s', (email,))
-        row = cur.fetchone()
-        if not row:
-            cur.execute(
-                'INSERT INTO users (email, creditos, plan) VALUES (%s, %s, %s) ON CONFLICT (email) DO NOTHING',
-                (email, CREDITOS_GRATIS, 'gratis'))
-            conn.commit()
-            cur.execute('SELECT email, name, creditos, plan, forzar_login FROM users WHERE email = %s', (email,))
-            row = cur.fetchone()
+        cur.execute('INSERT INTO users (email) VALUES (%s) ON CONFLICT (email) DO NOTHING', (email,))
+        conn.commit()
+        cur.execute('''SELECT email, name, picture, debe_pagar, sub_hasta,
+                              (sub_hasta IS NOT NULL AND sub_hasta > NOW()),
+                              COALESCE(sub_plan, 'ilimitado'), COALESCE(links_usados, 0)
+                       FROM users WHERE email = %s''', (email,))
+        f = cur.fetchone()
         cur.close()
         conn.close()
-        if not row:
+        if not f:
             return None
-        return {'email': row[0], 'name': row[1] or '', 'creditos': row[2] or 0,
-                'plan': row[3] or 'gratis', 'forzar_login': bool(row[4])}
+        planes = get_planes()
+        plan = f[6] if f[6] in planes else 'ilimitado'
+        limite = planes[plan]['links']
+        usados = int(f[7] or 0)
+        return {'email': f[0], 'name': f[1] or '', 'picture': f[2] or '',
+                'debe_pagar': bool(f[3]), 'sub_hasta': str(f[4]) if f[4] else '',
+                'activo': bool(f[5]), 'plan': plan, 'plan_nombre': planes[plan]['nombre'],
+                'instagram': bool(planes[plan]['instagram']),
+                'limite': limite, 'usados': usados,
+                'restantes': None if limite is None else max(0, limite - usados)}
     except:
         return None
 
-def restar_creditos(email, cantidad):
-    """Resta creditos al usuario. Nunca baja de 0."""
+
+def perfil_bloqueado(username):
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE users SET creditos = GREATEST(creditos - %s, 0) WHERE email = %s',
-                    (cantidad, email))
-        conn.commit()
+        cur.execute('SELECT 1 FROM blocked_profiles WHERE username = %s', (username.lower(),))
+        b = cur.fetchone() is not None
         cur.close()
         conn.close()
-        return True
+        return b
     except:
         return False
 
-@app.route('/mi-cuenta')
-def mi_cuenta():
-    """Devuelve los creditos y plan del usuario logueado (para la web)."""
-    email = request.args.get('email', '').strip()
-    if not email:
-        return jsonify({'logueado': False})
-    u = get_user(email)
-    if not u:
-        return jsonify({'logueado': False})
-    plan_info = PLANES.get(u['plan'], PLANES['gratis'])
-    return jsonify({
-        'logueado': True,
-        'email': u['email'],
-        'creditos': u['creditos'],
-        'plan': u['plan'],
-        'dias_max': plan_info['dias_max'],
-        'forzar_login': u['forzar_login'],
-    })
 
-# ===== PAGOS CON CRIPTO =====
-@app.route('/crear-pago', methods=['POST'])
-def crear_pago():
-    """Crea una factura en NOWPayments y devuelve el enlace de pago."""
-    if not NOWPAY_API_KEY:
-        return jsonify({'error': 'pagos_no_configurados',
-                        'mensaje': 'Los pagos aún no están activos. Contáctanos.'}), 503
+def ip_forzada(ip):
     try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()
-        tipo = data.get('tipo', 'plan')        # 'plan' o 'recarga'
-        plan = data.get('plan', '')
-        creditos = int(data.get('creditos', 0) or 0)
-
-        if not email:
-            return jsonify({'error': 'login_requerido'}), 401
-
-        if tipo == 'plan':
-            if plan not in PLANES or plan == 'gratis':
-                return jsonify({'error': 'plan_invalido'}), 400
-            importe = PLANES[plan]['precio']
-            creditos = PLANES[plan]['creditos']
-            descripcion = f'ClipLinks {plan} - {creditos} creditos'
-        else:
-            if creditos < RECARGA_MINIMA:
-                return jsonify({'error': 'minimo',
-                                'mensaje': f'Mínimo {RECARGA_MINIMA} créditos'}), 400
-            importe = round(creditos * PRECIO_POR_CREDITO, 2)
-            plan = 'recarga'
-            descripcion = f'ClipLinks recarga - {creditos} creditos'
-
-        # Guardar el pago como pendiente y usar su id como referencia
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('''INSERT INTO payments (email, plan, creditos, importe, metodo, estado)
-                       VALUES (%s, %s, %s, %s, 'cripto', 'pendiente') RETURNING id''',
-                    (email, plan, creditos, importe))
-        pago_id = cur.fetchone()[0]
+        cur.execute('SELECT 1 FROM forced_ips WHERE ip = %s LIMIT 1', (ip,))
+        b = cur.fetchone() is not None
+        cur.close()
+        conn.close()
+        return b
+    except:
+        return False
+
+
+# ===================== PAGINAS =====================
+
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+
+@app.route('/panel')
+def panel():
+    return send_from_directory('.', 'panel.html')
+
+
+# ===================== LOGIN Y CUENTA =====================
+
+@app.route('/track-login', methods=['POST'])
+def track_login():
+    """Recibe el login de Google, lo comprueba con Google y crea una sesion."""
+    try:
+        data = request.get_json(force=True)
+        credential = data.get('credential', '')
+        if not credential:
+            return jsonify({'error': 'sin_credencial'}), 400
+        r = requests.get('https://oauth2.googleapis.com/tokeninfo',
+                         params={'id_token': credential}, timeout=15)
+        if r.status_code != 200:
+            return jsonify({'error': 'login_invalido'}), 401
+        info = r.json()
+        if info.get('aud') != GOOGLE_CLIENT_ID or str(info.get('email_verified')).lower() != 'true':
+            return jsonify({'error': 'login_invalido'}), 401
+        email = (info.get('email') or '').strip().lower()
+        name = info.get('name', '') or ''
+        picture = info.get('picture', '') or ''
+        if not email:
+            return jsonify({'error': 'login_invalido'}), 401
+
+        token = secrets.token_urlsafe(32)
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO logins (email, name, picture, ip) VALUES (%s, %s, %s, %s)',
+                    (email, name, picture, request.remote_addr))
+        cur.execute('''INSERT INTO users (email, name, picture) VALUES (%s, %s, %s)
+                       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, picture = EXCLUDED.picture''',
+                    (email, name, picture))
+        cur.execute('INSERT INTO sessions (token, email) VALUES (%s, %s)', (token, email))
         conn.commit()
         cur.close()
         conn.close()
+        return jsonify({'ok': True, 'token': token, 'email': email, 'name': name, 'picture': picture})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-        # Crear la factura en NOWPayments
-        r = requests.post(
-            NOWPAY_API + '/invoice',
-            headers={'x-api-key': NOWPAY_API_KEY, 'Content-Type': 'application/json'},
-            json={
-                'price_amount': importe,
-                'price_currency': 'usd',
-                'order_id': str(pago_id),
-                'order_description': descripcion,
-                'ipn_callback_url': request.host_url.rstrip('/') + '/webhook-pago',
-                'success_url': request.host_url.rstrip('/') + '/?pago=ok',
-                'cancel_url': request.host_url.rstrip('/') + '/?pago=cancelado',
-            },
-            timeout=30)
 
-        if r.status_code not in (200, 201):
-            return jsonify({'error': 'error_pasarela', 'detalle': r.text[:200]}), 502
-
-        inv = r.json()
-        url_pago = inv.get('invoice_url')
-        if not url_pago:
-            return jsonify({'error': 'sin_url'}), 502
-
-        # Guardar la referencia de la factura
+@app.route('/logout', methods=['POST'])
+def logout():
+    token = leer_token()
+    if token:
         try:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute('UPDATE payments SET ref = %s WHERE id = %s',
-                        (str(inv.get('id', '')), pago_id))
+            cur.execute('DELETE FROM sessions WHERE token = %s', (token,))
             conn.commit()
             cur.close()
             conn.close()
         except:
             pass
+    return jsonify({'ok': True})
 
-        return jsonify({'url': url_pago, 'importe': importe, 'creditos': creditos})
+
+@app.route('/mi-cuenta')
+def mi_cuenta():
+    email = email_de_sesion()
+    if not email:
+        return jsonify({'logueado': False})
+    u = get_user(email)
+    if not u:
+        return jsonify({'logueado': False})
+    no_leidos = 0
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM chat WHERE email = %s AND de = 'admin' AND leido = FALSE", (email,))
+        no_leidos = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+    except:
+        pass
+    return jsonify({'logueado': True, 'email': u['email'], 'activo': u['activo'],
+                    'sub_hasta': u['sub_hasta'], 'debe_pagar': u['debe_pagar'],
+                    'plan': u['plan'] if u['activo'] else '', 'plan_nombre': u['plan_nombre'] if u['activo'] else '',
+                    'instagram': u['activo'] and u['instagram'],
+                    'limite': u['limite'], 'usados': u['usados'], 'restantes': u['restantes'],
+                    'chat_no_leidos': no_leidos})
+
+
+def lista_planes():
+    planes = get_planes()
+    return [dict(planes[k], id=k) for k in ORDEN_PLANES]
+
+
+@app.route('/config')
+def config():
+    return jsonify({'planes': lista_planes(), 'dias': dias_sub()})
+
+
+# ===================== PAGOS CON CRIPTO =====================
+
+@app.route('/crear-pago', methods=['POST'])
+def crear_pago():
+    if not NOWPAY_API_KEY:
+        return jsonify({'error': 'pagos_no_configurados'}), 503
+    email = email_de_sesion()
+    if not email:
+        return jsonify({'error': 'login_requerido'}), 401
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        plan = data.get('plan', 'pro')
+        planes = get_planes()
+        if plan not in planes:
+            return jsonify({'error': 'plan_invalido'}), 400
+        importe = planes[plan]['precio']
+        dias = dias_sub()
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''INSERT INTO payments (email, plan, creditos, importe, metodo, estado)
+                       VALUES (%s, %s, %s, %s, 'cripto', 'pendiente') RETURNING id''',
+                    (email, plan, dias, importe))
+        pago_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        base = request.host_url.rstrip('/')
+        r = requests.post(
+            NOWPAY_API + '/invoice',
+            headers={'x-api-key': NOWPAY_API_KEY, 'Content-Type': 'application/json'},
+            json={'price_amount': importe, 'price_currency': 'usd',
+                  'order_id': str(pago_id),
+                  'order_description': f"ClipLinks {planes[plan]['nombre']} - {dias} dias",
+                  'ipn_callback_url': base + '/webhook-pago',
+                  'success_url': base + '/?pago=ok',
+                  'cancel_url': base + '/?pago=cancelado'},
+            timeout=30)
+        if r.status_code not in (200, 201):
+            return jsonify({'error': 'error_pasarela', 'detalle': r.text[:200]}), 502
+        inv = r.json()
+        url_pago = inv.get('invoice_url')
+        if not url_pago:
+            return jsonify({'error': 'sin_url'}), 502
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('UPDATE payments SET ref = %s WHERE id = %s', (str(inv.get('id', '')), pago_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except:
+            pass
+        return jsonify({'url': url_pago, 'importe': importe, 'dias': dias})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/webhook-pago', methods=['POST'])
 def webhook_pago():
-    """NOWPayments avisa aqui cuando el pago se confirma -> sumamos creditos."""
+    """NOWPayments avisa aqui cuando se confirma el pago -> se activa la suscripcion."""
     try:
-        cuerpo = request.get_data()
         datos = request.get_json(force=True, silent=True) or {}
-
-        # Comprobar la firma para asegurar que viene de NOWPayments
         if NOWPAY_IPN_SECRET:
             import hmac, hashlib, json as _json
             firma = request.headers.get('x-nowpayments-sig', '')
             ordenado = _json.dumps(datos, sort_keys=True, separators=(',', ':'))
-            esperada = hmac.new(NOWPAY_IPN_SECRET.encode(),
-                                ordenado.encode(), hashlib.sha512).hexdigest()
+            esperada = hmac.new(NOWPAY_IPN_SECRET.encode(), ordenado.encode(), hashlib.sha512).hexdigest()
             if not hmac.compare_digest(firma, esperada):
                 return jsonify({'error': 'firma_invalida'}), 401
 
         estado = (datos.get('payment_status') or '').lower()
         order_id = datos.get('order_id')
-
-        # Solo sumamos creditos cuando el pago esta confirmado
         if estado not in ('finished', 'confirmed') or not order_id:
             return jsonify({'ok': True, 'ignorado': estado})
 
@@ -296,121 +403,270 @@ def webhook_pago():
         if not fila:
             cur.close(); conn.close()
             return jsonify({'error': 'pago_no_encontrado'}), 404
-
-        email, plan, creditos, estado_actual = fila
-        # Evitar sumar dos veces si llegan avisos repetidos
+        email, plan, dias, estado_actual = fila
         if estado_actual == 'pagado':
             cur.close(); conn.close()
             return jsonify({'ok': True, 'ya_procesado': True})
 
-        cur.execute('UPDATE payments SET estado = %s WHERE id = %s', ('pagado', int(order_id)))
-        if plan in PLANES and plan != 'gratis':
-            # Plan mensual: fija los creditos del plan y renueva en 30 dias
-            cur.execute('''UPDATE users SET creditos = creditos + %s, plan = %s,
-                           plan_renueva = NOW() + INTERVAL '30 days' WHERE email = %s''',
-                        (creditos, plan, email))
+        cur.execute("UPDATE payments SET estado = 'pagado' WHERE id = %s", (int(order_id),))
+        activar_plan(cur, email, plan if plan in PLANES_DEFECTO else 'ilimitado', int(dias or DIAS_DEFECTO))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def activar_plan(cur, email, plan, dias):
+    """Activa un plan: si es el mismo y sigue activo se suman los dias;
+    si es otro plan empieza desde hoy. El contador de links vuelve a 0."""
+    cur.execute('INSERT INTO users (email) VALUES (%s) ON CONFLICT (email) DO NOTHING', (email,))
+    cur.execute('''UPDATE users SET
+                     sub_hasta = (CASE WHEN sub_plan = %s AND sub_hasta > NOW() THEN sub_hasta ELSE NOW() END)
+                                 + (%s || ' days')::interval,
+                     sub_plan = %s, links_usados = 0
+                   WHERE email = %s''', (plan, str(dias), plan, email))
+
+
+# ===================== CHAT DE SOPORTE (usuario) =====================
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat_usuario():
+    email = email_de_sesion()
+    if not email:
+        return jsonify({'error': 'login_requerido'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        if request.method == 'POST':
+            data = request.get_json(force=True, silent=True) or {}
+            texto = (data.get('texto', '') or '').strip()[:2000]
+            if not texto:
+                cur.close(); conn.close()
+                return jsonify({'error': 'vacio'}), 400
+            cur.execute("INSERT INTO chat (email, de, texto) VALUES (%s, 'user', %s)", (email, texto))
+            conn.commit()
+        # Marcar como leidos los mensajes del soporte
+        cur.execute("UPDATE chat SET leido = TRUE WHERE email = %s AND de = 'admin' AND leido = FALSE", (email,))
+        conn.commit()
+        cur.execute('SELECT de, texto, created_at FROM chat WHERE email = %s ORDER BY id ASC LIMIT 500', (email,))
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'mensajes': [{'de': f[0], 'texto': f[1], 'fecha': str(f[2])} for f in filas]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ===================== CHAT DE SOPORTE (panel) =====================
+
+@app.route('/chat-admin')
+def chat_admin_lista():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT c.email, MAX(c.created_at) AS ultima,
+                   SUM(CASE WHEN c.de = 'user' AND c.leido = FALSE THEN 1 ELSE 0 END) AS no_leidos,
+                   MAX(u.name), MAX(u.picture),
+                   (SELECT texto FROM chat c2 WHERE c2.email = c.email ORDER BY id DESC LIMIT 1)
+            FROM chat c LEFT JOIN users u ON u.email = c.email
+            GROUP BY c.email ORDER BY ultima DESC LIMIT 300''')
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'conversaciones': [{
+            'email': f[0], 'ultima': str(f[1]), 'no_leidos': int(f[2] or 0),
+            'name': f[3] or '', 'picture': f[4] or '', 'ultimo_texto': f[5] or ''} for f in filas]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/chat-admin/conversacion', methods=['GET', 'POST'])
+def chat_admin_conv():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        if request.method == 'POST':
+            data = request.get_json(force=True, silent=True) or {}
+            email = (data.get('email', '') or '').strip()
+            texto = (data.get('texto', '') or '').strip()[:2000]
         else:
-            # Recarga suelta: solo suma creditos
-            cur.execute('UPDATE users SET creditos = creditos + %s WHERE email = %s',
-                        (creditos, email))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/')
-def index():
-    return send_from_directory('.', 'index.html')
-
-@app.route('/panel')
-def panel():
-    return send_from_directory('.', 'panel.html')
-
-@app.route('/track-login', methods=['POST'])
-def track_login():
-    try:
-        data = request.get_json(force=True)
-        email = data.get('email', '')
-        name = data.get('name', '')
-        picture = data.get('picture', '')
-        ip = request.remote_addr
+            email = request.args.get('email', '').strip()
+            texto = ''
+        if not email:
+            return jsonify({'error': 'falta_email'}), 400
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('INSERT INTO logins (email, name, picture, ip) VALUES (%s, %s, %s, %s)',
-                    (email, name, picture, ip))
-        # Crear el usuario con sus creditos gratis si es la primera vez
-        if email:
-            cur.execute('''INSERT INTO users (email, name, picture, creditos, plan)
-                           VALUES (%s, %s, %s, %s, 'gratis')
-                           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, picture = EXCLUDED.picture''',
-                        (email, name, picture, CREDITOS_GRATIS))
+        if texto:
+            cur.execute("INSERT INTO chat (email, de, texto) VALUES (%s, 'admin', %s)", (email, texto))
+        cur.execute("UPDATE chat SET leido = TRUE WHERE email = %s AND de = 'user' AND leido = FALSE", (email,))
         conn.commit()
+        cur.execute('SELECT de, texto, created_at FROM chat WHERE email = %s ORDER BY id ASC LIMIT 500', (email,))
+        filas = cur.fetchall()
         cur.close()
         conn.close()
-        return jsonify({'ok': True})
+        return jsonify({'mensajes': [{'de': f[0], 'texto': f[1], 'fecha': str(f[2])} for f in filas]})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/contact', methods=['POST'])
-def contact():
-    try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()[:200]
-        message = (data.get('message', '') or '').strip()[:2000]
-        ip = request.remote_addr
-        if not message:
-            return jsonify({'error': 'Mensaje vacío'}), 400
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO messages (email, message, ip) VALUES (%s, %s, %s)',
-                    (email, message, ip))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-@app.route('/messages')
-def get_messages():
+# ===================== PANEL: USUARIOS, BLOQUEOS, AJUSTES =====================
+
+@app.route('/usuarios')
+def usuarios_panel():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT id, email, message, replied, created_at FROM messages ORDER BY created_at DESC LIMIT 200')
-        rows = cur.fetchall()
+        cur.execute('''SELECT u.email, u.name, u.picture, u.debe_pagar, u.sub_hasta,
+                              (u.sub_hasta IS NOT NULL AND u.sub_hasta > NOW()),
+                              (SELECT COUNT(*) FROM searches s WHERE s.user_email = u.email),
+                              (SELECT MAX(created_at) FROM searches s WHERE s.user_email = u.email),
+                              u.created_at, COALESCE(u.sub_plan, 'ilimitado'), COALESCE(u.links_usados, 0)
+                       FROM users u
+                       ORDER BY 7 DESC, u.created_at DESC LIMIT 5000''')
+        filas = cur.fetchall()
         cur.close()
         conn.close()
-        return jsonify({'messages': [{
-            'id': r[0], 'email': r[1] or '', 'message': r[2] or '',
-            'replied': r[3], 'date': str(r[4])
-        } for r in rows]})
+        planes = get_planes()
+        return jsonify({'usuarios': [{
+            'email': f[0], 'name': f[1] or '', 'picture': f[2] or '',
+            'debe_pagar': bool(f[3]), 'sub_hasta': str(f[4]) if f[4] else '',
+            'activo': bool(f[5]), 'busquedas': f[6] or 0,
+            'ultima': str(f[7]) if f[7] else '', 'alta': str(f[8]) if f[8] else '',
+            'plan': f[9], 'plan_nombre': planes.get(f[9], planes['ilimitado'])['nombre'],
+            'usados': f[10], 'limite': planes.get(f[9], planes['ilimitado'])['links']} for f in filas]})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/mark-replied', methods=['POST'])
-def mark_replied():
+
+@app.route('/marcar-pago', methods=['POST'])
+def marcar_pago():
+    """Marca o desmarca una cuenta como 'tiene que pagar'."""
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
         data = request.get_json(force=True)
-        mid = data.get('id')
+        email = (data.get('email', '') or '').strip()
+        activar = bool(data.get('activar', True))
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE messages SET replied = TRUE WHERE id = %s', (mid,))
+        cur.execute('UPDATE users SET debe_pagar = %s WHERE email = %s', (activar, email))
         conn.commit()
         cur.close()
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/dar-dias', methods=['POST'])
+def dar_dias():
+    """Da dias de suscripcion a mano (dias > 0) o la cancela (dias = 0)."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()
+        dias = int(data.get('dias', 0) or 0)
+        plan = data.get('plan', 'ilimitado')
+        if plan not in PLANES_DEFECTO:
+            plan = 'ilimitado'
+        conn = get_db()
+        cur = conn.cursor()
+        if dias <= 0:
+            cur.execute('UPDATE users SET sub_hasta = NULL WHERE email = %s', (email,))
+        else:
+            activar_plan(cur, email, plan, dias)
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/perfiles-bloqueados')
+def perfiles_bloqueados():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''SELECT b.username, b.created_at,
+                              (SELECT COUNT(*) FROM searches s WHERE LOWER(s.username) = b.username)
+                       FROM blocked_profiles b ORDER BY b.created_at DESC''')
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'perfiles': [{'username': f[0], 'fecha': str(f[1]), 'busquedas': f[2] or 0} for f in filas]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/bloquear-perfil', methods=['POST'])
+def bloquear_perfil():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        username = (data.get('username', '') or '').strip().lstrip('@').lower()
+        activar = bool(data.get('activar', True))
+        if not username:
+            return jsonify({'error': 'falta_usuario'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        if activar:
+            cur.execute('INSERT INTO blocked_profiles (username) VALUES (%s) ON CONFLICT DO NOTHING', (username,))
+        else:
+            cur.execute('DELETE FROM blocked_profiles WHERE username = %s', (username,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/ajustes', methods=['GET', 'POST'])
+def ajustes():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        if request.method == 'POST':
+            data = request.get_json(force=True)
+            nuevos = {}
+            for k in ORDEN_PLANES:
+                v = (data.get('planes') or {}).get(k) or {}
+                precio = round(float(v.get('precio', PLANES_DEFECTO[k]['precio'])), 2)
+                links = v.get('links')
+                links = None if links in (None, '', 0, '0') else int(links)
+                if precio <= 0 or (links is not None and links < 0):
+                    return jsonify({'error': 'valores_invalidos'}), 400
+                nuevos[k] = {'precio': precio, 'links': links}
+            dias = int(data.get('dias', DIAS_DEFECTO))
+            if dias <= 0:
+                return jsonify({'error': 'valores_invalidos'}), 400
+            conn = get_db()
+            cur = conn.cursor()
+            for k, v in (('planes', json.dumps(nuevos)), ('dias', str(dias))):
+                cur.execute('''INSERT INTO ajustes (clave, valor) VALUES (%s, %s)
+                               ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor''', (k, v))
+            conn.commit()
+            cur.close()
+            conn.close()
+        return jsonify({'planes': lista_planes(), 'dias': dias_sub()})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/forzar-ip', methods=['POST'])
 def forzar_ip():
-    """Activa o quita el login obligatorio para una IP concreta (desde el panel)."""
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
@@ -428,127 +684,13 @@ def forzar_ip():
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({'ok': True, 'ip': ip_obj, 'forzada': activar})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/ips-forzadas')
-def ips_forzadas():
-    """Lista de IPs a las que se les exige iniciar sesion."""
-    if not check_password():
-        return jsonify({'error': 'unauthorized'}), 401
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('SELECT ip, created_at FROM forced_ips ORDER BY created_at DESC LIMIT 1000')
-        filas = cur.fetchall()
-        cur.close()
-        conn.close()
-        return jsonify({'ips': [{'ip': f[0], 'fecha': str(f[1]) if f[1] else ''} for f in filas]})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/usuarios')
-def usuarios_panel():
-    """Lista de usuarios con sus creditos y plan (para el panel)."""
-    if not check_password():
-        return jsonify({'error': 'unauthorized'}), 401
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('''SELECT u.email, u.name, u.picture, u.creditos, u.plan,
-                              u.plan_renueva, u.forzar_login, u.created_at,
-                              (SELECT COUNT(*) FROM searches s WHERE s.user_email = u.email) as busquedas
-                       FROM users u ORDER BY u.created_at DESC LIMIT 5000''')
-        filas = cur.fetchall()
-        cur.close()
-        conn.close()
-        return jsonify({'usuarios': [{
-            'email': f[0], 'name': f[1] or '', 'picture': f[2] or '',
-            'creditos': f[3] or 0, 'plan': f[4] or 'gratis',
-            'renueva': str(f[5]) if f[5] else '',
-            'forzar_login': bool(f[6]),
-            'alta': str(f[7]) if f[7] else '',
-            'busquedas': f[8] or 0,
-        } for f in filas]})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/dar-creditos', methods=['POST'])
-def dar_creditos():
-    """Suma o resta creditos a un usuario a mano (desde el panel)."""
-    if not check_password():
-        return jsonify({'error': 'unauthorized'}), 401
-    try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()
-        cantidad = int(data.get('cantidad', 0) or 0)
-        if not email:
-            return jsonify({'error': 'falta_email'}), 400
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('UPDATE users SET creditos = GREATEST(creditos + %s, 0) WHERE email = %s RETURNING creditos',
-                    (cantidad, email))
-        fila = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-        if not fila:
-            return jsonify({'error': 'usuario_no_encontrado'}), 404
-        return jsonify({'ok': True, 'creditos': fila[0]})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/cambiar-plan', methods=['POST'])
-def cambiar_plan():
-    """Cambia el plan de un usuario a mano (desde el panel)."""
-    if not check_password():
-        return jsonify({'error': 'unauthorized'}), 401
-    try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()
-        plan = (data.get('plan', '') or '').strip()
-        if not email or plan not in PLANES:
-            return jsonify({'error': 'datos_invalidos'}), 400
-        conn = get_db()
-        cur = conn.cursor()
-        if plan == 'gratis':
-            cur.execute("UPDATE users SET plan = 'gratis', plan_renueva = NULL WHERE email = %s", (email,))
-        else:
-            cur.execute("""UPDATE users SET plan = %s, creditos = creditos + %s,
-                           plan_renueva = NOW() + INTERVAL '30 days' WHERE email = %s""",
-                        (plan, PLANES[plan]['creditos'], email))
-        conn.commit()
-        cur.close()
-        conn.close()
         return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/forzar-login', methods=['POST'])
-def forzar_login():
-    """Activa o desactiva el login obligatorio para un usuario (desde el panel)."""
-    if not check_password():
-        return jsonify({'error': 'unauthorized'}), 401
-    try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()
-        activar = bool(data.get('activar', True))
-        if not email:
-            return jsonify({'error': 'falta_email'}), 400
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('UPDATE users SET forzar_login = %s WHERE email = %s', (activar, email))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({'ok': True, 'forzar_login': activar})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/pagos')
 def pagos_panel():
-    """Lista de pagos recibidos (para el panel)."""
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
@@ -561,17 +703,71 @@ def pagos_panel():
         total = cur.fetchone()[0]
         cur.close()
         conn.close()
-        return jsonify({
-            'total_cobrado': float(total or 0),
-            'pagos': [{
-                'id': f[0], 'email': f[1] or '', 'plan': f[2] or '',
-                'creditos': f[3] or 0, 'importe': float(f[4] or 0),
-                'metodo': f[5] or '', 'estado': f[6] or '',
-                'fecha': str(f[7]) if f[7] else '',
-            } for f in filas]
-        })
+        return jsonify({'total_cobrado': float(total or 0), 'pagos': [{
+            'id': f[0], 'email': f[1] or '', 'plan': f[2] or '', 'dias': f[3] or 0,
+            'importe': float(f[4] or 0), 'metodo': f[5] or '', 'estado': f[6] or '',
+            'fecha': str(f[7]) if f[7] else ''} for f in filas]})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ===================== MENSAJES DEL FORMULARIO ANTIGUO =====================
+
+@app.route('/contact', methods=['POST'])
+def contact():
+    try:
+        data = request.get_json(force=True)
+        email = (data.get('email', '') or '').strip()[:200]
+        message = (data.get('message', '') or '').strip()[:2000]
+        if not message:
+            return jsonify({'error': 'Mensaje vacío'}), 400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO messages (email, message, ip) VALUES (%s, %s, %s)',
+                    (email, message, request.remote_addr))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/messages')
+def get_messages():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('SELECT id, email, message, replied, created_at FROM messages ORDER BY created_at DESC LIMIT 200')
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'messages': [{'id': r[0], 'email': r[1] or '', 'message': r[2] or '',
+                                      'replied': r[3], 'date': str(r[4])} for r in rows]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/mark-replied', methods=['POST'])
+def mark_replied():
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        data = request.get_json(force=True)
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE messages SET replied = TRUE WHERE id = %s', (data.get('id'),))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ===================== ESTADISTICAS DEL PANEL =====================
 
 @app.route('/stats')
 def stats():
@@ -580,115 +776,57 @@ def stats():
     try:
         conn = get_db()
         cur = conn.cursor()
-
-        cur.execute('SELECT COUNT(*) FROM searches')
-        total = cur.fetchone()[0]
-        cur.execute('SELECT COUNT(DISTINCT ip) FROM searches')
-        unique_ips = cur.fetchone()[0]
-        cur.execute('SELECT COUNT(DISTINCT user_email) FROM searches WHERE user_email IS NOT NULL AND user_email != %s', ('',))
-        logged_users = cur.fetchone()[0]
-
-        cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE")
-        today = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'")
-        week = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'")
-        month = cur.fetchone()[0]
+        q = lambda sql, p=(): (cur.execute(sql, p), cur.fetchone()[0])[1]
+        total = q('SELECT COUNT(*) FROM searches')
+        unique_ips = q('SELECT COUNT(DISTINCT ip) FROM searches')
+        logged_users = q("SELECT COUNT(DISTINCT user_email) FROM searches WHERE user_email IS NOT NULL AND user_email != ''")
+        today = q("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE")
+        week = q("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'")
+        month = q("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'")
+        pending_msgs = q("SELECT COUNT(*) FROM messages WHERE replied = FALSE")
+        chat_no_leidos = q("SELECT COUNT(*) FROM chat WHERE de = 'user' AND leido = FALSE")
+        suscritos = q("SELECT COUNT(*) FROM users WHERE sub_hasta > NOW()")
 
         cur.execute('SELECT platform, COUNT(*) FROM searches GROUP BY platform ORDER BY COUNT(*) DESC')
         platforms = cur.fetchall()
-
         cur.execute("SELECT DATE(created_at), COUNT(*) FROM searches GROUP BY DATE(created_at) ORDER BY DATE(created_at) DESC LIMIT 30")
         daily = cur.fetchall()
-
         cur.execute('SELECT username, platform, COUNT(*) FROM searches GROUP BY username, platform ORDER BY COUNT(*) DESC LIMIT 30')
         top_profiles = cur.fetchall()
-
-        cur.execute('''
-            SELECT email, MAX(name) as name, MAX(picture) as picture,
-                   COUNT(*) as logins, MAX(created_at) as last_login
-            FROM logins
-            WHERE email IS NOT NULL AND email != ''
-            GROUP BY email
-            ORDER BY last_login DESC
-            LIMIT 5000
-        ''')
+        cur.execute('''SELECT email, MAX(name), MAX(picture), COUNT(*), MAX(created_at)
+                       FROM logins WHERE email IS NOT NULL AND email != ''
+                       GROUP BY email ORDER BY MAX(created_at) DESC LIMIT 5000''')
         accounts = cur.fetchall()
-
-        cur.execute('''
-            SELECT user_email, COUNT(*) as busquedas, MAX(created_at) as ultima
-            FROM searches
-            WHERE user_email IS NOT NULL AND user_email != ''
-            GROUP BY user_email
-            ORDER BY busquedas DESC
-            LIMIT 5000
-        ''')
-        user_activity = cur.fetchall()
-
-        cur.execute('''
-            SELECT username, platform, count, user_email, ip, created_at
-            FROM searches
-            ORDER BY created_at DESC
-            LIMIT 5000
-        ''')
+        cur.execute('''SELECT username, platform, count, user_email, ip, created_at
+                       FROM searches ORDER BY created_at DESC LIMIT 5000''')
         history = cur.fetchall()
-
-        cur.execute("SELECT COUNT(*) FROM messages WHERE replied = FALSE")
-        pending_msgs = cur.fetchone()[0]
-
         cur.execute("SELECT ip FROM forced_ips")
         forced = [f[0] for f in cur.fetchall()]
-
+        cur.execute("SELECT username FROM blocked_profiles")
+        bloqueados = [f[0] for f in cur.fetchall()]
+        cur.execute("SELECT email FROM users WHERE debe_pagar = TRUE")
+        marcados = [f[0] for f in cur.fetchall()]
         cur.close()
         conn.close()
 
         return jsonify({
-            'total': total,
-            'unique_ips': unique_ips,
-            'logged_users': logged_users,
-            'today': today,
-            'week': week,
-            'month': month,
-            'pending_msgs': pending_msgs,
-            'forced_ips': forced,
+            'total': total, 'unique_ips': unique_ips, 'logged_users': logged_users,
+            'today': today, 'week': week, 'month': month,
+            'pending_msgs': pending_msgs, 'chat_no_leidos': chat_no_leidos, 'suscritos': suscritos,
+            'forced_ips': forced, 'blocked_profiles': bloqueados, 'marcados': marcados,
             'platforms': [{'name': p[0], 'count': p[1]} for p in platforms],
             'daily': [{'date': str(d[0]), 'count': d[1]} for d in daily],
             'top_profiles': [{'username': p[0], 'platform': p[1], 'count': p[2]} for p in top_profiles],
-            'accounts': [{
-                'email': a[0], 'name': a[1], 'picture': a[2],
-                'logins': a[3], 'last_login': str(a[4])
-            } for a in accounts],
-            'user_activity': [{
-                'email': u[0], 'searches': u[1], 'last': str(u[2])
-            } for u in user_activity],
-            'history': [{
-                'username': h[0], 'platform': h[1], 'count': h[2],
-                'user_email': h[3] or '', 'ip': h[4] or '', 'date': str(h[5])
-            } for h in history]
+            'accounts': [{'email': a[0], 'name': a[1], 'picture': a[2], 'logins': a[3],
+                          'last_login': str(a[4])} for a in accounts],
+            'history': [{'username': h[0], 'platform': h[1], 'count': h[2], 'user_email': h[3] or '',
+                         'ip': h[4] or '', 'date': str(h[5])} for h in history],
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/create-checkout', methods=['POST'])
-def create_checkout():
-    try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': { 'name': 'ClipLinks Pro' },
-                    'unit_amount': 100,
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=request.host_url + '?payment=success',
-            cancel_url=request.host_url + '?payment=cancel',
-        )
-        return jsonify({'url': session.url})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+
+# ===================== EXTRACCION DE LINKS =====================
 
 def get_avatar(user, platform):
     try:
@@ -698,104 +836,65 @@ def get_avatar(user, platform):
             prof_url = f'https://www.youtube.com/@{user}'
         else:
             return None
-
-        opts = {
-            'quiet': True,
-            'skip_download': True,
-            'playlist_items': '0',
-            'ignoreerrors': True,
-        }
+        opts = {'quiet': True, 'skip_download': True, 'playlist_items': '0', 'ignoreerrors': True}
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(prof_url, download=False) or {}
-
         for key in ('thumbnail', 'channel_thumbnail', 'uploader_avatar'):
             if info.get(key):
                 return info.get(key)
-
         thumbs = info.get('thumbnails')
-        if thumbs and isinstance(thumbs, list) and len(thumbs) > 0:
+        if thumbs and isinstance(thumbs, list):
             return thumbs[-1].get('url')
-
         return None
     except:
         return None
 
-def get_instagram_reels(user, days, limite=None):
-    """Saca reels de Instagram via Apify. Usa onlyPostsNewerThan para que
-    Apify filtre por fecha en origen (saca pocos = barato). Ordena por reciente.
-    'limite' = maximo de reels a pedir (los creditos del usuario)."""
+
+def get_instagram_reels(user, days):
+    """Saca reels de Instagram via Apify, filtrados por fecha en origen y ordenados."""
     if not APIFY_TOKEN:
         return None, 'Instagram no está configurado'
-
     user = user.lower().lstrip('@')
-
-    # Llamar al Actor de Apify y esperar los resultados
     api_url = f'https://api.apify.com/v2/acts/{APIFY_ACTOR}/run-sync-get-dataset-items?token={APIFY_TOKEN}'
-    # onlyPostsNewerThan: le decimos a Apify que SOLO saque los reels de los
-    # ultimos X dias. Formato correcto: "1 day" (singular) o "5 days" (plural).
-    if days == 1:
-        newer = '1 day'
-    else:
-        newer = f'{days} days'
-    tope = limite if limite else INSTAGRAM_MAX_REELS
-    payload = {
-        'username': [user],
-        'resultsLimit': tope,
-        'onlyPostsNewerThan': newer,
-        'skipPinnedPosts': True,
-    }
-
+    newer = '1 day' if days == 1 else f'{days} days'
+    payload = {'username': [user], 'resultsLimit': INSTAGRAM_MAX_REELS,
+               'onlyPostsNewerThan': newer, 'skipPinnedPosts': True}
     try:
         resp = requests.post(api_url, json=payload, timeout=280)
     except requests.exceptions.Timeout:
         return None, 'Instagram tardó demasiado, prueba de nuevo'
     except Exception as e:
         return None, f'Error de conexión: {e}'
-
     if resp.status_code not in (200, 201):
         return None, f'Instagram no disponible ({resp.status_code})'
-
     try:
         items = resp.json()
     except:
         return None, 'Respuesta inválida de Instagram'
-
-    if not isinstance(items, list) or len(items) == 0:
+    if not isinstance(items, list) or not items:
         return {'links': [], 'stats': None}, None
 
-    # Recoger links con su fecha (sin filtro de perfil: salen todos los del perfil buscado)
     recogidos = []
     for it in items:
         url = it.get('url')
-        if not url:
-            continue
-        ts = it.get('timestamp') or ''
-        recogidos.append({
-            'url': url,
-            'timestamp': ts,
-            'likes': it.get('likesCount') or 0,
-            'coment': it.get('commentsCount') or 0,
-        })
-
-    # Ordenar: mas reciente primero
+        if url:
+            recogidos.append({'url': url, 'timestamp': it.get('timestamp') or '',
+                              'likes': it.get('likesCount') or 0, 'coment': it.get('commentsCount') or 0})
     recogidos.sort(key=lambda x: x['timestamp'], reverse=True)
     links = [f['url'] for f in recogidos]
 
-    # ===== ESTADISTICAS del conjunto =====
     stats = None
     if recogidos:
-        likes_validos = [r['likes'] for r in recogidos if isinstance(r['likes'], int) and r['likes'] > 0]
-        coment_validos = [r['coment'] for r in recogidos if isinstance(r['coment'], int) and r['coment'] > 0]
-        top = sorted(recogidos, key=lambda r: (r['likes'] if isinstance(r['likes'], int) else 0), reverse=True)[:3]
-        stats = {
-            'total': len(recogidos),
-            'media_likes': int(sum(likes_validos) / len(likes_validos)) if likes_validos else 0,
-            'media_coment': int(sum(coment_validos) / len(coment_validos)) if coment_validos else 0,
-            'por_dia': round(len(recogidos) / days, 1) if days else len(recogidos),
-            'top': [{'url': r['url'], 'likes': r['likes']} for r in top if r['likes']],
-        }
-
+        likes = [r['likes'] for r in recogidos if isinstance(r['likes'], int) and r['likes'] > 0]
+        coms = [r['coment'] for r in recogidos if isinstance(r['coment'], int) and r['coment'] > 0]
+        top = sorted(recogidos, key=lambda r: r['likes'] if isinstance(r['likes'], int) else 0, reverse=True)[:3]
+        stats = {'total': len(recogidos),
+                 'media_likes': int(sum(likes) / len(likes)) if likes else 0,
+                 'media_coment': int(sum(coms) / len(coms)) if coms else 0,
+                 'por_dia': round(len(recogidos) / days, 1) if days else len(recogidos),
+                 'top': [{'url': r['url'], 'likes': r['likes']} for r in top if r['likes']]}
     return {'links': links, 'stats': stats}, None
+
 
 @app.route('/links')
 def get_links():
@@ -803,97 +902,63 @@ def get_links():
     platform = request.args.get('platform', 'tiktok')
     count = int(request.args.get('count', 25))
     days = int(request.args.get('days', 1))
-    user_email = request.args.get('email', '')
     ip = request.remote_addr
+    email = email_de_sesion()
 
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
-
     user = user.replace('@', '').strip()
 
-    # Si no hay sesion y su IP esta en la lista de forzadas, se exige login
-    if not user_email:
-        try:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute('SELECT 1 FROM forced_ips WHERE ip = %s LIMIT 1', (ip,))
-            forzado = cur.fetchone() is not None
-            cur.close()
-            conn.close()
-        except:
-            forzado = False
-        if forzado:
-            return jsonify({'error': 'login_requerido',
-                            'mensaje': 'Inicia sesión para seguir usando ClipLinks'}), 401
-
-    # Guardar la busqueda (para Instagram guardamos 'days' en count)
+    # Guardar la busqueda (tambien los intentos bloqueados, para verlos en el panel)
     try:
         conn = get_db()
         cur = conn.cursor()
-        saved_count = days if platform == 'instagram' else count
         cur.execute('INSERT INTO searches (ip, platform, username, count, user_email) VALUES (%s, %s, %s, %s, %s)',
-                    (ip, platform, user, saved_count, user_email))
+                    (ip, platform, user, days if platform == 'instagram' else count, email))
         conn.commit()
         cur.close()
         conn.close()
     except:
         pass
 
-    # ===== INSTAGRAM via Apify (requiere login + creditos) =====
+    u = get_user(email) if email else None
+    activo = bool(u and u['activo'])
+    contar = False  # si hay que descontar links del plan
+
+    # 1) IP forzada a iniciar sesion
+    if not email and ip_forzada(ip):
+        return jsonify({'error': 'login_requerido', 'motivo': 'forzado'}), 401
+
+    # 2) Perfil (@) bloqueado o cuenta marcada: anonimo -> login; sin suscripcion -> pagar
+    if perfil_bloqueado(user) or (u and u['debe_pagar']):
+        if not email:
+            return jsonify({'error': 'login_requerido', 'motivo': 'forzado'}), 401
+        if not activo:
+            return jsonify({'error': 'pago_requerido', 'motivo': 'cuenta'}), 402
+        contar = True
+
+    # 3) Instagram: solo con un plan que incluya Instagram
     if platform == 'instagram':
-        # 1) Login obligatorio
-        if not user_email:
-            return jsonify({'error': 'login_requerido',
-                            'mensaje': 'Inicia sesión para usar Instagram'}), 401
-
-        u = get_user(user_email)
-        if not u:
-            return jsonify({'error': 'login_requerido',
-                            'mensaje': 'Inicia sesión para usar Instagram'}), 401
-
-        plan_info = PLANES.get(u['plan'], PLANES['gratis'])
-
-        # 2) Limite de dias segun el plan
-        if days < 1:
-            days = 1
-        if days > plan_info['dias_max']:
-            return jsonify({'error': 'plan_insuficiente',
-                            'mensaje': f"Tu plan permite hasta {plan_info['dias_max']} días. Mejora tu plan para más.",
-                            'dias_max': plan_info['dias_max']}), 403
-
-        # 3) Sin creditos
-        if u['creditos'] <= 0:
-            return jsonify({'error': 'sin_creditos',
-                            'mensaje': 'Te has quedado sin créditos. Recarga para seguir usando Instagram.',
-                            'creditos': 0}), 402
-
-        # 4) Buscar, limitando a los creditos que tiene (no gasta de mas)
-        resultado, err = get_instagram_reels(user, days, limite=u['creditos'])
+        if not email:
+            return jsonify({'error': 'login_requerido', 'motivo': 'instagram'}), 401
+        if not activo or not u['instagram']:
+            return jsonify({'error': 'pago_requerido', 'motivo': 'instagram'}), 402
+        days = max(1, min(days, 7))
+        resultado, err = get_instagram_reels(user, days)
         if err:
             return jsonify({'error': err}), 500
-        links = resultado.get('links', [])
-        stats = resultado.get('stats')
+        return jsonify({'links': resultado.get('links', []), 'stats': resultado.get('stats'),
+                        'avatar': get_avatar(user, 'instagram')})
 
-        # 5) Restar 1 credito por video
-        gastados = len(links)
-        if gastados > 0:
-            restar_creditos(user_email, gastados)
-        restantes = max(u['creditos'] - gastados, 0)
+    # 4) Limite de links del plan
+    restantes = None
+    if contar and u['restantes'] is not None:
+        restantes = u['restantes']
+        if restantes <= 0:
+            return jsonify({'error': 'pago_requerido', 'motivo': 'limite'}), 402
+        count = min(count, restantes)
 
-        # 6) Si salieron exactamente sus creditos, es que se corto a mitad
-        cortado = (gastados > 0 and gastados >= u['creditos'])
-
-        avatar = get_avatar(user, 'instagram')
-        return jsonify({
-            'links': links,
-            'avatar': avatar,
-            'stats': stats,
-            'creditos_gastados': gastados,
-            'creditos_restantes': restantes,
-            'cortado_por_creditos': cortado,
-        })
-
-    # ===== TIKTOK y YOUTUBE via yt-dlp =====
+    # ===== TikTok y YouTube via yt-dlp =====
     if platform == 'tiktok':
         url = f'https://www.tiktok.com/@{user}'
     elif platform == 'youtube':
@@ -901,18 +966,11 @@ def get_links():
     else:
         return jsonify({'error': 'Plataforma no válida'}), 400
 
-    ydl_opts = {
-        'quiet': True,
-        'extract_flat': True,
-        'playlistend': count,
-    }
-
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL({'quiet': True, 'extract_flat': True, 'playlistend': count}) as ydl:
             info = ydl.extract_info(url, download=False)
             entries = info.get('entries', [])
-            links = [entry.get('url', '') for entry in entries if entry.get('url')]
-
+            links = [e.get('url', '') for e in entries if e.get('url')]
             avatar = None
             for key in ('thumbnail', 'channel_thumbnail', 'uploader_avatar'):
                 if info.get(key):
@@ -920,14 +978,27 @@ def get_links():
                     break
             if not avatar:
                 thumbs = info.get('thumbnails')
-                if thumbs and isinstance(thumbs, list) and len(thumbs) > 0:
+                if thumbs and isinstance(thumbs, list):
                     avatar = thumbs[-1].get('url')
             if not avatar:
                 avatar = get_avatar(user, platform)
-
-            return jsonify({'links': links, 'avatar': avatar})
+            links = links[:count]
+            if restantes is not None:
+                try:
+                    conn = get_db()
+                    cur = conn.cursor()
+                    cur.execute('UPDATE users SET links_usados = COALESCE(links_usados, 0) + %s WHERE email = %s',
+                                (len(links), email))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except:
+                    pass
+                restantes = max(0, restantes - len(links))
+            return jsonify({'links': links, 'avatar': avatar, 'restantes': restantes})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)

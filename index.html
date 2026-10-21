@@ -9,274 +9,268 @@
 <meta property="og:description" content="Extrae links de TikTok, Instagram y YouTube automáticamente y agrúpalos listos para tu bot de Discord.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://web-production-db182.up.railway.app">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%235865F2%22/><text x=%2250%22 y=%2268%22 font-size=%2252%22 text-anchor=%22middle%22>🔗</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%2315171D%22/><path d=%22M30 34h40M30 50h40M30 66h24%22 stroke=%22%233DD6F5%22 stroke-width=%2210%22 stroke-linecap=%22round%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <title>ClipLinks — Extrae links de TikTok, Instagram y YouTube automáticamente</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #0F0F14; color: #E8E9ED; position: relative; min-height: 100vh; overflow-x: hidden; }
-body::before { content: ''; position: fixed; top: -280px; left: 50%; transform: translateX(-50%); width: 1100px; height: 800px; background: radial-gradient(ellipse at center top, rgba(88,101,242,0.32), rgba(88,101,242,0.08) 45%, rgba(88,101,242,0) 70%); filter: blur(30px); z-index: 0; pointer-events: none; }
-body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%); width: 900px; height: 500px; background: radial-gradient(ellipse at center, rgba(88,101,242,0.10), rgba(88,101,242,0) 70%); filter: blur(40px); z-index: 0; pointer-events: none; }
-::selection { background: rgba(88,101,242,0.35); }
-.nav { position: sticky; top: 0; z-index: 20; background: rgba(20,20,26,0.55); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 30px rgba(0,0,0,0.3); padding: 0 1.6rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.nav-logo { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 11px; letter-spacing: -0.2px; flex-shrink: 0; }
-.nav-icon { width: 33px; height: 33px; border-radius: 10px; background: linear-gradient(135deg, #5865F2, #8B93FF); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; box-shadow: 0 4px 16px rgba(88,101,242,0.45); flex-shrink: 0; }
-.nav-right { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.lang-sel { background: rgba(255,255,255,0.05); color: #A9ADB8; font-size: 13px; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; cursor: pointer; outline: none; transition: all 0.2s; flex-shrink: 0; }
-.lang-sel:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
-.lang-sel option { background: #16161C; color: #E8E9ED; }
-.userwrap { position: relative; }
-.userpill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px 4px 4px; border-radius: 22px; cursor: pointer; transition: all 0.18s; }
-.userpill:hover { background: rgba(255,255,255,0.1); }
-.userpill img { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
-.userpill span { font-size: 13px; font-weight: 500; color: #E8E9ED; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.usermenu { position: absolute; top: 46px; right: 0; background: #1B1B22; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); padding: 6px; min-width: 160px; display: none; z-index: 30; }
-.usermenu.open { display: block; }
-.usermenu button { width: 100%; text-align: left; background: transparent; border: none; color: #E8E9ED; font-size: 13px; font-family: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
-.usermenu button:hover { background: rgba(255,255,255,0.06); }
-#authArea { display: flex; flex-shrink: 0; }
-#gbtn { overflow: visible; }
-.wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 2.4rem 1.6rem 2rem; }
-.title { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; text-align: center; }
-.subtitle { font-size: 14px; color: #8A8E99; margin-bottom: 1.8rem; text-align: center; }
-.card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 1.7rem; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-.plat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
-.plat { display: flex; align-items: center; justify-content: center; gap: 9px; height: 48px; border: 1px solid rgba(255,255,255,0.09); border-radius: 13px; background: rgba(0,0,0,0.2); color: #A9ADB8; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.18s; }
-.plat svg { width: 19px; height: 19px; flex-shrink: 0; }
-.plat.active { background: rgba(88,101,242,0.15); color: #fff; border-color: rgba(88,101,242,0.55); box-shadow: 0 4px 16px rgba(88,101,242,0.2); }
-.plat:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #E8E9ED; }
-.field-label { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.field-wrap { position: relative; margin-bottom: 1.3rem; }
-.field { width: 100%; height: 50px; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 0 16px; font-size: 16px; font-family: inherit; background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: all 0.2s; }
-.field::placeholder { color: #55585F; }
-.field:focus { border-color: #5865F2; box-shadow: 0 0 0 3px rgba(88,101,242,0.18); }
-.recent { position: absolute; top: 56px; left: 0; right: 0; background: #1B1B22; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); padding: 6px; z-index: 15; display: none; }
-.recent.open { display: block; }
-.recent-title { font-size: 10px; font-weight: 600; color: #63666F; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px 4px; }
-.recent-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
-.recent-item:hover { background: rgba(255,255,255,0.05); }
-.recent-item svg { width: 15px; height: 15px; flex-shrink: 0; color: #8A8E99; }
-.recent-item span { font-size: 13.5px; color: #E8E9ED; }
-.opts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.3rem; }
-.opt { height: 36px; padding: 0 16px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; background: transparent; color: #A9ADB8; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
-.opt.active { background: rgba(88,101,242,0.16); color: #A5AEFF; border-color: rgba(88,101,242,0.55); }
-.opt:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #fff; }
-.go-btn { width: 100%; height: 52px; border: none; border-radius: 13px; background: linear-gradient(135deg, #5865F2, #6E79FF); color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(88,101,242,0.4); }
-.go-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(88,101,242,0.5); }
-.go-btn:active { transform: translateY(0); }
-.loadbox { display: none; text-align: center; padding: 1.8rem; }
-.spin { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.08); border-top-color: #5865F2; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loadmsg { font-size: 13px; color: #8A8E99; }
-.warnbox { display: none; background: rgba(240,178,50,0.08); border: 1px solid rgba(240,178,50,0.25); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #E8B33E; margin-bottom: 1.1rem; }
-.result { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; display: none; margin-bottom: 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: fadeUp 0.4s ease both; }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.result-head { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 10px; }
-.ruser { display: flex; align-items: center; gap: 13px; min-width: 0; }
-.rava { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #5865F2, #8B93FF); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; box-shadow: 0 4px 16px rgba(88,101,242,0.35); overflow: hidden; flex-shrink: 0; }
-.rava img { width: 100%; height: 100%; object-fit: cover; }
-.rname { font-size: 15px; font-weight: 600; color: #fff; word-break: break-all; }
-.rmeta { font-size: 12.5px; color: #8A8E99; margin-top: 1px; }
-.copyall { height: 36px; padding: 0 17px; border: 1px solid rgba(88,101,242,0.45); border-radius: 10px; background: rgba(88,101,242,0.12); color: #A5AEFF; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
-.copyall:hover { background: rgba(88,101,242,0.22); }
-.copyall.ok { animation: pop 0.32s ease; border-color: rgba(35,165,90,0.5); background: rgba(35,165,90,0.14); color: #4CC97B; }
-.grp { border-bottom: 1px solid rgba(255,255,255,0.05); animation: fadeUp 0.4s ease both; }
-.grp:last-child { border-bottom: none; }
-.grp-head { padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.22); }
-.grp-t { font-size: 11px; font-weight: 600; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.4px; }
-.grp-btn { height: 38px; padding: 0 22px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: transparent; color: #A9ADB8; font-size: 14px; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.18s; }
-.grp-btn:hover { border-color: #5865F2; color: #A5AEFF; }
-.grp-btn.ok { background: rgba(35,165,90,0.13); border-color: rgba(35,165,90,0.45); color: #4CC97B; animation: pop 0.32s ease; }
-@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.13); } 100% { transform: scale(1); } }
-.lks { padding: 10px 18px 14px; }
-.lk { font-size: 12.5px; color: #9A9EA9; padding: 3px 8px; border-radius: 6px; line-height: 1.6; font-family: 'SF Mono', Consolas, Menlo, monospace; word-break: break-all; transition: all 0.15s; }
-.lk:hover { background: rgba(255,255,255,0.04); color: #D5D7DE; }
-.lk.ok { color: #4CC97B; animation: flashGreen 0.6s ease; }
-@keyframes flashGreen { 0% { background: rgba(35,165,90,0.28); } 100% { background: transparent; } }
-.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
-.modal-bg.open { display: flex; }
-.modal { background: #16161C; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 26px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-.modal h3 { font-size: 18px; color: #fff; margin-bottom: 6px; }
-.modal p { font-size: 13px; color: #8A8E99; margin-bottom: 18px; }
-.modal input, .modal textarea { width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(0,0,0,0.3); color: #fff; padding: 12px 14px; font-size: 16px; font-family: inherit; outline: none; margin-bottom: 12px; }
-.modal input:focus, .modal textarea:focus { border-color: #5865F2; }
-.modal textarea { resize: vertical; min-height: 90px; }
-.modal-actions { display: flex; gap: 10px; }
-.modal-send { flex: 1; height: 46px; border: none; border-radius: 10px; background: linear-gradient(135deg, #5865F2, #6E79FF); color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
-.modal-cancel { height: 46px; padding: 0 18px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: transparent; color: #A9ADB8; font-size: 14px; font-family: inherit; cursor: pointer; }
-.modal-ok { text-align: center; padding: 10px 0; }
-.modal-ok .check { font-size: 40px; }
-.modal-ok h3 { color: #4CC97B; margin: 8px 0 4px; }
-.foot { text-align: center; padding: 2.4rem 1.6rem; font-size: 12px; color: #55585F; }
-.foot .contact-link { color: #55585F; text-decoration: none; cursor: pointer; border-bottom: 1px dotted rgba(255,255,255,0.15); transition: color 0.18s; }
-.foot .contact-link:hover { color: #8A8E99; }
-.foot .sep { margin: 0 8px; opacity: 0.5; }
-.contact-cta { display: flex; justify-content: center; margin-top: 1.4rem; }
-.contact-cta button { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.04); color: #B5B8C0; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 9px 18px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.18s; font-family: inherit; }
-.contact-cta button:hover { background: rgba(255,255,255,0.08); color: #FFF; border-color: rgba(255,255,255,0.22); }
-.contact-cta button svg { width: 15px; height: 15px; }
+:root{
+  --ink:#15171D; --panel:#1C1F27; --panel-2:#22262F; --line:#2B2F3A; --line-2:#383D4A;
+  --text:#ECEDF0; --muted:#8C92A0; --faint:#5E6472;
+  --cyan:#3DD6F5; --cyan-ink:#06222A; --cyan-soft:rgba(61,214,245,.12);
+  --gold:#F2B84B; --gold-ink:#241A05; --gold-soft:rgba(242,184,75,.10);
+  --ok:#4ED38A; --ok-soft:rgba(78,211,138,.12); --bad:#FF6B6B;
+  --r-sm:8px; --r:12px; --r-lg:18px;
+  --sans:'Onest',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(61,214,245,.28)}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-/* ===== CREDITOS / PRO / PLANES (solo Instagram) ===== */
-.opt.locked { opacity: 0.5; position: relative; padding-right: 22px; }
-.opt.locked .lock { position: absolute; top: 3px; right: 5px; font-size: 9px; line-height: 1; }
-.opt.locked:hover { opacity: 0.75; }
-/* Creditos discretos: una linea pequeña a un lado */
-.cred-mini { display: flex; align-items: baseline; gap: 5px; justify-content: flex-end; font-size: 11.5px; color: #6E7280; margin-top: 10px; flex-wrap: wrap; }
-.cred-mini #credNum { font-weight: 700; font-size: 13px; color: #9AA0AC; margin-right: 4px; }
-.cred-mini #credNum.alto { color: #4CC97B; }
-.cred-mini #credNum.medio { color: #F5C451; }
-.cred-mini #credNum.bajo { color: #FF6B6B; }
-.cred-mini a { color: #F5C451; cursor: pointer; text-decoration: none; font-weight: 600; border: 1px solid rgba(245,196,81,0.4); border-radius: 999px; padding: 3px 11px; margin-left: 8px; font-size: 11.5px; transition: all 0.18s; }
-.cred-mini a:hover { background: #F5C451; color: #14151A; border-color: #F5C451; }
-/* Cuando se acaban los creditos: grande y visible */
-.cred-mini.vacio { justify-content: center; font-size: 14px; color: #E8C878; background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); border-radius: 12px; padding: 12px 14px; }
-.cred-mini.vacio #credNum { font-size: 20px; color: #F5C451; margin-right: 6px; }
-.cred-mini.vacio a { color: #14151A; background: #F5C451; border: none; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 12.5px; margin-left: 8px; }
-.ig-warn { background: rgba(245,196,81,0.08); border: 1px solid rgba(245,196,81,0.25); color: #E8C878; border-radius: 12px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
-/* Botones del menu de pago */
-.cred-btn { background: #F5C451; color: #14151A; border: none; border-radius: 10px; padding: 10px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.18s; }
-.cred-btn:hover { background: #FFD76E; }
-#planesModal .modal-btns { display: flex; justify-content: center; margin-top: 22px; }
-#planesModal .mbtn.cancel { background: rgba(255,255,255,0.06); color: #C9CCD4; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 26px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; }
-#planesModal .mbtn.cancel:hover { background: rgba(255,255,255,0.12); color: #FFF; }
-.login-modal { max-width: 380px; text-align: center; padding: 30px 26px 24px; }
-.login-modal h3 { margin: 0 0 8px; font-size: 18px; }
-.login-sub { font-size: 13px; color: #8A8E99; line-height: 1.55; margin: 0 0 20px; }
-.login-slot { display: block; width: 100%; min-height: 44px; }
-.login-slot > div, .login-slot iframe { width: 100% !important; margin: 0 auto !important; }
-.login-slot [role="button"] { width: 100% !important; height: 46px !important; border-radius: 999px !important; }
-.login-cerrar { margin-top: 16px; background: none; border: none; color: #6E7280; font-size: 12.5px; cursor: pointer; font-family: inherit; text-decoration: underline; }
-.login-cerrar:hover { color: #9AA0AC; }
-.planes-modal { max-width: 780px; padding: 32px 30px 26px; }
-.planes-modal h3 { margin: 0 0 9px; font-size: 22px; }
-.planes-sub { font-size: 12.5px; color: #8A8E99; line-height: 1.6; margin: 0 0 26px; max-width: 540px; }
-.planes-grid { display: flex; gap: 16px; margin: 0 0 26px; }
-.planes-grid .plan-card { flex: 1 1 0; min-width: 0; }
-.plan-card { position: relative; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 26px 18px 20px; text-align: center; display: flex; flex-direction: column; transition: all 0.18s; }
-.plan-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); }
-.plan-card.destacado { border-color: rgba(245,196,81,0.55); background: rgba(245,196,81,0.07); transform: scale(1.03); }
-.plan-badge { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F5C451; color: #14151A; font-size: 9.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.plan-nom { font-size: 11.5px; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 2px; }
-.plan-precio { font-size: 34px; font-weight: 800; color: #FFF; margin: 9px 0 0; line-height: 1; }
-.plan-precio span { font-size: 12px; font-weight: 500; color: #8A8E99; }
-.plan-cred { font-size: 15px; color: #F5C451; font-weight: 700; margin-top: 14px; }
-.plan-det { font-size: 11px; color: #6E7280; margin-top: 4px; margin-bottom: 20px; }
-.plan-btn { width: 100%; margin-top: auto; background: rgba(255,255,255,0.08); color: #FFF; border: 1px solid rgba(255,255,255,0.16); border-radius: 11px; padding: 11px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.18s; }
-.plan-btn:hover { background: rgba(255,255,255,0.13); }
-.plan-card.destacado .plan-btn { background: #F5C451; color: #14151A; border-color: #F5C451; }
-.plan-card.destacado .plan-btn:hover { background: #FFD76E; }
-.recarga { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; }
-.recarga-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.recarga-t { font-size: 12.5px; font-weight: 600; color: #B5B8C0; line-height: 1.2; }
-.recarga-s { font-size: 11px; color: #6E7280; line-height: 1.2; }
-.recarga-grp { display: flex; align-items: stretch; height: 34px; flex-shrink: 0; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; transition: border-color 0.18s; }
-.recarga-grp:focus-within { border-color: rgba(245,196,81,0.6); }
-.recarga-grp > * { height: 32px; line-height: 32px; box-sizing: border-box; margin: 0; border: none; }
-.recarga-grp input, .modal .recarga-grp input, .modal .recarga-grp input:focus { width: 82px; text-align: center; background: transparent; padding: 0 6px; margin: 0; color: #FFF; font-size: 16px; font-weight: 600; font-family: inherit; outline: none; border: none; box-shadow: none; border-radius: 0; -moz-appearance: textfield; }
-.recarga-grp input::-webkit-outer-spin-button, .recarga-grp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.recarga-eq { padding: 0 8px; background: transparent; color: #6E7280; font-size: 13px; }
-.recarga-total { padding: 0 12px 0 2px; background: transparent; color: #F5C451; font-size: 13.5px; font-weight: 700; white-space: nowrap; min-width: 62px; }
-.recarga-pay { padding: 0 16px; background: #F5C451; color: #14151A; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.18s; }
-.recarga-pay:hover { background: #FFD76E; }
-@media (max-width: 560px) {
-  .recarga { flex-direction: column; align-items: stretch; }
-  .recarga-grp { width: 100%; }
-  .recarga-grp input { flex: 1; width: auto; }
-}
-@media (max-width: 620px) {
-  .planes-modal { max-width: 100%; padding: 22px 16px 18px; border-radius: 16px; }
-  .planes-modal h3 { font-size: 18px; }
-  .planes-sub { font-size: 12px; margin-bottom: 18px; }
-  .planes-grid { flex-direction: column; gap: 12px; margin-bottom: 18px; }
-  .plan-card { padding: 16px 14px 14px; }
-  .plan-card.destacado { transform: none; }
-  .plan-badge { top: -8px; }
-  .plan-precio { font-size: 27px; margin-top: 6px; }
-  .plan-cred { margin-top: 8px; font-size: 14px; }
-  .plan-det { margin-bottom: 12px; }
-  .plan-btn { padding: 12px; }
-  .recarga { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
-  .recarga-txt { align-items: flex-start; }
-  .recarga-grp { width: 100%; height: 40px; }
-  .recarga-grp > * { height: 38px; line-height: 38px; }
-  .recarga-grp input { flex: 1; width: auto; min-width: 0; }
-  .recarga-total { flex: 0 0 auto; }
-  .recarga-pay { flex: 0 0 auto; padding: 0 18px; font-size: 13px; }
-  #planesModal .modal-btns { margin-top: 16px; }
-  /* Creditos y dias */
-  .cred-mini { justify-content: center; font-size: 11px; }
-  .cred-mini.vacio { font-size: 13px; padding: 12px; }
-  .cred-mini.vacio a { display: block; margin: 8px auto 0; width: fit-content; }
-  .opt.locked { padding-right: 18px; }
-  .opt.locked .lock { top: 2px; right: 3px; font-size: 8px; }
-  /* Ventana de login */
-  .login-modal { max-width: 100%; padding: 26px 20px 20px; }
-  .login-modal h3 { font-size: 17px; }
-  .login-sub { font-size: 12.5px; }
-  /* Estadisticas */
-  .stats-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
-  .stat-val { font-size: 17px; }
-  .stat-lbl { font-size: 10.5px; }
-  .stats-box { padding: 14px; }
-}
-/* Estadisticas */
-.stats-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
-.stats-title { font-size: 12px; color: #8A8E99; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(110px,1fr)); gap: 12px; }
-.stat-item { }
-.stat-val { font-size: 20px; font-weight: 700; color: #FFF; }
-.stat-lbl { font-size: 11.5px; color: #8A8E99; margin-top: 2px; }
-.stats-top { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); }
-.stats-top a { display: block; color: #C9CCD4; text-decoration: none; font-size: 12.5px; padding: 4px 0; }
-.stats-top a:hover { color: #F5C451; }
+/* ---------- Barra superior ---------- */
+.nav{position:sticky;top:0;z-index:20;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(21,23,29,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-.3px;color:var(--text);flex-shrink:0}
+.nav-icon{width:28px;height:28px;flex-shrink:0;color:var(--cyan)}
+.nav-icon svg{width:100%;height:100%;display:block}
+.nav-right{display:flex;align-items:center;gap:10px;min-width:0}
+.lang-sel{height:34px;padding:0 10px;background:transparent;color:var(--muted);font-size:13px;border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;outline:none;flex-shrink:0}
+.lang-sel:hover{color:var(--text);border-color:var(--line-2)}
+.lang-sel option{background:var(--panel);color:var(--text)}
+.userwrap{position:relative}
+.userpill{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 3px;background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer}
+.userpill:hover{border-color:var(--line-2)}
+.userpill img{width:28px;height:28px;border-radius:50%;flex-shrink:0}
+.userpill span{font-size:13px;font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.usermenu{position:absolute;top:42px;right:0;min-width:160px;padding:6px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 14px 34px rgba(0,0,0,.45);display:none;z-index:30}
+.usermenu.open{display:block}
+.usermenu button{width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:13px;padding:9px 12px;border-radius:var(--r-sm);cursor:pointer}
+.usermenu button:hover{background:rgba(255,255,255,.05)}
+#authArea{display:flex;flex-shrink:0}
+#gbtn{overflow:visible}
 
-/* ===== ADAPTACION MOVIL ===== */
-@media (max-width: 640px) {
-  .nav { padding: 0 0.9rem; height: 56px; gap: 8px; }
-  .nav-logo { font-size: 15px; gap: 8px; }
-  .nav-icon { width: 30px; height: 30px; font-size: 14px; }
-  .nav-right { gap: 7px; }
-  .lang-sel { padding: 7px 9px; font-size: 12px; }
-  .userpill span { max-width: 70px; }
-  .wrap { padding: 1.6rem 1rem 1.5rem; }
-  .title { font-size: 24px; }
-  .subtitle { font-size: 13px; margin-bottom: 1.4rem; }
-  .card { padding: 1.2rem; border-radius: 16px; }
-  /* Plataformas en horizontal (fila) tambien en movil */
-  .plat-row { grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 1.2rem; }
-  .plat { height: 48px; flex-direction: column; gap: 3px; font-size: 12px; }
-  .plat svg { width: 18px; height: 18px; }
-  .opts { gap: 7px; }
-  .opt { height: 38px; padding: 0 14px; }
-  .result-head { padding: 14px; }
-  .lks { padding: 8px 14px 12px; }
-  .grp-head { padding: 10px 14px; }
+/* ---------- Cabecera ---------- */
+.wrap{max-width:760px;margin:0 auto;padding:56px 24px 32px}
+.title{font-size:40px;line-height:1.08;font-weight:700;letter-spacing:-1.2px;color:var(--text);max-width:19ch;margin-bottom:14px}
+.subtitle{font-size:16px;color:var(--muted);max-width:52ch;margin-bottom:32px}
+
+/* ---------- Herramienta ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;margin-bottom:20px}
+.field-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}
+.plat-row{display:flex;gap:4px;padding:4px;margin-bottom:24px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r)}
+.plat{flex:1 1 0;min-width:0;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;border-radius:var(--r-sm);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.plat svg{width:17px;height:17px;flex-shrink:0}
+.plat:hover:not(.active){color:var(--text)}
+.plat.active{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.plat.active svg{color:var(--cyan)}
+.field-wrap{position:relative;margin-bottom:24px}
+.field{width:100%;height:52px;padding:0 16px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r);color:var(--text);font-size:17px;font-weight:500;outline:none;transition:border-color .15s,box-shadow .15s}
+.field::placeholder{color:var(--faint);font-weight:400}
+.field:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft)}
+.recent{position:absolute;top:58px;left:0;right:0;padding:6px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 14px 34px rgba(0,0,0,.45);display:none;z-index:15}
+.recent.open{display:block}
+.recent-title{font-size:12px;color:var(--faint);padding:6px 10px 4px}
+.recent-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-sm);cursor:pointer}
+.recent-item:hover{background:rgba(255,255,255,.05)}
+.recent-item svg{width:15px;height:15px;flex-shrink:0;color:var(--muted)}
+.recent-item span{font-size:14px}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+.opt{height:36px;padding:0 14px;background:transparent;border:1px solid var(--line);border-radius:var(--r-sm);color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.opt:hover:not(.active){color:var(--text);border-color:var(--line-2)}
+.opt.active{background:var(--cyan-soft);border-color:var(--cyan);color:var(--cyan)}
+.go-btn{width:100%;height:54px;margin-top:4px;background:var(--cyan);color:var(--cyan-ink);border:none;border-radius:var(--r);font-size:16px;font-weight:700;letter-spacing:-.1px;cursor:pointer;transition:filter .15s,transform .1s}
+.go-btn:hover{filter:brightness(1.08)}
+.go-btn:active{transform:translateY(1px)}
+
+/* ---------- Estados ---------- */
+.loadbox{display:none;text-align:center;padding:32px 16px}
+.spin{width:26px;height:26px;margin:0 auto 12px;border:3px solid var(--line);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loadmsg{font-size:14px;color:var(--muted);max-width:46ch;margin:0 auto}
+.warnbox{display:none;margin-bottom:20px;padding:13px 16px;background:var(--gold-soft);border:1px solid rgba(242,184,75,.3);border-radius:var(--r);color:#F5CB7A;font-size:14px}
+
+/* ---------- Resultados ---------- */
+.result{display:none;margin-bottom:20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.result-head{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.ruser{display:flex;align-items:center;gap:12px;min-width:0}
+.rava{width:44px;height:44px;flex-shrink:0;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--panel-2);border:1px solid var(--line-2);color:var(--cyan);font-size:18px;font-weight:700}
+.rava img{width:100%;height:100%;object-fit:cover}
+.rname{font-size:16px;font-weight:700;word-break:break-all}
+.rmeta{font-size:13px;color:var(--muted)}
+.copyall{height:38px;padding:0 18px;flex-shrink:0;background:var(--cyan);color:var(--cyan-ink);border:none;border-radius:var(--r-sm);font-size:13.5px;font-weight:700;cursor:pointer}
+.copyall:hover{filter:brightness(1.08)}
+.copyall.ok{background:var(--ok);color:#06210F;animation:pop .3s ease}
+.grp{display:flex;border-bottom:1px solid var(--line)}
+.grp-body{flex:1;min-width:0}
+.grp:last-child{border-bottom:none}
+.grp-num{flex:0 0 64px;padding:16px 0 0;text-align:center;font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;color:var(--faint);border-right:1px solid var(--line)}
+.grp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 4px}
+.grp-t{font-size:13px;color:var(--muted)}
+.grp-btn{height:34px;padding:0 18px;background:transparent;border:1px solid var(--line-2);border-radius:var(--r-sm);color:var(--text);font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
+.grp-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.grp-btn.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);animation:pop .3s ease}
+.grp.copiado .grp-num{color:var(--ok)}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.08)}100%{transform:scale(1)}}
+.lks{padding:4px 16px 14px;min-width:0}
+.lk{font-family:var(--mono);font-size:12.5px;line-height:1.75;color:#AEB3BF;padding:0 6px;border-radius:4px;word-break:break-all}
+.lk:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.lk.ok{color:var(--ok);animation:flash .6s ease}
+@keyframes flash{0%{background:var(--ok-soft)}100%{background:transparent}}
+
+/* ---------- Estadisticas (Instagram) ---------- */
+.stats-box{margin:16px 20px 4px;padding:16px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r)}
+.stats-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-val{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.stat-lbl{font-size:12px;color:var(--muted)}
+.stats-top{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.stats-top a{display:block;padding:3px 0;color:var(--muted);text-decoration:none;font-size:13px}
+.stats-top a:hover{color:var(--cyan)}
+
+/* ---------- Pie ---------- */
+.foot{text-align:center;padding:24px 24px 40px;font-size:12.5px;color:var(--faint)}
+
+/* ---------- Ventanas ---------- */
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;padding:20px;background:rgba(8,9,12,.72);backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{width:100%;max-width:420px;max-height:calc(100vh - 40px);overflow-y:auto;padding:28px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.modal h3{font-size:19px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+.modal p{font-size:14px;color:var(--muted);margin-bottom:18px}
+.modal input,.modal textarea{width:100%;margin-bottom:12px;padding:12px 14px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r);color:var(--text);font-size:16px;outline:none}
+.modal input:focus,.modal textarea:focus{border-color:var(--cyan)}
+.modal textarea{resize:vertical;min-height:100px}
+.modal-actions{display:flex;gap:10px}
+.modal-send{flex:1;height:46px;background:var(--cyan);color:var(--cyan-ink);border:none;border-radius:var(--r);font-size:14.5px;font-weight:700;cursor:pointer}
+.modal-cancel{height:46px;padding:0 18px;background:transparent;border:1px solid var(--line-2);border-radius:var(--r);color:var(--muted);font-size:14px;cursor:pointer}
+.modal-ok{text-align:center;padding:10px 0}
+.modal-ok .check{font-size:38px;color:var(--ok)}
+.modal-ok h3{color:var(--ok);margin:8px 0 4px}
+
+/* Login */
+.login-modal{max-width:380px;text-align:center;padding:32px 26px 24px}
+.login-modal h3{font-size:20px;margin-bottom:8px}
+.login-sub{font-size:14px;color:var(--muted);margin:0 0 22px}
+.login-slot{display:block;width:100%;min-height:44px}
+.login-slot>div,.login-slot iframe{width:100%!important;margin:0 auto!important}
+.login-slot [role="button"]{width:100%!important;height:46px!important;border-radius:999px!important}
+.login-cerrar{margin-top:16px;background:none;border:none;color:var(--faint);font-size:13px;cursor:pointer;text-decoration:underline}
+.login-cerrar:hover{color:var(--muted)}
+
+/* ---------- Suscripcion ---------- */
+.pro-tag{display:inline-block;margin-left:6px;padding:1px 7px;background:var(--gold);color:var(--gold-ink);border-radius:999px;font-size:10.5px;font-weight:700;vertical-align:1px}
+.usermenu .menu-info{padding:8px 12px 10px;margin-bottom:4px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.4}
+.usermenu .menu-info b{display:block;color:var(--text);font-size:13px;font-weight:600}
+.usermenu .menu-info b.on{color:var(--gold)}
+.sub-modal{max-width:820px;padding:30px 28px 22px;text-align:center}
+.sub-modal h3{font-size:22px;margin-bottom:8px}
+.sub-modal .sub-motivo{margin:0 auto 26px;max-width:46ch}
+.planes{display:flex;align-items:stretch;margin:0 -7px 6px}
+.plan{position:relative;flex:1 1 0;min-width:0;margin:0 7px;display:flex;flex-direction:column;padding:24px 18px 18px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r-lg);text-align:left}
+.plan.top{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan) inset,0 18px 40px rgba(61,214,245,.12);transform:translateY(-6px)}
+.plan-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);padding:3px 12px;background:var(--cyan);color:var(--cyan-ink);border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.plan-nom{font-size:14px;font-weight:600;color:var(--muted)}
+.plan.top .plan-nom{color:var(--cyan)}
+.plan-precio{margin-top:8px;font-size:38px;font-weight:700;letter-spacing:-1.3px;line-height:1}
+.plan-precio span{margin-left:3px;font-size:13px;font-weight:500;letter-spacing:0;color:var(--muted)}
+.plan-links{margin-top:14px;font-size:16px;font-weight:700}
+.plan-extra{min-height:18px;margin-top:2px;font-size:12px;color:var(--faint)}
+.plan.top .plan-extra{color:var(--ok)}
+.plan ul{list-style:none;margin:16px 0 20px}
+.plan li{position:relative;padding:3px 0 3px 22px;font-size:13.5px}
+.plan li:before{content:"";position:absolute;left:2px;top:9px;width:10px;height:6px;border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);transform:rotate(-45deg)}
+.plan li.no{color:var(--faint)}
+.plan li.no:before{top:12px;width:10px;height:0;border-left:none;border-bottom:2px solid var(--faint);transform:none}
+.plan-btn{width:100%;height:44px;margin-top:auto;background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--r-sm);color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
+.plan-btn:hover{border-color:var(--muted)}
+.plan.top .plan-btn{background:var(--cyan);border-color:var(--cyan);color:var(--cyan-ink)}
+.plan.top .plan-btn:hover{filter:brightness(1.08)}
+.plan-btn:disabled{opacity:.6;cursor:default}
+.plan.ig-off{opacity:.55}
+.sub-nota{margin-top:16px;font-size:12px;color:var(--faint)}
+.sub-activa{max-width:520px;padding:11px 14px;margin:-8px auto 22px;background:var(--ok-soft);border:1px solid rgba(78,211,138,.35);border-radius:var(--r);color:var(--ok);font-size:13.5px;font-weight:600}
+
+/* ---------- Chat de soporte ---------- */
+.chat-fab{position:fixed;right:22px;bottom:22px;z-index:90;width:56px;height:56px;display:none;align-items:center;justify-content:center;background:var(--cyan);color:var(--cyan-ink);border:none;border-radius:50%;box-shadow:0 10px 28px rgba(0,0,0,.45);cursor:pointer;transition:transform .15s}
+.chat-fab.show{display:flex}
+.chat-fab:hover{transform:scale(1.05)}
+.chat-fab svg{width:24px;height:24px}
+.chat-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 6px;display:none;align-items:center;justify-content:center;background:var(--bad);color:#fff;border:2px solid var(--ink);border-radius:999px;font-size:11px;font-weight:700}
+.chat-badge.show{display:flex}
+.chat-box{position:fixed;right:22px;bottom:90px;z-index:91;width:360px;height:480px;max-height:calc(100vh - 120px);display:none;flex-direction:column;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.chat-box.open{display:flex}
+.chat-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.chat-head-t{font-size:15px;font-weight:700}
+.chat-head-s{font-size:12px;color:var(--muted)}
+.chat-x{width:32px;height:32px;background:none;border:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;border-radius:var(--r-sm)}
+.chat-x:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column}
+.chat-vacio{margin:auto;max-width:26ch;text-align:center;font-size:13.5px;color:var(--muted)}
+.cm{max-width:82%;margin-bottom:8px;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.cm small{display:block;margin-top:3px;font-size:10.5px;opacity:.6}
+.cm.yo{align-self:flex-end;background:var(--cyan);color:var(--cyan-ink);border-bottom-right-radius:4px}
+.cm.sop{align-self:flex-start;background:var(--panel-2);border:1px solid var(--line-2);border-bottom-left-radius:4px}
+.chat-form{display:flex;align-items:flex-end;padding:10px;border-top:1px solid var(--line);background:var(--panel)}
+.chat-form textarea{flex:1;min-width:0;height:42px;max-height:110px;margin-right:8px;padding:10px 12px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r);color:var(--text);font-size:15px;line-height:1.4;resize:none;outline:none}
+.chat-form textarea:focus{border-color:var(--cyan)}
+.chat-send{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--cyan);color:var(--cyan-ink);border:none;border-radius:var(--r);cursor:pointer}
+.chat-send svg{width:18px;height:18px}
+
+/* ---------- Movil ---------- */
+@media (max-width:640px){
+  .nav{height:56px;padding:0 14px}
+  .nav-logo{font-size:16px;gap:8px}
+  .nav-icon{width:24px;height:24px}
+  .userpill span{max-width:70px}
+  .wrap{padding:32px 16px 24px}
+  .title{font-size:30px;letter-spacing:-.9px}
+  .subtitle{font-size:15px;margin-bottom:24px}
+  .card{padding:18px;border-radius:16px}
+  .plat{height:46px;flex-direction:column;gap:2px;font-size:12px}
+  .opt{height:38px;padding:0 13px}
+  .result-head{padding:14px}
+  .grp-num{flex-basis:44px;font-size:22px;padding-top:14px}
+  .grp-head{padding:10px 12px 2px}
+  .lks{padding:2px 10px 12px}
+  .lk{font-size:11.5px}
+  .stats-box{margin:12px 14px 4px;padding:14px}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .stat-val{font-size:19px}
+  .modal{padding:22px 18px}
+  .sub-modal{padding:24px 16px 18px}
+  .planes{flex-direction:column;margin:0}
+  .plan{margin:0 0 14px}
+  .plan.top{transform:none;order:-1;margin-top:8px}
+  .chat-fab{right:16px;bottom:16px;width:52px;height:52px}
+  .chat-box{right:0;left:0;bottom:0;width:auto;height:auto;top:56px;max-height:none;border-radius:16px 16px 0 0}
 }
-@media (max-width: 380px) {
-  .nav-logo span, .nav-logo { font-size: 14px; }
-  .lang-sel { padding: 6px 7px; font-size: 11px; }
-  .userpill span { max-width: 54px; }
-  .plat { font-size: 11px; }
+@media (max-width:380px){
+  .lang-sel{padding:0 6px;font-size:12px}
+  .userpill span{max-width:54px}
+  .title{font-size:27px}
 }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+
 </head>
 <body>
 <nav class="nav">
-  <div class="nav-logo"><div class="nav-icon">🔗</div> ClipLinks</div>
+  <div class="nav-logo"><span class="nav-icon"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="7" stroke="currentColor" stroke-width="2"/><path d="M8 10h12M8 14h12M8 18h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>ClipLinks</div>
   <div class="nav-right">
     <div id="authArea"></div>
     <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
-      <option value="es">🌍 Español</option>
-      <option value="en">🌍 English</option>
+      <option value="es">ES</option>
+      <option value="en">EN</option>
     </select>
   </div>
 </nav>
 <div class="wrap">
-  <div class="title" data-es="Extrae tus links" data-en="Extract your links">Extrae tus links</div>
-  <div class="subtitle" data-es="Todos los links del perfil en grupos listos para copiar." data-en="All profile links in groups ready to copy.">Todos los links del perfil en grupos listos para copiar.</div>
+  <h1 class="title" data-es="Todos los vídeos de un perfil, listos para pegar" data-en="Every video from a profile, ready to paste">Todos los vídeos de un perfil, listos para pegar</h1>
+  <p class="subtitle" data-es="Escribe el usuario, elige cuántos vídeos quieres y copia los links por grupos directamente en tu bot de Discord." data-en="Type the username, choose how many videos you want and copy the links in groups straight into your Discord bot.">Escribe el usuario, elige cuántos vídeos quieres y copia los links por grupos directamente en tu bot de Discord.</p>
   <div class="card">
     <div class="field-label" data-es="Plataforma" data-en="Platform">Plataforma</div>
     <div class="plat-row">
@@ -301,30 +295,25 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
         <div id="recentList"></div>
       </div>
     </div>
-    <div class="field-label" id="countLabel" data-es="Cantidad de links" data-en="Number of links">Cantidad de links</div>
+    <div class="field-label" id="countLabel" data-es="Últimos vídeos" data-en="Latest videos">Últimos vídeos</div>
     <div class="opts" id="countOpts">
-      <button class="opt" onclick="setOpt(this,'count',25)" data-es="Últimos 25 links" data-en="Last 25 links">Últimos 25 links</button>
-      <button class="opt" onclick="setOpt(this,'count',50)" data-es="Últimos 50 links" data-en="Last 50 links">Últimos 50 links</button>
-      <button class="opt active" onclick="setOpt(this,'count',100)" data-es="Últimos 100 links" data-en="Last 100 links">Últimos 100 links</button>
-      <button class="opt" onclick="setOpt(this,'count',200)" data-es="Últimos 200 links" data-en="Last 200 links">Últimos 200 links</button>
-      <button class="opt" onclick="setOpt(this,'count',500)" data-es="Últimos 500 links" data-en="Last 500 links">Últimos 500 links</button>
-      <button class="opt" onclick="setOpt(this,'count',1000)" data-es="Últimos 1000 links" data-en="Last 1000 links">Últimos 1000 links</button>
-      <button class="opt" onclick="setOpt(this,'count',1500)" data-es="Últimos 1500 links" data-en="Last 1500 links">Últimos 1500 links</button>
+      <button class="opt" onclick="setOpt(this,'count',25)" >25</button>
+      <button class="opt" onclick="setOpt(this,'count',50)" >50</button>
+      <button class="opt active" onclick="setOpt(this,'count',100)" >100</button>
+      <button class="opt" onclick="setOpt(this,'count',200)" >200</button>
+      <button class="opt" onclick="setOpt(this,'count',500)" >500</button>
+      <button class="opt" onclick="setOpt(this,'count',1000)" >1000</button>
+      <button class="opt" onclick="setOpt(this,'count',1500)" >1500</button>
     </div>
     <div class="field-label" id="daysLabel" data-es="Reels de los últimos..." data-en="Reels from the last..." style="display:none;">Reels de los últimos...</div>
     <div class="opts" id="daysOpts" style="display:none;">
       <button class="opt active" onclick="setDays(this,1)" data-es="1 día" data-en="1 day">1 día</button>
       <button class="opt" onclick="setDays(this,2)" data-es="2 días" data-en="2 days">2 días</button>
       <button class="opt" onclick="setDays(this,3)" data-es="3 días" data-en="3 days">3 días</button>
-      <button class="opt locked" onclick="setDays(this,4)" data-dias="4"><span data-es="4 días" data-en="4 days">4 días</span><span class="lock">🔒</span></button>
-      <button class="opt locked" onclick="setDays(this,5)" data-dias="5"><span data-es="5 días" data-en="5 days">5 días</span><span class="lock">🔒</span></button>
-      <button class="opt locked" onclick="setDays(this,6)" data-dias="6"><span data-es="6 días" data-en="6 days">6 días</span><span class="lock">🔒</span></button>
-      <button class="opt locked" onclick="setDays(this,7)" data-dias="7"><span data-es="7 días" data-en="7 days">7 días</span><span class="lock">🔒</span></button>
-    </div>
-    <div class="cred-mini" id="credBar" style="display:none;">
-      <span id="credNum">—</span>
-      <span data-es="créditos · 1 crédito = 1 vídeo" data-en="credits · 1 credit = 1 video">créditos · 1 crédito = 1 vídeo</span>
-      <a onclick="openPlanes()" data-es="Recargar" data-en="Top up">Recargar</a>
+      <button class="opt" onclick="setDays(this,4)" data-es="4 días" data-en="4 days">4 días</button>
+      <button class="opt" onclick="setDays(this,5)" data-es="5 días" data-en="5 days">5 días</button>
+      <button class="opt" onclick="setDays(this,6)" data-es="6 días" data-en="6 days">6 días</button>
+      <button class="opt" onclick="setDays(this,7)" data-es="7 días" data-en="7 days">7 días</button>
     </div>
     <div class="field-label" data-es="Links por grupo" data-en="Links per group">Links por grupo</div>
     <div class="opts" id="groupOpts">
@@ -352,12 +341,6 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     </div>
     <div id="grpsArea"></div>
   </div>
-  <div class="contact-cta" id="contactCta">
-    <button onclick="openContact()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span data-es="¿Necesitas ayuda? Contáctanos" data-en="Need help? Contact us">¿Necesitas ayuda? Contáctanos</span>
-    </button>
-  </div>
 </div>
 <div class="foot">ClipLinks</div>
 
@@ -370,62 +353,30 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
   </div>
 </div>
 
-<div class="modal-bg" id="planesModal">
-  <div class="modal planes-modal">
-    <h3 data-es="Créditos de Instagram" data-en="Instagram credits">Créditos de Instagram</h3>
-    <p class="planes-sub" data-es="Instagram bloquea el acceso a sus datos, así que hay que extraerlos con un servicio de pago. Por eso tiene créditos: 1 crédito = 1 vídeo." data-en="Instagram blocks access to its data, so we extract it through a paid service. That is why it uses credits: 1 credit = 1 video.">Instagram bloquea el acceso a sus datos, así que hay que extraerlos con un servicio de pago. Por eso tiene créditos: 1 crédito = 1 vídeo.</p>
-    <div class="planes-grid">
-      <div class="plan-card">
-        <div class="plan-nom">Starter</div>
-        <div class="plan-precio">$9<span>/mes</span></div>
-        <div class="plan-cred">1.000 <span data-es="créditos" data-en="credits">créditos</span></div>
-        <div class="plan-det" data-es="1.000 vídeos al mes" data-en="1,000 videos per month">1.000 vídeos al mes</div>
-        <button class="plan-btn" onclick="pagarPlan('starter')" data-es="Elegir" data-en="Choose">Elegir</button>
-      </div>
-      <div class="plan-card destacado">
-        <div class="plan-badge" data-es="Popular" data-en="Popular">Popular</div>
-        <div class="plan-nom">Pro</div>
-        <div class="plan-precio">$24<span>/mes</span></div>
-        <div class="plan-cred">5.000 <span data-es="créditos" data-en="credits">créditos</span></div>
-        <div class="plan-det" data-es="5.000 vídeos al mes" data-en="5,000 videos per month">5.000 vídeos al mes</div>
-        <button class="plan-btn" onclick="pagarPlan('pro')" data-es="Elegir" data-en="Choose">Elegir</button>
-      </div>
-      <div class="plan-card">
-        <div class="plan-nom">Agency</div>
-        <div class="plan-precio">$49<span>/mes</span></div>
-        <div class="plan-cred">15.000 <span data-es="créditos" data-en="credits">créditos</span></div>
-        <div class="plan-det" data-es="15.000 vídeos al mes" data-en="15,000 videos per month">15.000 vídeos al mes</div>
-        <button class="plan-btn" onclick="pagarPlan('agency')" data-es="Elegir" data-en="Choose">Elegir</button>
-      </div>
-    </div>
-    <div class="recarga">
-      <div class="recarga-txt">
-        <div class="recarga-t" data-es="Recarga suelta" data-en="One-off top-up">Recarga suelta</div>
-        <div class="recarga-s" data-es="$0.006 por vídeo · mínimo 500" data-en="$0.006 per video · minimum 500">$0.006 por vídeo · mínimo 500</div>
-      </div>
-      <div class="recarga-grp">
-        <input type="number" id="recargaInp" min="500" step="100" value="500" oninput="calcRecarga()" aria-label="créditos">
-        <span class="recarga-eq">=</span>
-        <span class="recarga-total" id="recargaTotal">$3.00</span>
-        <button type="button" class="recarga-pay" onclick="pagarRecarga()" data-es="Pagar" data-en="Pay">Pagar</button>
-      </div>
-    </div>
-    <div class="modal-btns">
-      <button class="mbtn cancel" onclick="closePlanes()" data-es="Cerrar" data-en="Close">Cerrar</button>
-    </div>
+<div class="modal-bg" id="subModal">
+  <div class="modal sub-modal">
+    <h3 id="subTit" data-es="Elige tu plan" data-en="Choose your plan">Elige tu plan</h3>
+    <p class="sub-motivo" id="subMotivo"></p>
+    <div class="sub-activa" id="subActiva" style="display:none;"></div>
+    <div class="planes" id="planesBox"></div>
+    <div class="sub-nota" data-es="Pago con USDT, BTC, ETH… Cada pago son 30 días. No se renueva solo." data-en="Pay with USDT, BTC, ETH… Each payment is 30 days. Does not auto-renew.">Pago con USDT, BTC, ETH… Cada pago son 30 días. No se renueva solo.</div>
+    <button class="login-cerrar" onclick="closeSub()" data-es="Ahora no" data-en="Not now">Ahora no</button>
   </div>
 </div>
 
-<div class="modal-bg" id="contactModal">
-  <div class="modal" id="contactInner">
-    <h3 data-es="Contacto" data-en="Contact">Contacto</h3>
-    <p data-es="¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h." data-en="Any questions? Write to us and we'll reply within 24h.">¿Alguna duda o problema? Escríbenos y te responderemos en menos de 24h.</p>
-    <input type="email" id="contactEmail" placeholder="Tu email" />
-    <textarea id="contactMsg" placeholder="Tu mensaje..."></textarea>
-    <div class="modal-actions">
-      <button class="modal-send" onclick="sendContact()" data-es="Enviar" data-en="Send">Enviar</button>
-      <button class="modal-cancel" onclick="closeContact()" data-es="Cancelar" data-en="Cancel">Cancelar</button>
-    </div>
+<button class="chat-fab" id="chatFab" onclick="toggleChat()" aria-label="Soporte">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span class="chat-badge" id="chatBadge">0</span>
+</button>
+<div class="chat-box" id="chatBox">
+  <div class="chat-head">
+    <div><div class="chat-head-t" data-es="Soporte" data-en="Support">Soporte</div><div class="chat-head-s" data-es="Te respondemos lo antes posible" data-en="We reply as soon as possible">Te respondemos lo antes posible</div></div>
+    <button class="chat-x" onclick="toggleChat()" aria-label="Cerrar">×</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"><div class="chat-vacio" data-es="¿Alguna duda o problema? Escríbenos aquí." data-en="Any questions or problems? Write to us here.">¿Alguna duda o problema? Escríbenos aquí.</div></div>
+  <div class="chat-form">
+    <textarea id="chatInp" rows="1" placeholder="Escribe un mensaje..."></textarea>
+    <button class="chat-send" onclick="enviarChat()" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></button>
   </div>
 </div>
 
@@ -435,22 +386,34 @@ var count=100,group=25,platform='tiktok',days=1;
 var lang=navigator.language.indexOf('en')===0?'en':'es';
 var PH={es:{tiktok:'@usuario de TikTok',instagram:'@usuario de Instagram',youtube:'@canal de YouTube'},en:{tiktok:'@TikTok username',instagram:'@Instagram username',youtube:'@YouTube channel'}};
 var GOOGLE_CLIENT_ID = "443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com";
+var miCuenta={logueado:false,activo:false};
+var pendiente=false; // repetir la busqueda tras iniciar sesion
 
-function parseJwt(token){
+function T(es,en){ return lang==='es'?es:en; }
+function esc(t){ return String(t||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+// ===== SESION =====
+function getUser(){
   try{
-    var base=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    var json=decodeURIComponent(atob(base).split('').map(function(c){return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
-    return JSON.parse(json);
-  }catch(e){return null;}
+    var u=JSON.parse(localStorage.getItem('clipuser')||'null');
+    if(u && u.token) return u;
+    if(u){ localStorage.removeItem('clipuser'); } // sesiones antiguas sin token: volver a entrar
+  }catch(e){}
+  return null;
 }
+function getToken(){ var u=getUser(); return u?u.token:''; }
+
 function handleCredential(resp){
-  var d=parseJwt(resp.credential);
-  if(!d)return;
-  try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email}));}catch(e){}
-  try{fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,name:d.name,picture:d.picture})});}catch(e){}
-  renderAuth();
-  closeLogin();
-  if(platform==='instagram'){ setTimeout(cargarCuenta,400); }
+  fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:resp.credential})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.token){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')); return; }
+    try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email,token:d.token}));}catch(e){}
+    closeLogin();
+    renderAuth();
+    cargarCuenta(function(){ if(pendiente){ pendiente=false; fetchLinks(); } });
+  })
+  .catch(function(){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')); });
 }
 function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById('userMenu'); if(m){m.classList.toggle('open');} }
 document.addEventListener('click',function(){
@@ -458,26 +421,58 @@ document.addEventListener('click',function(){
   var r=document.getElementById('recentBox'); if(r){r.classList.remove('open');}
 });
 function logout(){
+  var tk=getToken();
+  if(tk){ try{fetch(API+'/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk})});}catch(e){} }
   try{localStorage.removeItem('clipuser');}catch(e){}
   if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.disableAutoSelect();}
+  miCuenta={logueado:false,activo:false};
+  closeChat();
   renderAuth();
+}
+function fechaCorta(s){
+  if(!s)return '';
+  var d=new Date(s.replace(' ','T'));
+  if(isNaN(d))return s.slice(0,10);
+  return d.toLocaleDateString(lang==='es'?'es-ES':'en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
 function renderAuth(){
   var area=document.getElementById('authArea');
-  var raw=null; try{raw=localStorage.getItem('clipuser');}catch(e){}
-  if(raw){
-    var u=JSON.parse(raw);
-    area.innerHTML='<div class="userwrap"><div class="userpill" onclick="toggleMenu(event)"><img src="'+u.picture+'" referrerpolicy="no-referrer"><span>'+u.name+'</span></div><div class="usermenu" id="userMenu"><button onclick="logout()">'+(lang==='es'?'Cerrar sesión':'Log out')+'</button></div></div>';
+  var u=getUser();
+  document.getElementById('chatFab').classList.toggle('show',!!u);
+  if(u){
+    var pro=miCuenta.activo?'<span class="pro-tag">'+esc((miCuenta.plan_nombre||'').toUpperCase())+'</span>':'';
+    var resto=(miCuenta.activo&&miCuenta.limite)?'<br>'+fmtMiles(miCuenta.restantes)+' / '+fmtMiles(miCuenta.limite)+T(' links este mes',' links this month'):'';
+    var info=miCuenta.activo
+      ? '<b class="on">'+T('Plan ','')+esc(miCuenta.plan_nombre)+'</b>'+T('Hasta el ','Until ')+fechaCorta(miCuenta.sub_hasta)+resto
+      : '<b>'+T('Plan gratis','Free plan')+'</b>'+esc(u.email);
+    area.innerHTML='<div class="userwrap"><div class="userpill" onclick="toggleMenu(event)"><img src="'+esc(u.picture)+'" referrerpolicy="no-referrer"><span>'+esc(u.name)+'</span>'+pro+'</div>'+
+      '<div class="usermenu" id="userMenu"><div class="menu-info">'+info+'</div>'+
+      '<button onclick="openSub()">'+(miCuenta.activo?T('Cambiar o renovar plan','Change or renew plan'):T('Ver planes','See plans'))+'</button>'+
+      '<button onclick="openChat()">'+T('Soporte','Support')+'</button>'+
+      '<button onclick="logout()">'+T('Cerrar sesión','Log out')+'</button></div></div>';
     return;
   }
-  if(GOOGLE_CLIENT_ID){
-    area.innerHTML='<div id="gbtn"></div>';
-    if(window.google&&google.accounts&&google.accounts.id){
-      google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
-      google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'filled_black',size:'medium',shape:'pill',text:'signin'});
-    }
+  area.innerHTML='<div id="gbtn"></div>';
+  if(window.google&&google.accounts&&google.accounts.id){
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
+    google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'filled_black',size:'medium',shape:'pill',text:'signin'});
   }
 }
+function cargarCuenta(cb){
+  var tk=getToken();
+  if(!tk){ miCuenta={logueado:false,activo:false}; renderAuth(); if(cb)cb(); return; }
+  fetch(API+'/mi-cuenta?token='+encodeURIComponent(tk))
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.logueado){ try{localStorage.removeItem('clipuser');}catch(e){} miCuenta={logueado:false,activo:false}; }
+    else { miCuenta=d; pintarBadge(d.chat_no_leidos||0); }
+    renderAuth();
+    if(cb)cb();
+  })
+  .catch(function(){ if(cb)cb(); });
+}
+
+// ===== BUSQUEDAS RECIENTES =====
 function getRecent(){ try{ return JSON.parse(localStorage.getItem('cliprecent')||'[]'); }catch(e){ return []; } }
 function saveRecent(name){
   var list=getRecent();
@@ -494,7 +489,7 @@ function renderRecent(){
   list.forEach(function(name){
     var d=document.createElement('div');
     d.className='recent-item';
-    d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+name+'</span>';
+    d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>@'+esc(name)+'</span>';
     d.onclick=function(){ document.getElementById('userInp').value=name; box.classList.remove('open'); };
     listEl.appendChild(d);
   });
@@ -502,10 +497,14 @@ function renderRecent(){
 }
 document.getElementById('userInp').addEventListener('focus',function(){ if(this.value.trim()===''){ renderRecent(); } });
 document.getElementById('userInp').addEventListener('click',function(e){ e.stopPropagation(); });
+
+// ===== IDIOMA Y OPCIONES =====
 function applyLang(){
   document.querySelectorAll('[data-es]').forEach(function(el){el.textContent=lang==='es'?el.getAttribute('data-es'):el.getAttribute('data-en');});
   document.getElementById('userInp').placeholder=PH[lang][platform];
+  document.getElementById('chatInp').placeholder=T('Escribe un mensaje...','Write a message...');
   document.getElementById('langSel').value=lang;
+  pintarPlanes();
   renderAuth();
 }
 function setLang(v){lang=v;applyLang();}
@@ -513,139 +512,16 @@ function setPlat(el,p){
   document.querySelectorAll('.plat').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');platform=p;
   document.getElementById('userInp').placeholder=PH[lang][p];
-  // Instagram usa dias; TikTok/YouTube usan cantidad
-  var esIG = (p==='instagram');
-  document.getElementById('countLabel').style.display = esIG?'none':'block';
-  document.getElementById('countOpts').style.display = esIG?'none':'flex';
-  document.getElementById('daysLabel').style.display = esIG?'block':'none';
-  document.getElementById('daysOpts').style.display = esIG?'flex':'none';
-  // Lo de creditos y planes SOLO se ve en Instagram
-  document.getElementById('credBar').style.display = esIG?'flex':'none';
-  if(esIG){ cargarCuenta(); }
-}
-// ===== CREDITOS =====
-var miCuenta={logueado:false,creditos:0,plan:'gratis',dias_max:3};
-function getEmail(){
-  try{var cu=localStorage.getItem('clipuser'); if(cu)return JSON.parse(cu).email||'';}catch(e){}
-  return '';
-}
-function cargarCuenta(){
-  var em=getEmail();
-  if(!em){
-    miCuenta={logueado:false,creditos:0,plan:'gratis',dias_max:3};
-    pintarCreditos(null);
-    pintarCandados();
-    return;
-  }
-  fetch(API+'/mi-cuenta?email='+encodeURIComponent(em))
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.logueado){
-      miCuenta=d;
-      pintarCreditos(d.creditos);
-    }else{
-      pintarCreditos(null);
-    }
-    pintarCandados();
-  })
-  .catch(function(){});
-}
-function pintarCreditos(n){
-  var bar=document.getElementById('credBar');
-  var el=document.getElementById('credNum');
-  el.className='';
-  if(n===null||typeof n==='undefined'){
-    el.textContent='—';
-    bar.classList.remove('vacio');
-    return;
-  }
-  el.textContent=n;
-  if(n===0){ bar.classList.add('vacio'); }
-  else {
-    bar.classList.remove('vacio');
-    if(n>50){ el.className='alto'; }
-    else if(n>10){ el.className='medio'; }
-    else { el.className='bajo'; }
-  }
-}
-function pintarCandados(){
-  var max=miCuenta.logueado?(miCuenta.dias_max||3):3;
-  document.querySelectorAll('#daysOpts .opt').forEach(function(b){
-    var d=parseInt(b.getAttribute('data-dias')||'0',10);
-    if(!d){return;}
-    var lock=b.querySelector('.lock');
-    if(d<=max){ b.classList.remove('locked'); if(lock)lock.style.display='none'; }
-    else { b.classList.add('locked'); if(lock)lock.style.display='inline'; }
-  });
+  var esIG=(p==='instagram');
+  document.getElementById('countLabel').style.display=esIG?'none':'block';
+  document.getElementById('countOpts').style.display=esIG?'none':'flex';
+  document.getElementById('daysLabel').style.display=esIG?'block':'none';
+  document.getElementById('daysOpts').style.display=esIG?'flex':'none';
 }
 function setDays(el,val){
-  var max=miCuenta.logueado?(miCuenta.dias_max||3):3;
-  if(val>max){ openPlanes(); return; }
   document.querySelectorAll('#daysOpts .opt').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');
   days=val;
-}
-function openLogin(motivo){
-  var t=document.getElementById('loginTit'), sb=document.getElementById('loginSub');
-  if(motivo==='instagram'){
-    t.textContent = lang==='es' ? 'Inicia sesión para usar Instagram' : 'Sign in to use Instagram';
-    sb.textContent = lang==='es' ? 'Necesitas una cuenta para extraer reels de Instagram.' : 'You need an account to extract Instagram reels.';
-  }else{
-    t.textContent = lang==='es' ? 'Inicia sesión para continuar' : 'Sign in to continue';
-    sb.textContent = lang==='es' ? 'Necesitas una cuenta para seguir usando ClipLinks.' : 'You need an account to keep using ClipLinks.';
-  }
-  document.getElementById('loginModal').classList.add('open');
-  try{
-    var slot=document.getElementById('loginSlot');
-    slot.innerHTML='';
-    if(window.google&&google.accounts&&google.accounts.id){
-      var ancho=Math.min(slot.offsetWidth||300,360);
-      google.accounts.id.renderButton(slot,{theme:'outline',size:'large',text:'continue_with',shape:'pill',width:ancho,logo_alignment:'left'});
-      google.accounts.id.prompt();
-    }
-  }catch(e){}
-}
-function closeLogin(){ document.getElementById('loginModal').classList.remove('open'); }
-function openPlanes(){ document.getElementById('planesModal').classList.add('open'); calcRecarga(); }
-function closePlanes(){ document.getElementById('planesModal').classList.remove('open'); }
-function calcRecarga(){
-  var n=parseInt(document.getElementById('recargaInp').value||'0',10);
-  if(isNaN(n)||n<0)n=0;
-  var usd=(n*0.006).toFixed(2);
-  document.getElementById('recargaTotal').textContent='$'+usd;
-}
-function pagarPlan(plan){
-  iniciarPago({tipo:'plan',plan:plan});
-}
-function pagarRecarga(){
-  var n=parseInt(document.getElementById('recargaInp').value||'0',10);
-  if(isNaN(n)||n<500){ alert(lang==='es'?'Mínimo 500 créditos.':'Minimum 500 credits.'); return; }
-  iniciarPago({tipo:'recarga',creditos:n});
-}
-function iniciarPago(datos){
-  var em=getEmail();
-  if(!em){
-    alert(lang==='es'?'Inicia sesión con Google para poder pagar.':'Sign in with Google to pay.');
-    return;
-  }
-  datos.email=em;
-  fetch(API+'/crear-pago',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(datos)
-  })
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.url){ window.open(d.url,'_blank'); closePlanes(); return; }
-    if(d.error==='pagos_no_configurados'){
-      alert(lang==='es'?'Los pagos aún no están activos. Escríbenos desde el botón de contacto.':'Payments are not active yet. Contact us.');
-      return;
-    }
-    alert(lang==='es'?'No se pudo iniciar el pago. Inténtalo de nuevo.':'Could not start payment. Try again.');
-  })
-  .catch(function(){
-    alert(lang==='es'?'No se pudo iniciar el pago. Inténtalo de nuevo.':'Could not start payment. Try again.');
-  });
 }
 function setOpt(el,type,val){
   var id=type==='count'?'countOpts':'groupOpts';
@@ -654,22 +530,119 @@ function setOpt(el,type,val){
   if(type==='count'){count=val;}else{group=val;}
 }
 document.getElementById('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
+
+// ===== LOGIN =====
+function openLogin(motivo){
+  var t=document.getElementById('loginTit'), sb=document.getElementById('loginSub');
+  if(motivo==='instagram'){
+    t.textContent=T('Inicia sesión para usar Instagram','Sign in to use Instagram');
+    sb.textContent=T('Instagram está incluido en ClipLinks Pro. Entra con tu cuenta para continuar.','Instagram is included in ClipLinks Pro. Sign in to continue.');
+  }else if(motivo==='pagar'){
+    t.textContent=T('Inicia sesión para suscribirte','Sign in to subscribe');
+    sb.textContent=T('Necesitas una cuenta para activar ClipLinks Pro.','You need an account to activate ClipLinks Pro.');
+  }else{
+    t.textContent=T('Inicia sesión para continuar','Sign in to continue');
+    sb.textContent=T('Necesitas una cuenta para seguir usando ClipLinks.','You need an account to keep using ClipLinks.');
+  }
+  document.getElementById('loginModal').classList.add('open');
+  try{
+    var slot=document.getElementById('loginSlot');
+    slot.innerHTML='';
+    if(window.google&&google.accounts&&google.accounts.id){
+      google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleCredential});
+      var ancho=Math.min(slot.offsetWidth||300,360);
+      google.accounts.id.renderButton(slot,{theme:'outline',size:'large',text:'continue_with',shape:'pill',width:ancho,logo_alignment:'left'});
+      google.accounts.id.prompt();
+    }
+  }catch(e){}
+}
+function closeLogin(){ document.getElementById('loginModal').classList.remove('open'); }
+
+// ===== SUSCRIPCIONES =====
+var cfg={dias:30,planes:[
+  {id:'basico',nombre:'Básico',precio:9,links:300,instagram:false},
+  {id:'pro',nombre:'Pro',precio:27,links:3000,instagram:false},
+  {id:'ilimitado',nombre:'Ilimitado',precio:56,links:null,instagram:true}]};
+var motivoSub='';
+function cargarConfig(){
+  fetch(API+'/config').then(function(r){return r.json();}).then(function(d){ if(d&&d.planes){cfg=d; pintarPlanes();} }).catch(function(){});
+}
+function fmtMiles(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, lang==='es'?'.':','); }
+function fmtPrecio(p){ return '$'+((p%1===0)?String(p):Number(p).toFixed(2)); }
+function pintarPlanes(){
+  var box=document.getElementById('planesBox'); if(!box)return;
+  var base=cfg.planes[0];
+  box.innerHTML=cfg.planes.map(function(p){
+    var top=p.id==='pro';
+    var links=p.links===null?T('Links ilimitados','Unlimited links'):fmtMiles(p.links)+T(' links / mes',' links / month');
+    var extra='';
+    if(top && base.links && p.links){
+      var x=Math.round(p.links/base.links), y=Math.round(p.precio/base.precio);
+      extra=T(x+'× más links por solo '+y+'× el precio',x+'× the links for only '+y+'× the price');
+    }else if(p.links===null){ extra=T('Sin límites de nada','No limits at all'); }
+    else if(p.links){ extra=T('Para probar','To try it out'); }
+    var li='<li>'+T('TikTok y YouTube','TikTok and YouTube')+'</li>'+
+      (p.instagram?'<li>'+T('Instagram incluido','Instagram included')+'</li>':'<li class="no">'+T('Sin Instagram','No Instagram')+'</li>')+
+      (p.id==='basico'?'<li>'+T('Soporte por chat','Chat support')+'</li>':'<li>'+T('Soporte prioritario','Priority support')+'</li>');
+    var actual=miCuenta.activo&&miCuenta.plan===p.id;
+    var btn=actual?T('Renovar','Renew'):T('Elegir ','Choose ')+p.nombre;
+    var off=(motivoSub==='instagram'&&!p.instagram)?' ig-off':'';
+    return '<div class="plan'+(top?' top':'')+off+'">'+(top?'<div class="plan-badge">'+T('Recomendado','Recommended')+'</div>':'')+
+      '<div class="plan-nom">'+p.nombre+'</div>'+
+      '<div class="plan-precio">'+fmtPrecio(p.precio)+'<span>/ '+T('mes','month')+'</span></div>'+
+      '<div class="plan-links">'+links+'</div><div class="plan-extra">'+extra+'</div>'+
+      '<ul>'+li+'</ul>'+
+      '<button class="plan-btn" onclick="pagarSub(\''+p.id+'\',this)">'+btn+'</button></div>';
+  }).join('');
+}
+function openSub(motivo){
+  motivoSub=motivo||'';
+  var m=document.getElementById('subMotivo'), a=document.getElementById('subActiva');
+  if(motivo==='instagram'){ m.textContent=T('Instagram está incluido en el plan Ilimitado.','Instagram is included in the Unlimited plan.'); }
+  else if(motivo==='cuenta'){ m.textContent=T('Para seguir sacando clips necesitas un plan.','To keep getting clips you need a plan.'); }
+  else if(motivo==='limite'){ m.textContent=T('Has gastado todos los links de tu plan este mes. Pásate a uno mayor para seguir.','You have used all your plan links this month. Upgrade to keep going.'); }
+  else { m.textContent=T('Saca todos los links que necesites, sin esperas.','Get all the links you need, with no waiting.'); }
+  if(miCuenta.activo){
+    var r=miCuenta.restantes===null||miCuenta.restantes===undefined?'':T(' · Te quedan ',' · ')+fmtMiles(miCuenta.restantes)+T(' links',' links left');
+    a.textContent=T('Tienes el plan ','You have the ')+miCuenta.plan_nombre+T(' hasta el ',' plan until ')+fechaCorta(miCuenta.sub_hasta)+r;
+    a.style.display='block';
+  }else{ a.style.display='none'; }
+  pintarPlanes();
+  document.getElementById('subModal').classList.add('open');
+}
+function closeSub(){ document.getElementById('subModal').classList.remove('open'); }
+function pagarSub(plan,b){
+  var tk=getToken();
+  if(!tk){ closeSub(); openLogin('pagar'); return; }
+  var txt=b.textContent;
+  b.disabled=true; b.textContent=T('Abriendo pago...','Opening payment...');
+  fetch(API+'/crear-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,plan:plan})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.url){ window.location.href=d.url; return; }
+    if(d.error==='login_requerido'){ try{localStorage.removeItem('clipuser');}catch(e){} closeSub(); renderAuth(); openLogin('pagar'); return; }
+    if(d.error==='pagos_no_configurados'){ alert(T('Los pagos aún no están activos. Escríbenos por el chat de soporte.','Payments are not active yet. Contact us via support chat.')); return; }
+    alert(T('No se pudo iniciar el pago. Inténtalo de nuevo.','Could not start payment. Try again.'));
+  })
+  .catch(function(){ alert(T('No se pudo iniciar el pago. Inténtalo de nuevo.','Could not start payment. Try again.')); })
+  .finally(function(){ b.disabled=false; b.textContent=txt; });
+}
 if(location.search.indexOf('pago=ok')>-1){
   setTimeout(function(){
-    alert(lang==='es'?'¡Pago recibido! Tus créditos se añadirán en unos minutos, cuando la red confirme la transacción.':'Payment received! Your credits will be added in a few minutes once the network confirms.');
-    cargarCuenta();
+    alert(T('¡Pago recibido! Tu plan se activará en unos minutos, cuando la red confirme la transacción.','Payment received! Your subscription will activate in a few minutes once the network confirms.'));
+    history.replaceState(null,'',location.pathname);
   },600);
 }
 
+// ===== OBTENER LINKS =====
 function fetchLinks(){
   var user=document.getElementById('userInp').value.trim().replace('@','');
   if(!user){return;}
-  var em=getEmail();
+  var tk=getToken();
 
-  // Instagram exige iniciar sesion
-  if(platform==='instagram' && !em){
-    openLogin('instagram');
-    return;
+  if(platform==='instagram'){
+    if(!tk){ pendiente=true; openLogin('instagram'); return; }
+    if(miCuenta.logueado && !miCuenta.instagram){ openSub('instagram'); return; }
   }
 
   document.getElementById('recentBox').classList.remove('open');
@@ -681,58 +654,44 @@ function fetchLinks(){
 
   var apiUrl;
   if(platform==='instagram'){
-    document.getElementById('loadMsg').textContent=lang==='es'?('Buscando reels de @'+user+' de los últimos '+days+(days===1?' día':' días')+'. Instagram tarda bastante más: esto puede llevar varios minutos. No cierres la página.'):('Getting reels from @'+user+' from the last '+days+' day(s). Instagram is much slower: this can take several minutes. Do not close the page.');
-    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform=instagram&days='+days+'&email='+encodeURIComponent(em);
+    document.getElementById('loadMsg').textContent=T('Buscando reels de @'+user+' de los últimos '+days+(days===1?' día':' días')+'. Instagram tarda bastante más: esto puede llevar varios minutos. No cierres la página.','Getting reels from @'+user+' from the last '+days+' day(s). Instagram is much slower: this can take several minutes. Do not close the page.');
+    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform=instagram&days='+days;
   }else{
-    document.getElementById('loadMsg').textContent=lang==='es'?('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...'):('Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
-    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count+'&email='+encodeURIComponent(em);
+    document.getElementById('loadMsg').textContent=T('Sacando los últimos '+count+' links de @'+user+' en grupos de '+group+'...','Getting the last '+count+' links from @'+user+' in groups of '+group+'...');
+    apiUrl=API+'/links?user='+encodeURIComponent(user)+'&platform='+platform+'&count='+count;
   }
+  if(tk){ apiUrl+='&token='+encodeURIComponent(tk); }
 
   fetch(apiUrl)
-  .then(function(res){return res.json().then(function(d){return {ok:res.ok,data:d};});})
-  .then(function(r){
-    var data=r.data;
-    // Errores de creditos / plan / login
-    if(data.error==='sin_creditos'){
-      var wc=document.getElementById('warnBox');
-      wc.textContent=lang==='es'?'Te has quedado sin créditos de Instagram. Recarga para seguir.':'You have run out of Instagram credits. Top up to continue.';
-      wc.style.display='block';
-      pintarCreditos(0);
-      openPlanes();
-      return;
-    }
-    if(data.error==='plan_insuficiente'){
-      var wp=document.getElementById('warnBox');
-      wp.textContent=data.mensaje||'Mejora tu plan para más días.';
-      wp.style.display='block';
-      openPlanes();
-      return;
-    }
+  .then(function(res){return res.json();})
+  .then(function(data){
     if(data.error==='login_requerido'){
-      openLogin(platform==='instagram'?'instagram':'forzado');
+      pendiente=true;
+      openLogin(data.motivo==='instagram'?'instagram':'forzado');
       return;
     }
+    if(data.error==='pago_requerido'){
+      if(!getUser()){ pendiente=true; openLogin('pagar'); return; }
+      openSub(data.motivo||'cuenta');
+      return;
+    }
+    if(data.restantes!==undefined && data.restantes!==null){ miCuenta.restantes=data.restantes; renderAuth(); }
     if(data.error){throw new Error(data.error);}
 
     if(platform==='instagram'){
-      // Actualizar creditos
-      if(typeof data.creditos_restantes!=='undefined'){
-        miCuenta.creditos=data.creditos_restantes;
-        pintarCreditos(data.creditos_restantes);
-      }
       if(data.links.length===0){
         var wi=document.getElementById('warnBox');
-        wi.textContent=lang==='es'?('No se encontraron reels de @'+user+' en los últimos '+days+(days===1?' día':' días')+'. Prueba con más días.'):('No reels found for @'+user+' in the last '+days+' day(s). Try more days.');
+        wi.textContent=T('No se encontraron reels de @'+user+' en los últimos '+days+(days===1?' día':' días')+'. Prueba con más días.','No reels found for @'+user+' in the last '+days+' day(s). Try more days.');
         wi.style.display='block';
-      }else if(data.cortado_por_creditos){
-        var wx=document.getElementById('warnBox');
-        wx.textContent=lang==='es'?('⚠️ Se agotaron tus créditos a mitad de la búsqueda: puede que haya más reels. Recarga para obtenerlos todos.'):('⚠️ Your credits ran out mid-search: there may be more reels. Top up to get them all.');
-        wx.style.display='block';
       }
       mostrarStats(data.stats);
+    }else if(data.restantes!==undefined && data.restantes!==null && data.links.length<count){
+      var wr=document.getElementById('warnBox');
+      wr.textContent=T('⚠️ Tu plan solo tenía '+data.links.length+' links disponibles. Te quedan '+data.restantes+' este mes.','⚠️ Your plan only had '+data.links.length+' links left. '+data.restantes+' remaining this month.');
+      wr.style.display='block';
     }else if(data.links.length<count){
       var w=document.getElementById('warnBox');
-      w.textContent=lang==='es'?('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.'):('⚠️ You asked for '+count+' links but got '+data.links.length+'.');
+      w.textContent=T('⚠️ Pediste '+count+' links pero salieron '+data.links.length+'. Prueba de nuevo si te faltan.','⚠️ You asked for '+count+' links but got '+data.links.length+'.');
       w.style.display='block';
     }
     showResults(user,data.links,data.avatar);
@@ -740,7 +699,7 @@ function fetchLinks(){
   })
   .catch(function(){
     var w=document.getElementById('warnBox');
-    w.textContent=lang==='es'?'No se pudieron obtener los links. Comprueba que el usuario existe y es público.':'Could not get links.';
+    w.textContent=T('No se pudieron obtener los links. Comprueba que el usuario existe y es público.','Could not get links. Check the account exists and is public.');
     w.style.display='block';
   })
   .finally(function(){document.getElementById('loadBox').style.display='none';});
@@ -749,20 +708,18 @@ function mostrarStats(s){
   if(!s){ document.getElementById('statsBox').style.display='none'; return; }
   var g=document.getElementById('statsGrid');
   var items=[
-    {v:s.total, l:lang==='es'?'Reels':'Reels'},
-    {v:fmtNum(s.media_likes), l:lang==='es'?'Media de likes':'Avg. likes'},
-    {v:fmtNum(s.media_coment), l:lang==='es'?'Media comentarios':'Avg. comments'},
-    {v:s.por_dia, l:lang==='es'?'Reels por día':'Reels per day'}
+    {v:s.total, l:'Reels'},
+    {v:fmtNum(s.media_likes), l:T('Media de likes','Avg. likes')},
+    {v:fmtNum(s.media_coment), l:T('Media comentarios','Avg. comments')},
+    {v:s.por_dia, l:T('Reels por día','Reels per day')}
   ];
   g.innerHTML=items.map(function(i){
     return '<div class="stat-item"><div class="stat-val">'+i.v+'</div><div class="stat-lbl">'+i.l+'</div></div>';
   }).join('');
   var t=document.getElementById('statsTop');
   if(s.top && s.top.length){
-    t.innerHTML='<div class="stats-title" style="margin-bottom:6px;">'+(lang==='es'?'Más virales':'Most viral')+'</div>'+
-      s.top.map(function(r,i){
-        return '<a href="'+r.url+'" target="_blank" rel="noopener">'+(i+1)+'. '+fmtNum(r.likes)+' likes</a>';
-      }).join('');
+    t.innerHTML='<div class="stats-title" style="margin-bottom:6px;">'+T('Más virales','Most viral')+'</div>'+
+      s.top.map(function(r,i){ return '<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+(i+1)+'. '+fmtNum(r.likes)+' likes</a>'; }).join('');
   }else{ t.innerHTML=''; }
   document.getElementById('statsBox').style.display='block';
 }
@@ -773,8 +730,7 @@ function fmtNum(n){
   return n;
 }
 function checkLoginPrompt(){
-  var logged=false; try{logged=!!localStorage.getItem('clipuser');}catch(e){}
-  if(logged)return;
+  if(getUser())return;
   var n=0; try{n=parseInt(localStorage.getItem('clipusos')||'0',10);}catch(e){}
   n++;
   try{localStorage.setItem('clipusos',String(n));}catch(e){}
@@ -784,21 +740,19 @@ function showResults(user,links,avatar){
   var groups=[];
   for(var i=0;i<links.length;i+=group){groups.push(links.slice(i,i+group));}
   var ava=document.getElementById('rAva');
-  if(avatar){ ava.innerHTML='<img src="'+avatar+'" referrerpolicy="no-referrer" onerror="this.parentNode.textContent=\''+user.charAt(0).toUpperCase()+'\'">'; }
+  if(avatar){ ava.innerHTML='<img src="'+esc(avatar)+'" referrerpolicy="no-referrer" onerror="this.parentNode.textContent=\''+esc(user.charAt(0).toUpperCase())+'\'">'; }
   else { ava.textContent=user.charAt(0).toUpperCase(); }
   document.getElementById('rName').textContent='@'+user;
-  document.getElementById('rMeta').textContent=links.length+' links — '+groups.length+(lang==='es'?' grupos de ':' groups of ')+group;
+  document.getElementById('rMeta').textContent=links.length+T(' links en ',' links in ')+groups.length+(lang==='es'?(groups.length===1?' grupo':' grupos'):(groups.length===1?' group':' groups'));
   var area=document.getElementById('grpsArea');
   area.innerHTML='';
   groups.forEach(function(g,gi){
     var div=document.createElement('div');
     div.className='grp';
-    div.style.animationDelay=Math.min(gi*0.05,1.2)+'s';
     var list='';
-    g.forEach(function(l,i){ list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+l+(i<g.length-1?',':'')+'</div>'; });
-    var gLabel=(lang==='es'?'Grupo ':'Group ')+(gi+1)+' — '+g.length+' links';
-    var cLabel=lang==='es'?'Copiar':'Copy';
-    div.innerHTML='<div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+cLabel+'</button></div><div class="lks">'+list+'</div>';
+    g.forEach(function(l,i){ list+='<div class="lk" id="lk-'+gi+'-'+i+'">'+esc(l)+(i<g.length-1?',':'')+'</div>'; });
+    var gLabel=T('Grupo ','Group ')+(gi+1)+', '+g.length+' links';
+    div.innerHTML='<div class="grp-num" aria-hidden="true">'+(gi+1)+'</div><div class="grp-body"><div class="grp-head"><span class="grp-t">'+gLabel+'</span><button class="grp-btn" id="gb-'+gi+'" onclick="copyGroup('+gi+')">'+T('Copiar','Copy')+'</button></div><div class="lks">'+list+'</div></div>';
     area.appendChild(div);
   });
   document.getElementById('resultBox').style.display='block';
@@ -808,8 +762,9 @@ function copyGroup(gi){
   var text=Array.prototype.map.call(rows,function(r){return r.textContent;}).join('\n');
   navigator.clipboard.writeText(text).then(function(){
     var btn=document.getElementById('gb-'+gi);
+    try{ btn.parentNode.parentNode.parentNode.classList.add('copiado'); }catch(e){}
     btn.classList.remove('ok'); void btn.offsetWidth;
-    btn.textContent=lang==='es'?'✓ Copiado':'✓ Copied';
+    btn.textContent=T('✓ Copiado','✓ Copied');
     btn.classList.add('ok');
     rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
   });
@@ -820,27 +775,78 @@ function copyAll(){
   navigator.clipboard.writeText(text).then(function(){
     rows.forEach(function(r){r.classList.remove('ok'); void r.offsetWidth; r.classList.add('ok');});
     document.querySelectorAll('.grp-btn').forEach(function(b){b.textContent='✓';b.classList.add('ok');});
+    document.querySelectorAll('.grp').forEach(function(g){g.classList.add('copiado');});
     var ca=document.querySelector('.copyall');
     ca.classList.remove('ok'); void ca.offsetWidth; ca.classList.add('ok');
   });
 }
-function openContact(){ document.getElementById('contactModal').classList.add('open'); }
-function closeContact(){ document.getElementById('contactModal').classList.remove('open'); }
-function sendContact(){
-  var email=document.getElementById('contactEmail').value.trim();
-  var msg=document.getElementById('contactMsg').value.trim();
-  if(!msg){ return; }
-  fetch(API+'/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,message:msg})})
-  .then(function(r){return r.json();})
-  .then(function(){
-    document.getElementById('contactInner').innerHTML='<div class="modal-ok"><div class="check">✅</div><h3>'+(lang==='es'?'¡Mensaje enviado!':'Sent!')+'</h3><p>'+(lang==='es'?'Tu mensaje será respondido en menos de 24h.':'Your message will be answered within 24h.')+'</p><button class="modal-send" onclick="closeContact()">'+(lang==='es'?'Cerrar':'Close')+'</button></div>';
-  })
-  .catch(function(){ alert(lang==='es'?'No se pudo enviar. Inténtalo de nuevo.':'Could not send.'); });
-}
-document.getElementById('contactModal').addEventListener('click',function(e){ if(e.target===this){ closeContact(); } });
-document.getElementById('loginModal').addEventListener('click',function(e){ if(e.target===this){ closeLogin(); } });
 
-window.addEventListener('load', renderAuth);
+// ===== CHAT DE SOPORTE =====
+var chatTimer=null, chatN=-1;
+function pintarBadge(n){
+  var b=document.getElementById('chatBadge');
+  b.textContent=n>9?'9+':n;
+  b.classList.toggle('show',n>0 && !document.getElementById('chatBox').classList.contains('open'));
+}
+function openChat(){
+  if(!getToken()){ openLogin(); return; }
+  document.getElementById('chatBox').classList.add('open');
+  pintarBadge(0);
+  cargarChat();
+  clearInterval(chatTimer);
+  chatTimer=setInterval(cargarChat,8000);
+  setTimeout(function(){ document.getElementById('chatInp').focus(); },50);
+}
+function closeChat(){
+  document.getElementById('chatBox').classList.remove('open');
+  clearInterval(chatTimer); chatTimer=null;
+}
+function toggleChat(){
+  if(document.getElementById('chatBox').classList.contains('open')) closeChat(); else openChat();
+}
+function pintarChat(msgs){
+  var box=document.getElementById('chatMsgs');
+  if(msgs.length===chatN) return;
+  chatN=msgs.length;
+  if(!msgs.length){
+    box.innerHTML='<div class="chat-vacio">'+T('¿Alguna duda o problema? Escríbenos aquí.','Any questions or problems? Write to us here.')+'</div>';
+    return;
+  }
+  box.innerHTML=msgs.map(function(m){
+    var h=(m.fecha||'').slice(11,16);
+    return '<div class="cm '+(m.de==='admin'?'sop':'yo')+'">'+esc(m.texto)+'<small>'+h+'</small></div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function cargarChat(){
+  var tk=getToken(); if(!tk)return;
+  fetch(API+'/chat?token='+encodeURIComponent(tk))
+  .then(function(r){return r.json();})
+  .then(function(d){ if(d.mensajes) pintarChat(d.mensajes); })
+  .catch(function(){});
+}
+function enviarChat(){
+  var inp=document.getElementById('chatInp');
+  var txt=inp.value.trim();
+  var tk=getToken();
+  if(!txt||!tk)return;
+  inp.value='';
+  fetch(API+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,texto:txt})})
+  .then(function(r){return r.json();})
+  .then(function(d){ if(d.mensajes) pintarChat(d.mensajes); else inp.value=txt; })
+  .catch(function(){ inp.value=txt; alert(T('No se pudo enviar. Inténtalo de nuevo.','Could not send.')); });
+}
+document.getElementById('chatInp').addEventListener('keydown',function(e){
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); enviarChat(); }
+});
+// Avisar de respuestas nuevas aunque el chat este cerrado
+setInterval(function(){ if(getToken() && !chatTimer){ cargarCuenta(); } },60000);
+
+document.getElementById('loginModal').addEventListener('click',function(e){ if(e.target===this){ closeLogin(); pendiente=false; } });
+document.getElementById('subModal').addEventListener('click',function(e){ if(e.target===this){ closeSub(); } });
+
+window.addEventListener('load',function(){ renderAuth(); cargarCuenta(); });
+cargarConfig();
 applyLang();
 </script>
 </body>
