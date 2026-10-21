@@ -388,13 +388,13 @@ function handleCredential(resp){
   fetch(API+'/track-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:resp.credential})})
   .then(function(r){return r.json();})
   .then(function(d){
-    if(!d.token){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')); return; }
+    if(!d.token){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')+(d.error?' ('+d.error+')':' (sin_token)')); return; }
     try{localStorage.setItem('clipuser',JSON.stringify({name:d.name,picture:d.picture,email:d.email,token:d.token}));}catch(e){}
     closeLogin();
     renderAuth();
     cargarCuenta(function(){ if(pendiente){ pendiente=false; fetchLinks(); } });
   })
-  .catch(function(){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')); });
+  .catch(function(e){ alert(T('No se pudo iniciar sesión. Inténtalo de nuevo.','Could not sign in. Try again.')+' (red: '+(e&&e.message||'')+')'); });
 }
 function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById('userMenu'); if(m){m.classList.toggle('open');} }
 document.addEventListener('click',function(){
