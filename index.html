@@ -340,7 +340,7 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
     <p class="sub-motivo" id="subMotivo"></p>
     <div class="sub-activa" id="subActiva" style="display:none;"></div>
     <div class="planes" id="planesBox"></div>
-    <div class="sub-nota" data-es="Pago con USDT, BTC, ETH… Cada pago son 30 días. No se renueva solo." data-en="Pay with USDT, BTC, ETH… Each payment is 30 days. Does not auto-renew.">Pago con USDT, BTC, ETH… Cada pago son 30 días. No se renueva solo.</div>
+    <div class="sub-nota" data-es="Paga con tarjeta, Apple Pay, Google Pay o cripto. Cada pago son 30 días. No se renueva solo." data-en="Pay by card, Apple Pay, Google Pay or crypto. Each payment is 30 days. Does not auto-renew.">Paga con tarjeta, Apple Pay, Google Pay o cripto. Cada pago son 30 días. No se renueva solo.</div>
     <button class="login-cerrar" onclick="closeSub()" data-es="Ahora no" data-en="Not now">Ahora no</button>
   </div>
 </div>
@@ -609,10 +609,16 @@ function pagarSub(plan,b){
   .finally(function(){ b.disabled=false; b.textContent=txt; });
 }
 if(location.search.indexOf('pago=ok')>-1){
+  history.replaceState(null,'',location.pathname);
   setTimeout(function(){
-    alert(T('¡Pago recibido! Tu plan se activará en unos minutos, cuando la red confirme la transacción.','Payment received! Your subscription will activate in a few minutes once the network confirms.'));
-    history.replaceState(null,'',location.pathname);
+    alert(T('¡Gracias por tu pago! Tu plan se activará en cuanto se confirme (normalmente en 1-2 minutos).','Thanks for your payment! Your plan will activate as soon as it is confirmed (usually 1-2 minutes).'));
   },600);
+  // Comprobar varias veces si ya se ha activado
+  var intentosPago=0;
+  var tPago=setInterval(function(){
+    intentosPago++;
+    cargarCuenta(function(){ if(miCuenta.activo||intentosPago>=10){ clearInterval(tPago); } });
+  },15000);
 }
 
 // ===== OBTENER LINKS =====

@@ -34,6 +34,10 @@ NOWPAY_API_KEY = os.environ.get('NOWPAY_API_KEY', '')
 NOWPAY_IPN_SECRET = os.environ.get('NOWPAY_IPN_SECRET', '')
 NOWPAY_API = 'https://api.nowpayments.io/v1'
 
+# ===== PAGOS CON TARJETA / CRIPTO (PaymeGate) — si hay clave, se usa esta =====
+PAYMEGATE_API_KEY = os.environ.get('PAYMEGATE_API_KEY', '')
+PAYMEGATE_API = 'https://api.paymegate.com'
+
 
 def get_db():
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -289,6 +293,7 @@ def mi_cuenta():
     email = email_de_sesion()
     if not email:
         return jsonify({'logueado': False})
+    comprobar_pendientes(email)
     u = get_user(email)
     if not u:
         return jsonify({'logueado': False})
@@ -324,6 +329,8 @@ def config():
 
 @app.route('/crear-pago', methods=['POST'])
 def crear_pago():
+    if PAYMEGATE_API_KEY:
+        return crear_pago_paymegate()
     if not NOWPAY_API_KEY:
         return jsonify({'error': 'pagos_no_configurados'}), 503
     email = email_de_sesion()
@@ -374,6 +381,146 @@ def crear_pago():
         except:
             pass
         return jsonify({'url': url_pago, 'importe': importe, 'dias': dias})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def marcar_pagado(pago_id):
+    """Marca un pago como pagado y activa el plan. Solo la primera vez (no duplica dias)."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""UPDATE payments SET estado = 'pagado'
+                   WHERE id = %s AND estado <> 'pagado'
+                   RETURNING email, plan, creditos""", (int(pago_id),))
+    fila = cur.fetchone()
+    if fila:
+        email, plan, dias = fila
+        activar_plan(cur, email, plan if plan in PLANES_DEFECTO else 'ilimitado', int(dias or DIAS_DEFECTO))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return bool(fila)
+
+
+def url_web():
+    """Direccion de la web desde la que paga el usuario (Vercel o Railway)."""
+    origen = (request.headers.get('Origin') or '').rstrip('/')
+    if origen.startswith('https://'):
+        return origen
+    return request.host_url.rstrip('/').replace('http://', 'https://')
+
+
+def crear_pago_paymegate():
+    email = email_de_sesion()
+    if not email:
+        return jsonify({'error': 'login_requerido'}), 401
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        plan = data.get('plan', 'pro')
+        planes = get_planes()
+        if plan not in planes:
+            return jsonify({'error': 'plan_invalido'}), 400
+        importe = planes[plan]['precio']
+        dias = dias_sub()
+        u = get_user(email) or {}
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''INSERT INTO payments (email, plan, creditos, importe, metodo, estado)
+                       VALUES (%s, %s, %s, %s, 'paymegate', 'pendiente') RETURNING id''',
+                    (email, plan, dias, importe))
+        pago_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        r = requests.post(
+            PAYMEGATE_API + '/v1/orders',
+            headers={'X-API-Key': PAYMEGATE_API_KEY, 'Content-Type': 'application/json'},
+            json={'amount': '%.2f' % float(importe), 'currency': 'USD',
+                  'externalId': str(pago_id),
+                  'paymentMethodsKeys': ['*'],
+                  'backUrl': url_web() + '/?pago=ok',
+                  'customer': {'email': email, 'fullName': u.get('name') or email.split('@')[0]},
+                  'metadata': {'pago_id': pago_id, 'plan': plan}},
+            timeout=30)
+        if r.status_code not in (200, 201):
+            return jsonify({'error': 'error_pasarela', 'detalle': r.text[:300]}), 502
+        resp = r.json()
+        orden = resp.get('data', resp) if isinstance(resp, dict) else {}
+        url_pago = orden.get('checkoutUrl')
+        if not url_pago:
+            return jsonify({'error': 'sin_url', 'detalle': str(resp)[:300]}), 502
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE payments SET ref = %s WHERE id = %s', (str(orden.get('orderUUID', '')), pago_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'url': url_pago, 'importe': importe, 'dias': dias})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def orden_pagada(order_uuid, pago_id):
+    """Pregunta a PaymeGate si la orden esta pagada (no nos fiamos de lo que llega al webhook)."""
+    if not PAYMEGATE_API_KEY or not order_uuid:
+        return False
+    try:
+        r = requests.get(PAYMEGATE_API + '/v1/orders/' + str(order_uuid),
+                         headers={'X-API-Key': PAYMEGATE_API_KEY}, timeout=20)
+        if r.status_code != 200:
+            return False
+        resp = r.json()
+        orden = resp.get('data', resp) if isinstance(resp, dict) else {}
+        return (str(orden.get('status', '')).upper() == 'PAID'
+                and str(orden.get('externalId', '')) == str(pago_id))
+    except:
+        return False
+
+
+def comprobar_pendientes(email):
+    """Por si el aviso de PaymeGate no llega: revisa los pagos pendientes recientes del usuario."""
+    if not PAYMEGATE_API_KEY:
+        return
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""SELECT id, ref FROM payments
+                       WHERE email = %s AND metodo = 'paymegate' AND estado = 'pendiente'
+                         AND ref IS NOT NULL AND ref <> ''
+                         AND created_at > NOW() - INTERVAL '1 day'
+                       ORDER BY id DESC LIMIT 3""", (email,))
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        for pago_id, ref in filas:
+            if orden_pagada(ref, pago_id):
+                marcar_pagado(pago_id)
+    except:
+        pass
+
+
+@app.route('/webhook-paymegate', methods=['POST'])
+def webhook_paymegate():
+    """PaymeGate avisa aqui. Comprobamos la orden con su API antes de activar nada."""
+    try:
+        datos = request.get_json(force=True, silent=True) or {}
+        evento = datos.get('data', datos) if isinstance(datos.get('data'), dict) else datos
+        order_uuid = evento.get('orderUUID') or datos.get('orderUUID')
+        if not order_uuid:
+            return jsonify({'ok': True, 'ignorado': 'sin_orden'})
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM payments WHERE ref = %s AND metodo = 'paymegate'", (str(order_uuid),))
+        fila = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not fila:
+            return jsonify({'ok': True, 'ignorado': 'pago_no_encontrado'})
+        if not orden_pagada(order_uuid, fila[0]):
+            return jsonify({'ok': True, 'ignorado': 'no_pagada'})
+        marcar_pagado(fila[0])
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
