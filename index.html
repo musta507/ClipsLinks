@@ -603,7 +603,7 @@ function pagarSub(plan,b){
     if(d.url){ window.location.href=d.url; return; }
     if(d.error==='login_requerido'){ try{localStorage.removeItem('clipuser');}catch(e){} closeSub(); renderAuth(); openLogin('pagar'); return; }
     if(d.error==='pagos_no_configurados'){ alert(T('Los pagos aún no están activos. Escríbenos por el chat de soporte.','Payments are not active yet. Contact us via support chat.')); return; }
-    alert(T('No se pudo iniciar el pago. Inténtalo de nuevo.','Could not start payment. Try again.'));
+    alert(T('No se pudo iniciar el pago. Inténtalo de nuevo.','Could not start payment. Try again.')+'\n\n('+(d.error||'?')+(d.detalle?': '+String(d.detalle).slice(0,300):'')+')');
   })
   .catch(function(){ alert(T('No se pudo iniciar el pago. Inténtalo de nuevo.','Could not start payment. Try again.')); })
   .finally(function(){ b.disabled=false; b.textContent=txt; });
