@@ -70,6 +70,11 @@ body::after { content: ''; position: fixed; bottom: -200px; left: 50%; transform
 .opt { height: 36px; min-width: 52px; padding: 0 16px; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; background: transparent; color: #A9ADB8; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.18s; }
 .opt.active { background: rgba(88,101,242,0.16); color: #A5AEFF; border-color: rgba(88,101,242,0.55); }
 .opt:hover:not(.active) { border-color: rgba(255,255,255,0.22); color: #fff; }
+.opt-inp { width: 92px; height: 36px; padding: 0 14px; border: 1px dashed rgba(255,255,255,0.18); border-radius: 20px; background: transparent; color: #fff; font-size: 13px; font-family: inherit; font-weight: 500; text-align: center; outline: none; transition: all 0.18s; -moz-appearance: textfield; }
+.opt-inp::-webkit-outer-spin-button, .opt-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.opt-inp::placeholder { color: #6E7280; }
+.opt-inp:focus { border-style: solid; border-color: #5865F2; box-shadow: 0 0 0 3px rgba(88,101,242,0.18); }
+.opt-inp.active { border-style: solid; background: rgba(88,101,242,0.16); color: #A5AEFF; border-color: rgba(88,101,242,0.55); }
 .go-btn { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 52px; margin-top: 0.4rem; border: none; border-radius: 13px; background: linear-gradient(135deg, #5865F2, #6E79FF); color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(88,101,242,0.4); }
 .go-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(88,101,242,0.5); }
 .go-btn:active { transform: translateY(0); }
@@ -275,6 +280,7 @@ button:focus-visible, select:focus-visible, .userpill:focus-visible, .recent-ite
   .plat svg { width: 18px; height: 18px; }
   .opts { gap: 7px; }
   .opt { height: 38px; padding: 0 14px; }
+  .opt-inp { height: 38px; font-size: 16px; width: 96px; }
   .result-head { padding: 14px; }
   .lks { padding: 8px 14px 12px; }
   .grp-head { padding: 10px 14px; }
@@ -334,6 +340,7 @@ button:focus-visible, select:focus-visible, .userpill:focus-visible, .recent-ite
       <button class="opt" onclick="setOpt(this,'count',500)">500</button>
       <button class="opt" onclick="setOpt(this,'count',1000)">1000</button>
       <button class="opt" onclick="setOpt(this,'count',1500)">1500</button>
+      <input class="opt-inp" id="countInp" type="number" inputmode="numeric" min="1" max="1500" placeholder="Otro" aria-label="Otra cantidad" oninput="setCustom(this,'count')">
     </div>
     <div class="field-label" id="daysLabel" data-es="Reels de los últimos..." data-en="Reels from the last..." style="display:none;">Reels de los últimos...</div>
     <div class="opts" id="daysOpts" style="display:none;">
@@ -351,6 +358,7 @@ button:focus-visible, select:focus-visible, .userpill:focus-visible, .recent-ite
       <button class="opt active" onclick="setOpt(this,'group',25)">25</button>
       <button class="opt" onclick="setOpt(this,'group',50)">50</button>
       <button class="opt" onclick="setOpt(this,'group',100)">100</button>
+      <input class="opt-inp" id="groupInp" type="number" inputmode="numeric" min="1" max="1500" placeholder="Otro" aria-label="Otros links por grupo" oninput="setCustom(this,'group')">
     </div>
     <button class="go-btn" id="goBtn" onclick="fetchLinks()"></button>
   </div>
@@ -597,6 +605,7 @@ function applyLang(){
   $('titulo').innerHTML=T('Extrae tus <em>links</em>','Extract your <em>links</em>');
   $('userInp').placeholder=PH[lang][platform];
   $('chatInp').placeholder=T('Escribe un mensaje...','Write a message...');
+  $('countInp').placeholder=$('groupInp').placeholder=T('Otro','Other');
   $('langSel').value=lang;
   pintarGo();
   pintarPlanes();
@@ -619,14 +628,27 @@ function setDays(el,val){
   el.classList.add('active');
   days=val;
 }
+// Cantidad escrita a mano (entre 1 y 1500)
+function setCustom(inp,type){
+  var v=parseInt(inp.value,10);
+  if(!(v>=1)){ inp.classList.remove('active'); return; }
+  if(v>1500){ v=1500; inp.value=1500; }
+  var id=type==='count'?'countOpts':'groupOpts';
+  document.querySelectorAll('#'+id+' .opt').forEach(function(b){b.classList.remove('active');});
+  inp.classList.add('active');
+  if(type==='count'){count=v;}
+  else{ group=v; if(ultimo){ ultimo.copiados={}; showResults(); } }
+}
 function setOpt(el,type,val){
   var id=type==='count'?'countOpts':'groupOpts';
   document.querySelectorAll('#'+id+' .opt').forEach(function(b){b.classList.remove('active');});
+  var ci=$(type==='count'?'countInp':'groupInp'); ci.value=''; ci.classList.remove('active');
   el.classList.add('active');
   if(type==='count'){count=val;}
   else{ group=val; if(ultimo){ ultimo.copiados={}; showResults(); } }  // reagrupa lo que ya hay, sin gastar otra busqueda
 }
 $('userInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
+$('countInp').addEventListener('keydown',function(e){if(e.key==='Enter'){fetchLinks();}});
 
 // ===== LOGIN =====
 function openLogin(motivo){
