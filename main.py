@@ -6,10 +6,20 @@ import secrets
 import psycopg2
 import requests
 import json
-from datetime import datetime, timezone
+import re
+import hmac
+import hashlib
+import time
+import threading
+from collections import deque
 
 app = Flask(__name__)
 CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024   # nadie necesita enviar mas de 64 KB
+
+USUARIO_VALIDO = re.compile(r'^[\w.\-]{1,60}$')
+MAX_LINKS = 1500
+SESION_DIAS = 90
 
 PANEL_PASSWORD = os.environ.get('PANEL_PASSWORD', '')
 GOOGLE_CLIENT_ID = '443136299093-nf63uj2112a5h9hiknmksot6veldl5na.apps.googleusercontent.com'
@@ -84,6 +94,11 @@ def init_db():
         # Ajustes editables desde el panel
         cur.execute('''CREATE TABLE IF NOT EXISTS ajustes (
             clave TEXT PRIMARY KEY, valor TEXT)''')
+        cur.execute("DELETE FROM sessions WHERE created_at < NOW() - INTERVAL '120 days'")
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_email ON searches (user_email)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_fecha ON searches (created_at)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_chat_email ON chat (email)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_payments_ref ON payments (ref)')
         conn.commit()
         cur.close()
         conn.close()
@@ -96,9 +111,72 @@ init_db()
 
 # ===================== UTILIDADES =====================
 
+def client_ip():
+    """IP real del visitante (Railway pone la suya delante, la real viene en estas cabeceras)."""
+    ip = (request.headers.get('X-Real-IP') or '').strip()
+    if not ip:
+        ip = (request.headers.get('X-Forwarded-For') or '').split(',')[0].strip()
+    return (ip or request.remote_addr or '')[:60]
+
+
+# ----- Limite de peticiones (en memoria) -----
+_rl = {}
+_rl_lock = threading.Lock()
+
+
+def limitado(clave, maximo, segundos):
+    """True si 'clave' ya ha hecho 'maximo' peticiones en los ultimos 'segundos'."""
+    ahora = time.time()
+    with _rl_lock:
+        if len(_rl) > 20000:
+            _rl.clear()
+        cola = _rl.setdefault(clave, deque())
+        while cola and cola[0] < ahora - segundos:
+            cola.popleft()
+        if len(cola) >= maximo:
+            return True
+        cola.append(ahora)
+        return False
+
+
+def demasiadas():
+    return jsonify({'error': 'demasiadas_peticiones'}), 429
+
+
+def fallo(e):
+    """Error inesperado: se guarda en el registro y al visitante no se le dan detalles internos."""
+    app.logger.exception(e)
+    return jsonify({'error': 'error_interno'}), 500
+
+
 def check_password():
-    pw = request.args.get('pw', '')
-    return PANEL_PASSWORD != '' and pw == PANEL_PASSWORD
+    """Clave del panel. Con 10 intentos fallidos desde una IP se bloquea 15 minutos."""
+    if not PANEL_PASSWORD:
+        return False
+    ip = client_ip()
+    with _rl_lock:
+        fallos = _rl.get('pwfail:' + ip)
+        if fallos:
+            while fallos and fallos[0] < time.time() - 900:
+                fallos.popleft()
+            if len(fallos) >= 10:
+                return False
+    pw = request.headers.get('X-Panel-Password') or request.args.get('pw', '')
+    if hmac.compare_digest(pw.encode('utf-8'), PANEL_PASSWORD.encode('utf-8')):
+        return True
+    with _rl_lock:
+        _rl.setdefault('pwfail:' + ip, deque()).append(time.time())
+    return False
+
+
+@app.after_request
+def cabeceras_seguridad(resp):
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'DENY'
+    resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if request.path not in ('/', '/panel'):
+        resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 def get_ajuste(clave, defecto):
@@ -138,6 +216,9 @@ def dias_sub():
 
 
 def leer_token():
+    auth = request.headers.get('Authorization', '')
+    if auth.startswith('Bearer '):
+        return auth[7:].strip()
     t = request.args.get('token', '')
     if not t:
         data = request.get_json(force=True, silent=True) or {}
@@ -153,7 +234,9 @@ def email_de_sesion():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT email FROM sessions WHERE token = %s', (token,))
+        cur.execute("""SELECT email FROM sessions
+                       WHERE token = %s AND created_at > NOW() - (%s || ' days')::interval""",
+                    (token, str(SESION_DIAS)))
         f = cur.fetchone()
         cur.close()
         conn.close()
@@ -237,21 +320,27 @@ def panel():
 @app.route('/track-login', methods=['POST'])
 def track_login():
     """Recibe el login de Google, lo comprueba con Google y crea una sesion."""
+    if limitado('login:' + client_ip(), 15, 300):
+        return demasiadas()
     try:
-        data = request.get_json(force=True)
-        credential = data.get('credential', '')
-        if not credential:
+        data = request.get_json(force=True, silent=True) or {}
+        credential = str(data.get('credential', '') or '')
+        if not credential or len(credential) > 5000:
             return jsonify({'error': 'sin_credencial'}), 400
         r = requests.get('https://oauth2.googleapis.com/tokeninfo',
                          params={'id_token': credential}, timeout=15)
         if r.status_code != 200:
             return jsonify({'error': 'login_invalido'}), 401
         info = r.json()
-        if info.get('aud') != GOOGLE_CLIENT_ID or str(info.get('email_verified')).lower() != 'true':
+        if (info.get('aud') != GOOGLE_CLIENT_ID
+                or info.get('iss') not in ('accounts.google.com', 'https://accounts.google.com')
+                or str(info.get('email_verified')).lower() != 'true'):
             return jsonify({'error': 'login_invalido'}), 401
         email = (info.get('email') or '').strip().lower()
-        name = info.get('name', '') or ''
-        picture = info.get('picture', '') or ''
+        name = (info.get('name', '') or '')[:120]
+        picture = (info.get('picture', '') or '')[:500]
+        if not picture.startswith('https://'):
+            picture = ''
         if not email:
             return jsonify({'error': 'login_invalido'}), 401
 
@@ -259,7 +348,7 @@ def track_login():
         conn = get_db()
         cur = conn.cursor()
         cur.execute('INSERT INTO logins (email, name, picture, ip) VALUES (%s, %s, %s, %s)',
-                    (email, name, picture, request.remote_addr))
+                    (email, name, picture, client_ip()))
         cur.execute('''INSERT INTO users (email, name, picture) VALUES (%s, %s, %s)
                        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, picture = EXCLUDED.picture''',
                     (email, name, picture))
@@ -269,7 +358,7 @@ def track_login():
         conn.close()
         return jsonify({'ok': True, 'token': token, 'email': email, 'name': name, 'picture': picture})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/logout', methods=['POST'])
@@ -322,13 +411,15 @@ def lista_planes():
 
 @app.route('/config')
 def config():
-    return jsonify({'planes': lista_planes(), 'dias': dias_sub()})
+    return jsonify({'planes': lista_planes(), 'dias': dias_sub(), 'v': 3})
 
 
 # ===================== PAGOS CON CRIPTO =====================
 
 @app.route('/crear-pago', methods=['POST'])
 def crear_pago():
+    if limitado('pago:' + client_ip(), 8, 600):
+        return demasiadas()
     if PAYMEGATE_API_KEY:
         return crear_pago_paymegate()
     if not NOWPAY_API_KEY:
@@ -382,7 +473,7 @@ def crear_pago():
             pass
         return jsonify({'url': url_pago, 'importe': importe, 'dias': dias})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 def marcar_pagado(pago_id):
@@ -458,7 +549,7 @@ def crear_pago_paymegate():
         conn.close()
         return jsonify({'url': url_pago, 'importe': importe, 'dias': dias})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 def orden_pagada(order_uuid, pago_id):
@@ -522,47 +613,39 @@ def webhook_paymegate():
         marcar_pagado(fila[0])
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/webhook-pago', methods=['POST'])
 def webhook_pago():
     """NOWPayments avisa aqui cuando se confirma el pago -> se activa la suscripcion."""
+    # Sin clave secreta no se puede comprobar que el aviso es de verdad: se rechaza
+    if not NOWPAY_IPN_SECRET:
+        return jsonify({'error': 'webhook_no_configurado'}), 503
     try:
         datos = request.get_json(force=True, silent=True) or {}
-        if NOWPAY_IPN_SECRET:
-            import hmac, hashlib, json as _json
-            firma = request.headers.get('x-nowpayments-sig', '')
-            ordenado = _json.dumps(datos, sort_keys=True, separators=(',', ':'))
-            esperada = hmac.new(NOWPAY_IPN_SECRET.encode(), ordenado.encode(), hashlib.sha512).hexdigest()
-            if not hmac.compare_digest(firma, esperada):
-                return jsonify({'error': 'firma_invalida'}), 401
+        firma = request.headers.get('x-nowpayments-sig', '')
+        ordenado = json.dumps(datos, sort_keys=True, separators=(',', ':'))
+        esperada = hmac.new(NOWPAY_IPN_SECRET.encode(), ordenado.encode(), hashlib.sha512).hexdigest()
+        if not hmac.compare_digest(firma, esperada):
+            return jsonify({'error': 'firma_invalida'}), 401
 
-        estado = (datos.get('payment_status') or '').lower()
-        order_id = datos.get('order_id')
-        if estado not in ('finished', 'confirmed') or not order_id:
+        estado = str(datos.get('payment_status') or '').lower()
+        order_id = str(datos.get('order_id') or '')
+        if estado not in ('finished', 'confirmed') or not order_id.isdigit():
             return jsonify({'ok': True, 'ignorado': estado})
-
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT email, plan, creditos, estado FROM payments WHERE id = %s', (int(order_id),))
-        fila = cur.fetchone()
-        if not fila:
-            cur.close(); conn.close()
-            return jsonify({'error': 'pago_no_encontrado'}), 404
-        email, plan, dias, estado_actual = fila
-        if estado_actual == 'pagado':
-            cur.close(); conn.close()
-            return jsonify({'ok': True, 'ya_procesado': True})
-
-        cur.execute("UPDATE payments SET estado = 'pagado' WHERE id = %s", (int(order_id),))
-        activar_plan(cur, email, plan if plan in PLANES_DEFECTO else 'ilimitado', int(dias or DIAS_DEFECTO))
-        conn.commit()
+        cur.execute("SELECT 1 FROM payments WHERE id = %s AND metodo = 'cripto'", (int(order_id),))
+        existe = cur.fetchone()
         cur.close()
         conn.close()
-        return jsonify({'ok': True})
+        if not existe:
+            return jsonify({'error': 'pago_no_encontrado'}), 404
+        nuevo = marcar_pagado(int(order_id))
+        return jsonify({'ok': True, 'ya_procesado': not nuevo})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 def activar_plan(cur, email, plan, dias):
@@ -588,10 +671,13 @@ def chat_usuario():
         cur = conn.cursor()
         if request.method == 'POST':
             data = request.get_json(force=True, silent=True) or {}
-            texto = (data.get('texto', '') or '').strip()[:2000]
+            texto = str(data.get('texto', '') or '').strip()[:2000]
             if not texto:
                 cur.close(); conn.close()
                 return jsonify({'error': 'vacio'}), 400
+            if limitado('chat:' + email, 20, 60):
+                cur.close(); conn.close()
+                return demasiadas()
             cur.execute("INSERT INTO chat (email, de, texto) VALUES (%s, 'user', %s)", (email, texto))
             conn.commit()
         # Marcar como leidos los mensajes del soporte
@@ -603,7 +689,7 @@ def chat_usuario():
         conn.close()
         return jsonify({'mensajes': [{'de': f[0], 'texto': f[1], 'fecha': str(f[2])} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 # ===================== CHAT DE SOPORTE (panel) =====================
@@ -629,7 +715,7 @@ def chat_admin_lista():
             'email': f[0], 'ultima': str(f[1]), 'no_leidos': int(f[2] or 0),
             'name': f[3] or '', 'picture': f[4] or '', 'ultimo_texto': f[5] or ''} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/chat-admin/conversacion', methods=['GET', 'POST'])
@@ -658,7 +744,7 @@ def chat_admin_conv():
         conn.close()
         return jsonify({'mensajes': [{'de': f[0], 'texto': f[1], 'fecha': str(f[2])} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 # ===================== PANEL: USUARIOS, BLOQUEOS, AJUSTES =====================
@@ -689,7 +775,7 @@ def usuarios_panel():
             'plan': f[9], 'plan_nombre': planes.get(f[9], planes['ilimitado'])['nombre'],
             'usados': f[10], 'limite': planes.get(f[9], planes['ilimitado'])['links']} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/marcar-pago', methods=['POST'])
@@ -698,7 +784,7 @@ def marcar_pago():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(force=True, silent=True) or {}
         email = (data.get('email', '') or '').strip()
         activar = bool(data.get('activar', True))
         conn = get_db()
@@ -709,7 +795,7 @@ def marcar_pago():
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/dar-dias', methods=['POST'])
@@ -718,7 +804,7 @@ def dar_dias():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(force=True, silent=True) or {}
         email = (data.get('email', '') or '').strip()
         dias = int(data.get('dias', 0) or 0)
         plan = data.get('plan', 'ilimitado')
@@ -735,7 +821,7 @@ def dar_dias():
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/perfiles-bloqueados')
@@ -753,7 +839,7 @@ def perfiles_bloqueados():
         conn.close()
         return jsonify({'perfiles': [{'username': f[0], 'fecha': str(f[1]), 'busquedas': f[2] or 0} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/bloquear-perfil', methods=['POST'])
@@ -761,7 +847,7 @@ def bloquear_perfil():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(force=True, silent=True) or {}
         username = (data.get('username', '') or '').strip().lstrip('@').lower()
         activar = bool(data.get('activar', True))
         if not username:
@@ -777,7 +863,7 @@ def bloquear_perfil():
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/ajustes', methods=['GET', 'POST'])
@@ -786,7 +872,7 @@ def ajustes():
         return jsonify({'error': 'unauthorized'}), 401
     try:
         if request.method == 'POST':
-            data = request.get_json(force=True)
+            data = request.get_json(force=True, silent=True) or {}
             nuevos = {}
             for k in ORDEN_PLANES:
                 v = (data.get('planes') or {}).get(k) or {}
@@ -809,7 +895,7 @@ def ajustes():
             conn.close()
         return jsonify({'planes': lista_planes(), 'dias': dias_sub()})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/forzar-ip', methods=['POST'])
@@ -817,7 +903,7 @@ def forzar_ip():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(force=True, silent=True) or {}
         ip_obj = (data.get('ip', '') or '').strip()
         activar = bool(data.get('activar', True))
         if not ip_obj:
@@ -833,7 +919,7 @@ def forzar_ip():
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/pagos')
@@ -855,29 +941,31 @@ def pagos_panel():
             'importe': float(f[4] or 0), 'metodo': f[5] or '', 'estado': f[6] or '',
             'fecha': str(f[7]) if f[7] else ''} for f in filas]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 # ===================== MENSAJES DEL FORMULARIO ANTIGUO =====================
 
 @app.route('/contact', methods=['POST'])
 def contact():
+    if limitado('contact:' + client_ip(), 5, 600):
+        return demasiadas()
     try:
-        data = request.get_json(force=True)
-        email = (data.get('email', '') or '').strip()[:200]
-        message = (data.get('message', '') or '').strip()[:2000]
+        data = request.get_json(force=True, silent=True) or {}
+        email = str(data.get('email', '') or '').strip()[:200]
+        message = str(data.get('message', '') or '').strip()[:2000]
         if not message:
             return jsonify({'error': 'Mensaje vacío'}), 400
         conn = get_db()
         cur = conn.cursor()
         cur.execute('INSERT INTO messages (email, message, ip) VALUES (%s, %s, %s)',
-                    (email, message, request.remote_addr))
+                    (email, message, client_ip()))
         conn.commit()
         cur.close()
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/messages')
@@ -894,7 +982,7 @@ def get_messages():
         return jsonify({'messages': [{'id': r[0], 'email': r[1] or '', 'message': r[2] or '',
                                       'replied': r[3], 'date': str(r[4])} for r in rows]})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 @app.route('/mark-replied', methods=['POST'])
@@ -902,7 +990,7 @@ def mark_replied():
     if not check_password():
         return jsonify({'error': 'unauthorized'}), 401
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(force=True, silent=True) or {}
         conn = get_db()
         cur = conn.cursor()
         cur.execute('UPDATE messages SET replied = TRUE WHERE id = %s', (data.get('id'),))
@@ -911,7 +999,7 @@ def mark_replied():
         conn.close()
         return jsonify({'ok': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 # ===================== ESTADISTICAS DEL PANEL =====================
@@ -970,7 +1058,7 @@ def stats():
                          'ip': h[4] or '', 'date': str(h[5])} for h in history],
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return fallo(e)
 
 
 # ===================== EXTRACCION DE LINKS =====================
@@ -1011,7 +1099,8 @@ def get_instagram_reels(user, days):
     except requests.exceptions.Timeout:
         return None, 'Instagram tardó demasiado, prueba de nuevo'
     except Exception as e:
-        return None, f'Error de conexión: {e}'
+        app.logger.warning('apify: %s', str(e)[:300])
+        return None, 'Error de conexión con Instagram'
     if resp.status_code not in (200, 201):
         return None, f'Instagram no disponible ({resp.status_code})'
     try:
@@ -1024,7 +1113,7 @@ def get_instagram_reels(user, days):
     recogidos = []
     for it in items:
         url = it.get('url')
-        if url:
+        if url and str(url).startswith('https://'):
             recogidos.append({'url': url, 'timestamp': it.get('timestamp') or '',
                               'likes': it.get('likesCount') or 0, 'coment': it.get('commentsCount') or 0})
     recogidos.sort(key=lambda x: x['timestamp'], reverse=True)
@@ -1045,16 +1134,27 @@ def get_instagram_reels(user, days):
 
 @app.route('/links')
 def get_links():
-    user = request.args.get('user', '')
+    user = request.args.get('user', '').replace('@', '').strip()
     platform = request.args.get('platform', 'tiktok')
-    count = int(request.args.get('count', 25))
-    days = int(request.args.get('days', 1))
-    ip = request.remote_addr
+    try:
+        count = max(1, min(int(request.args.get('count', 25)), MAX_LINKS))
+        days = max(1, min(int(request.args.get('days', 1)), 7))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'parametros_invalidos'}), 400
+    ip = client_ip()
     email = email_de_sesion()
 
     if not user:
         return jsonify({'error': 'Usuario requerido'}), 400
-    user = user.replace('@', '').strip()
+    if not USUARIO_VALIDO.match(user):
+        return jsonify({'error': 'usuario_invalido'}), 400
+    if platform not in ('tiktok', 'youtube', 'instagram'):
+        return jsonify({'error': 'Plataforma no válida'}), 400
+
+    # Freno contra abusos: 15 busquedas por minuto y 150 por hora
+    quien = 'links:' + (email or ip)
+    if limitado(quien + ':m', 15, 60) or limitado(quien + ':h', 150, 3600):
+        return demasiadas()
 
     # Guardar la busqueda (tambien los intentos bloqueados, para verlos en el panel)
     try:
@@ -1065,7 +1165,7 @@ def get_links():
         conn.commit()
         cur.close()
         conn.close()
-    except:
+    except Exception:
         pass
 
     u = get_user(email) if email else None
@@ -1090,10 +1190,12 @@ def get_links():
             return jsonify({'error': 'login_requerido', 'motivo': 'instagram'}), 401
         if not activo or not u['instagram']:
             return jsonify({'error': 'pago_requerido', 'motivo': 'instagram'}), 402
-        days = max(1, min(days, 7))
+        # Instagram cuesta dinero por cada busqueda: maximo 30 por hora y cuenta
+        if limitado('ig:' + email, 30, 3600):
+            return demasiadas()
         resultado, err = get_instagram_reels(user, days)
         if err:
-            return jsonify({'error': err}), 500
+            return jsonify({'error': err}), 502
         return jsonify({'links': resultado.get('links', []), 'stats': resultado.get('stats'),
                         'avatar': get_avatar(user, 'instagram')})
 
@@ -1108,16 +1210,14 @@ def get_links():
     # ===== TikTok y YouTube via yt-dlp =====
     if platform == 'tiktok':
         url = f'https://www.tiktok.com/@{user}'
-    elif platform == 'youtube':
-        url = f'https://www.youtube.com/@{user}/shorts'
     else:
-        return jsonify({'error': 'Plataforma no válida'}), 400
+        url = f'https://www.youtube.com/@{user}/shorts'
 
     try:
         with yt_dlp.YoutubeDL({'quiet': True, 'extract_flat': True, 'playlistend': count}) as ydl:
             info = ydl.extract_info(url, download=False)
             entries = info.get('entries', [])
-            links = [e.get('url', '') for e in entries if e.get('url')]
+            links = [e.get('url', '') for e in entries if e and str(e.get('url', '')).startswith('https://')]
             avatar = None
             for key in ('thumbnail', 'channel_thumbnail', 'uploader_avatar'):
                 if info.get(key):
@@ -1144,8 +1244,9 @@ def get_links():
                 restantes = max(0, restantes - len(links))
             return jsonify({'links': links, 'avatar': avatar, 'restantes': restantes})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.warning('links %s @%s: %s', platform, user, str(e)[:300])
+        return jsonify({'error': 'no_disponible'}), 502
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, threaded=True)

@@ -109,14 +109,20 @@ var API='https://web-production-db182.up.railway.app';
 var PW='';
 var TAB=0;
 var S={}; // ultimas stats
-function q(path){ return API+path+(path.indexOf('?')>-1?'&':'?')+'pw='+encodeURIComponent(PW); }
+// La clave viaja en una cabecera (no en la direccion, donde quedaria guardada en registros e historial)
+function q(path){ return API+path; }
+function pfetch(url,opts){
+  opts=opts||{}; opts.headers=opts.headers||{};
+  opts.headers['X-Panel-Password']=PW;
+  return fetch(url,opts);
+}
 function post(path,body){
-  return fetch(q(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json();});
+  return pfetch(q(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
 function entrar(){
   PW=document.getElementById('pwInput').value.trim();
   if(!PW)return;
-  fetch(q('/stats'))
+  pfetch(q('/stats'))
     .then(function(r){ if(r.status===401){throw new Error('unauthorized');} return r.json(); })
     .then(function(d){
       document.getElementById('loginScreen').style.display='none';
@@ -209,7 +215,7 @@ function tab(i){
   document.querySelectorAll('.tab').forEach(function(t,j){t.classList.toggle('active',j===i);});
   document.querySelectorAll('.section').forEach(function(s,j){s.classList.toggle('active',j===i);});
 }
-function recargarStats(){ fetch(q('/stats')).then(function(r){return r.json();}).then(render); }
+function recargarStats(){ pfetch(q('/stats')).then(function(r){return r.json();}).then(render); }
 
 /* ===== HISTORIAL ===== */
 function toggleIP(ip,activar){ post('/forzar-ip',{ip:ip,activar:activar}).then(recargarStats); }
@@ -225,7 +231,7 @@ function bloquearInput(){
   post('/bloquear-perfil',{username:v,activar:true}).then(recargarStats);
 }
 function loadBloqueados(){
-  fetch(q('/perfiles-bloqueados')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/perfiles-bloqueados')).then(function(r){return r.json();}).then(function(d){
     var a=document.getElementById('bloqArea'); if(!a)return;
     if(!d.perfiles||!d.perfiles.length){ a.innerHTML='No hay perfiles bloqueados.'; return; }
     a.className='';
@@ -236,7 +242,7 @@ function loadBloqueados(){
 
 /* ===== USUARIOS Y SUSCRIPCIONES ===== */
 function loadUsuarios(){
-  fetch(q('/usuarios')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/usuarios')).then(function(r){return r.json();}).then(function(d){
     var area=document.getElementById('usrArea'); if(!area)return;
     area.className='';
     if(!d.usuarios||!d.usuarios.length){ area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
@@ -263,7 +269,7 @@ function quitarSub(email){ if(confirm('¿Quitar la suscripción a '+email+'?')) 
 /* ===== PAGOS Y PRECIO ===== */
 var PLANES=[];
 function loadAjustes(){
-  fetch(q('/ajustes')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/ajustes')).then(function(r){return r.json();}).then(function(d){
     var a=document.getElementById('ajPlanes'); if(!a||!d.planes)return;
     PLANES=d.planes;
     a.className='';
@@ -289,7 +295,7 @@ function guardarAjustes(){
   });
 }
 function loadPagos(){
-  fetch(q('/pagos')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/pagos')).then(function(r){return r.json();}).then(function(d){
     var k=document.getElementById('kpiDinero');
     if(k){ k.querySelector('.num').textContent='$'+(d.total_cobrado||0).toFixed(2); }
     var area=document.getElementById('pagArea'); if(!area)return;
@@ -309,7 +315,7 @@ function loadPagos(){
 /* ===== CHAT DE SOPORTE ===== */
 var CONV='', CONV_N=-1;
 function loadConvs(){
-  fetch(q('/chat-admin')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/chat-admin')).then(function(r){return r.json();}).then(function(d){
     var a=document.getElementById('convs'); if(!a)return;
     var cs=d.conversaciones||[];
     if(!cs.length){ a.innerHTML='<div class="vacio" style="padding:30px 10px">Aún no hay chats.</div>'; return; }
@@ -331,7 +337,7 @@ function abrirConv(email){
   if(email!==CONV){ CONV_N=-1; }
   CONV=email;
   var hh=document.getElementById('hiloHead'); if(hh) hh.textContent=email;
-  fetch(q('/chat-admin/conversacion?email='+encodeURIComponent(email))).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/chat-admin/conversacion?email='+encodeURIComponent(email))).then(function(r){return r.json();}).then(function(d){
     if(d.mensajes) pintarHilo(d.mensajes);
     loadConvs();
   }).catch(function(){});
@@ -350,7 +356,7 @@ function refrescarChat(){
 
 /* ===== MENSAJES ANTIGUOS (formulario de contacto) ===== */
 function loadMessages(){
-  fetch(q('/messages')).then(function(r){return r.json();}).then(function(d){
+  pfetch(q('/messages')).then(function(r){return r.json();}).then(function(d){
     var area=document.getElementById('msgArea'); if(!area)return;
     area.className='';
     if(!d.messages||!d.messages.length){ area.innerHTML='<div class="card"><p class="muted">No hay mensajes antiguos.</p></div>'; return; }

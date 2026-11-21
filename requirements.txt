@@ -2,5 +2,5 @@ flask
 flask-cors
 yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 psycopg2-binary
-stripe
 requests
+gunicorn
