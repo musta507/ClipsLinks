@@ -23,7 +23,7 @@ INSTAGRAM_MAX_REELS = 99999
 # links = links al mes (None = ilimitados). instagram = si incluye Instagram
 PLANES_DEFECTO = {
     'basico':    {'nombre': 'Básico',    'precio': 9,  'links': 300,  'instagram': False},
-    'pro':       {'nombre': 'Pro',       'precio': 27, 'links': 3000, 'instagram': False},
+    'pro':       {'nombre': 'Pro',       'precio': 19, 'links': 5000, 'instagram': False},
     'ilimitado': {'nombre': 'Ilimitado', 'precio': 56, 'links': None, 'instagram': True},
 }
 ORDEN_PLANES = ['basico', 'pro', 'ilimitado']
