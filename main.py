@@ -38,6 +38,7 @@ PLANES_DEFECTO = {
 }
 ORDEN_PLANES = ['basico', 'pro', 'ilimitado']
 DIAS_DEFECTO = 30       # dias de acceso por cada pago
+PROMO_DEFECTO = 50      # % de descuento en el primer pago de cada cuenta (0 = sin promocion)
 
 # ===== PAGOS CON CRIPTO (NOWPayments) =====
 NOWPAY_API_KEY = os.environ.get('NOWPAY_API_KEY', '')
@@ -213,6 +214,35 @@ def dias_sub():
         return int(get_ajuste('dias', DIAS_DEFECTO))
     except:
         return DIAS_DEFECTO
+
+
+def promo_pct():
+    """% de descuento del primer pago (0 = desactivado)."""
+    try:
+        return max(0, min(90, int(float(get_ajuste('promo', PROMO_DEFECTO)))))
+    except:
+        return PROMO_DEFECTO
+
+
+def promo_usuario(email):
+    """Descuento que le toca a esta cuenta: solo si nunca ha pagado nada."""
+    pct = promo_pct()
+    if not pct or not email:
+        return 0
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM payments WHERE email = %s AND estado = 'pagado' LIMIT 1", (email,))
+        ya_pago = cur.fetchone() is not None
+        cur.close()
+        conn.close()
+        return 0 if ya_pago else pct
+    except:
+        return 0
+
+
+def precio_final(precio, pct):
+    return round(float(precio) * (100 - pct) / 100.0, 2) if pct else float(precio)
 
 
 def leer_token():
@@ -401,7 +431,7 @@ def mi_cuenta():
                     'plan': u['plan'] if u['activo'] else '', 'plan_nombre': u['plan_nombre'] if u['activo'] else '',
                     'instagram': u['activo'] and u['instagram'],
                     'limite': u['limite'], 'usados': u['usados'], 'restantes': u['restantes'],
-                    'chat_no_leidos': no_leidos})
+                    'promo': promo_usuario(email), 'chat_no_leidos': no_leidos})
 
 
 def lista_planes():
@@ -411,7 +441,7 @@ def lista_planes():
 
 @app.route('/config')
 def config():
-    return jsonify({'planes': lista_planes(), 'dias': dias_sub(), 'v': 3})
+    return jsonify({'planes': lista_planes(), 'dias': dias_sub(), 'promo': promo_pct(), 'v': 3})
 
 
 # ===================== PAGOS CON CRIPTO =====================
@@ -433,7 +463,7 @@ def crear_pago():
         planes = get_planes()
         if plan not in planes:
             return jsonify({'error': 'plan_invalido'}), 400
-        importe = planes[plan]['precio']
+        importe = precio_final(planes[plan]['precio'], promo_usuario(email))
         dias = dias_sub()
         conn = get_db()
         cur = conn.cursor()
@@ -511,7 +541,7 @@ def crear_pago_paymegate():
         planes = get_planes()
         if plan not in planes:
             return jsonify({'error': 'plan_invalido'}), 400
-        importe = planes[plan]['precio']
+        importe = precio_final(planes[plan]['precio'], promo_usuario(email))
         dias = dias_sub()
         u = get_user(email) or {}
         conn = get_db()
@@ -883,17 +913,18 @@ def ajustes():
                     return jsonify({'error': 'valores_invalidos'}), 400
                 nuevos[k] = {'precio': precio, 'links': links}
             dias = int(data.get('dias', DIAS_DEFECTO))
-            if dias <= 0:
+            promo = int(float(data.get('promo', promo_pct()) or 0))
+            if dias <= 0 or promo < 0 or promo > 90:
                 return jsonify({'error': 'valores_invalidos'}), 400
             conn = get_db()
             cur = conn.cursor()
-            for k, v in (('planes', json.dumps(nuevos)), ('dias', str(dias))):
+            for k, v in (('planes', json.dumps(nuevos)), ('dias', str(dias)), ('promo', str(promo))):
                 cur.execute('''INSERT INTO ajustes (clave, valor) VALUES (%s, %s)
                                ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor''', (k, v))
             conn.commit()
             cur.close()
             conn.close()
-        return jsonify({'planes': lista_planes(), 'dias': dias_sub()})
+        return jsonify({'planes': lista_planes(), 'dias': dias_sub(), 'promo': promo_pct()})
     except Exception as e:
         return fallo(e)
 

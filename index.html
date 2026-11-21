@@ -186,6 +186,12 @@ button:focus-visible, select:focus-visible, .userpill:focus-visible, .recent-ite
 .plan.top .plan-nom { color: #F5C451; }
 .plan-precio { font-size: 36px; font-weight: 800; color: #fff; margin-top: 10px; line-height: 1; }
 .plan-precio span { font-size: 12px; font-weight: 500; color: #8A8E99; margin-left: 2px; }
+.plan-antes { min-height: 17px; margin-top: 8px; font-size: 13px; color: #6E7280; }
+.plan-antes s { text-decoration-thickness: 1.5px; }
+.plan-antes b { margin-left: 6px; padding: 1px 7px; background: rgba(35,165,90,0.16); color: #4CC97B; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.plan-antes + .plan-precio { margin-top: 2px; }
+.plan-luego { margin-top: 4px; font-size: 11.5px; color: #6E7280; }
+.promo-banner { max-width: 520px; margin: -10px auto 26px; padding: 11px 14px; background: linear-gradient(120deg, rgba(245,196,81,0.16), rgba(245,196,81,0.06)); border: 1px solid rgba(245,196,81,0.4); border-radius: 12px; color: #F5C451; font-size: 13.5px; font-weight: 700; }
 .plan-links { font-size: 15px; color: #fff; font-weight: 700; margin-top: 14px; }
 .plan-extra { min-height: 16px; font-size: 11px; color: #6E7280; margin-top: 3px; }
 .plan.top .plan-extra { color: #4CC97B; font-weight: 600; }
@@ -403,6 +409,7 @@ button:focus-visible, select:focus-visible, .userpill:focus-visible, .recent-ite
     <h3 id="subTit" data-es="Elige tu plan" data-en="Choose your plan">Elige tu plan</h3>
     <p class="sub-motivo" id="subMotivo"></p>
     <div class="sub-activa" id="subActiva" style="display:none;"></div>
+    <div class="promo-banner" id="promoBanner" style="display:none;"></div>
     <div class="planes" id="planesBox"></div>
     <div class="sub-nota" data-es="Paga con tarjeta, Apple Pay, Google Pay o cripto. Cada pago son 30 días. No se renueva solo." data-en="Pay by card, Apple Pay, Google Pay or crypto. Each payment is 30 days. Does not auto-renew.">Paga con tarjeta, Apple Pay, Google Pay o cripto. Cada pago son 30 días. No se renueva solo.</div>
     <button class="login-cerrar" onclick="closeSub()" data-es="Ahora no" data-en="Not now">Ahora no</button>
@@ -524,6 +531,7 @@ function fechaCorta(s){
 }
 var authKey='';
 function renderAuth(){
+  if($('subModal').classList.contains('open') && !pagando){ pintarPlanes(); }
   var area=$('authArea');
   var u=getUser();
   $('chatFab').classList.toggle('show',!!u);
@@ -693,9 +701,21 @@ function cargarConfig(){
 }
 function fmtMiles(n){ return String(n==null?'':n).replace(/\B(?=(\d{3})+(?!\d))/g, lang==='es'?'.':','); }
 function fmtPrecio(p){ p=Number(p)||0; return '$'+((p%1===0)?String(p):p.toFixed(2)); }
+// Descuento del primer pago: lo decide el servidor (solo cuentas que nunca han pagado)
+function promoActual(){
+  var p=miCuenta.logueado?miCuenta.promo:cfg.promo;
+  p=parseInt(p,10)||0;
+  return (p>0&&p<=90)?p:0;
+}
 function pintarPlanes(){
   var box=$('planesBox'); if(!box)return;
   var base=cfg.planes[0];
+  var promo=promoActual();
+  var pb=$('promoBanner');
+  if(pb){
+    pb.textContent=T('🎉 '+promo+'% de descuento en tu primer mes','🎉 '+promo+'% off your first month');
+    pb.style.display=promo?'block':'none';
+  }
   box.innerHTML=cfg.planes.map(function(p){
     var top=p.id==='pro';
     var links=p.links===null?T('Links ilimitados','Unlimited links'):fmtMiles(p.links)+T(' links / mes',' links / month');
@@ -713,7 +733,9 @@ function pintarPlanes(){
     var off=(motivoSub==='instagram'&&!p.instagram)?' ig-off':'';
     return '<div class="plan'+(top?' top':'')+off+'">'+(top?'<div class="plan-badge">'+T('Recomendado','Recommended')+'</div>':'')+
       '<div class="plan-nom">'+esc(p.nombre)+'</div>'+
-      '<div class="plan-precio">'+fmtPrecio(p.precio)+'<span>/ '+T('mes','month')+'</span></div>'+
+      (promo?'<div class="plan-antes"><s>'+fmtPrecio(p.precio)+'</s><b>-'+promo+'%</b></div>':'')+
+      '<div class="plan-precio">'+fmtPrecio(promo?Math.round(p.precio*(100-promo))/100:p.precio)+'<span>/ '+(promo?T('1.er mes','1st month'):T('mes','month'))+'</span></div>'+
+      (promo?'<div class="plan-luego">'+T('Después ','Then ')+fmtPrecio(p.precio)+T(' / mes',' / month')+'</div>':'')+
       '<div class="plan-links">'+links+'</div><div class="plan-extra">'+extra+'</div>'+
       '<ul>'+li+'</ul>'+
       '<button class="plan-btn" data-plan="'+esc(p.id)+'" onclick="pagarSub(this.getAttribute(\'data-plan\'),this)">'+btn+'</button></div>';

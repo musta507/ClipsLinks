@@ -181,7 +181,7 @@ function render(d){
   h+=sec(3,'<div class="card"><h2>Bloquear perfiles (@)</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Quien busque estos perfiles: si es anónimo, tendrá que iniciar sesión; si ya ha iniciado sesión, tendrá que pagar la suscripción.</p><div class="toolbar"><input class="inp" id="bloqInp" placeholder="@usuario" onkeydown="if(event.key===\'Enter\')bloquearInput()"><button class="btn" onclick="bloquearInput()">Bloquear</button></div><div id="bloqArea" class="muted">Cargando...</div></div>');
 
   // 4 Pagos
-  h+=sec(4,'<div class="card"><h2>Planes</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Links al mes de cada plan. Deja vacío = ilimitados. Solo el plan Ilimitado incluye Instagram.</p><div id="ajPlanes" class="muted">Cargando...</div><div class="toolbar" style="margin-top:12px"><span class="muted">Cada pago dura</span><input class="inp" id="ajDias" type="number" min="1" style="width:80px"><span class="muted">días</span><button class="btn" onclick="guardarAjustes()">Guardar</button><span id="ajOk" class="email" style="font-size:13px"></span></div></div><div id="pagArea" class="loading">Cargando pagos...</div>');
+  h+=sec(4,'<div class="card"><h2>Planes</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Links al mes de cada plan. Deja vacío = ilimitados. Solo el plan Ilimitado incluye Instagram.</p><div id="ajPlanes" class="muted">Cargando...</div><div class="toolbar" style="margin-top:12px"><span class="muted">Cada pago dura</span><input class="inp" id="ajDias" type="number" min="1" style="width:80px"><span class="muted">días</span><span class="muted" style="margin-left:14px">Descuento primer pago</span><input class="inp" id="ajPromo" type="number" min="0" max="90" style="width:80px"><span class="muted">% (0 = sin promoción)</span><button class="btn" onclick="guardarAjustes()">Guardar</button><span id="ajOk" class="email" style="font-size:13px"></span></div></div><div id="pagArea" class="loading">Cargando pagos...</div>');
 
   // 5 Cuentas
   h+=sec(5,'<div class="card"><h2>Cuentas que han iniciado sesión</h2><div class="tblwrap"><table><tr><th>Usuario</th><th>Email</th><th>Nº logins</th><th>Último acceso</th></tr>'+
@@ -277,6 +277,7 @@ function loadAjustes(){
       return '<tr><td><b>'+esc(p.nombre)+'</b></td><td><input class="inp" id="pp_'+p.id+'" type="number" step="0.5" min="1" style="width:90px" value="'+p.precio+'"></td><td><input class="inp" id="pl_'+p.id+'" type="number" min="0" style="width:110px" placeholder="ilimitados" value="'+(p.links===null?'':p.links)+'"></td><td>'+(p.instagram?'<span class="est est-activa">Sí</span>':'<span class="est est-gratis">No</span>')+'</td></tr>';
     }).join('')+'</table>';
     document.getElementById('ajDias').value=d.dias;
+    document.getElementById('ajPromo').value=(d.promo==null?0:d.promo);
   }).catch(function(){});
 }
 function guardarAjustes(){
@@ -287,8 +288,9 @@ function guardarAjustes(){
     planes[p.id]={precio:pr,links:l===''?null:parseInt(l,10)};
   });
   var dd=parseInt(document.getElementById('ajDias').value,10);
-  if(!ok||!(dd>0)){ alert('Revisa los precios y los días.'); return; }
-  post('/ajustes',{planes:planes,dias:dd}).then(function(d){
+  var pr=parseInt(document.getElementById('ajPromo').value,10); if(isNaN(pr))pr=0;
+  if(!ok||!(dd>0)||pr<0||pr>90){ alert('Revisa los precios, los días y el descuento (0 a 90).'); return; }
+  post('/ajustes',{planes:planes,dias:dd,promo:pr}).then(function(d){
     if(d.error){ alert('Error: '+d.error); return; }
     document.getElementById('ajOk').textContent='✓ Guardado';
     loadAjustes();
