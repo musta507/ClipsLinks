@@ -62,6 +62,17 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 .est-pagado,.est-activa{background:rgba(35,165,90,0.15);color:#4CC97B}
 .est-pendiente,.est-debe{background:rgba(232,179,62,0.15);color:#E8B33E}
 .est-gratis{background:rgba(255,255,255,0.07);color:#8A8E99}
+.res{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.res small{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:1px}
+.res-ok{background:rgba(35,165,90,0.15);color:#4CC97B}
+.res-login{background:rgba(232,179,62,0.15);color:#E8B33E}
+.res-pago{background:rgba(229,72,77,0.15);color:#F2777A}
+.res-gris{background:rgba(255,255,255,0.07);color:#8A8E99}
+tr.bloq td{background:rgba(229,72,77,0.05)}
+.kpi.click{cursor:pointer}
+.kpi.click:hover{border-color:rgba(229,72,77,0.5)}
+.otras{font-size:12px;color:#E8B33E;line-height:1.6}
+.otras .mini{height:24px;padding:0 8px;font-size:11px;margin-left:4px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .inp{height:36px;padding:0 12px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:#0F0F14;color:#fff;font-size:14px;outline:none}
 .inp:focus{border-color:#5865F2}
@@ -138,7 +149,23 @@ function fecha(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d)
 function dia(s){if(!s)return '';var d=new Date(s.replace(' ','T'));if(isNaN(d))return s.slice(0,10);return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});}
 function kpi(num,lbl,cls,id){return '<div class="kpi'+(cls?' '+cls:'')+'"'+(id?' id="'+id+'"':'')+'><div class="num">'+(num||0)+'</div><div class="lbl">'+lbl+'</div></div>';}
 
-var TABS=['📜 Historial','💬 Chat soporte','💳 Usuarios y suscripciones','⛔ Perfiles bloqueados','💰 Pagos y planes','👤 Cuentas','🔥 Rankings','📈 Por día','✉️ Mensajes antiguos'];
+var TABS=['📜 Historial','💬 Chat soporte','💳 Usuarios y suscripciones','⛔ Perfiles bloqueados','💰 Pagos y planes','👤 Cuentas','🔥 Rankings','📈 Por día','✉️ Mensajes antiguos','🚨 Intentos bloqueados'];
+var ORDEN=[0,9,1,2,3,4,5,6,7,8];   // orden en el que se ven las pestañas
+var FILTRO_INT='';                 // filtro de la pestana de intentos (@ o email)
+
+// Explica que paso con una busqueda
+function resultadoHTML(r){
+  if(!r||r==='en_curso')return '<span class="muted">—</span>';
+  var mot={perfil:'@ bloqueado',cuenta:'cuenta obligada a pagar',ip:'IP forzada',instagram:'Instagram',limite:'sin links del plan'};
+  var p=r.split(':'), tipo=p[0], m=mot[p[1]]||'';
+  if(tipo==='ok')return '<span class="res res-ok">✓ Sacó links</span>';
+  if(tipo==='error')return '<span class="res res-gris">Error</span>';
+  if(tipo==='limite_velocidad')return '<span class="res res-gris">Demasiado rápido</span>';
+  if(tipo==='login')return '<span class="res res-login">Le pidió login<small>'+m+'</small></span>';
+  if(tipo==='pago')return '<span class="res res-pago">Le pidió pagar<small>'+m+'</small></span>';
+  return '<span class="res res-gris">'+esc(r)+'</span>';
+}
+function esBloqueo(r){ return ['login:ip','login:perfil','pago:perfil','login:cuenta','pago:cuenta'].indexOf(r)>-1; }
 
 function render(d){
   if(d.error){document.getElementById('content').innerHTML='<div class="loading">Error: '+esc(d.error)+'</div>';return;}
@@ -154,21 +181,23 @@ function render(d){
   h+=kpi(d.logged_users,'Usuarios logueados');
   h+=kpi(d.suscritos,'Suscripciones activas','money');
   h+=kpi(d.chat_no_leidos,'Chats sin leer','alert');
+  h+='<div class="kpi alert click" onclick="verIntentos(\'\')"><div class="num">'+(d.bloqueos_hoy||0)+'</div><div class="lbl">Intentos bloqueados hoy</div></div>';
   h+='<div class="kpi money" id="kpiDinero"><div class="num">—</div><div class="lbl">Cobrado ($)</div></div>';
   h+='</div><div class="tabs">';
-  TABS.forEach(function(t,i){
-    var extra=(i===1&&d.chat_no_leidos)?'<span class="cnt">'+d.chat_no_leidos+'</span>':'';
-    h+='<div class="tab'+(i===TAB?' active':'')+'" onclick="tab('+i+')">'+t+extra+'</div>';
+  ORDEN.forEach(function(i){
+    var t=TABS[i];
+    var extra=(i===1&&d.chat_no_leidos)?'<span class="cnt">'+d.chat_no_leidos+'</span>':(i===9&&d.bloqueos_hoy)?'<span class="cnt">'+d.bloqueos_hoy+'</span>':'';
+    h+='<div class="tab'+(i===TAB?' active':'')+'" data-i="'+i+'" onclick="tab('+i+')">'+t+extra+'</div>';
   });
   h+='</div>';
 
   // 0 Historial
-  h+=sec(0,'<div class="card"><h2>Últimas búsquedas</h2><p class="muted" style="font-size:12px;margin-bottom:12px">«Forzar login» obliga a esa IP anónima a entrar. «Bloquear @» hace que quien busque ese perfil tenga que entrar y pagar.</p><div class="tblwrap"><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Acciones</th><th>Fecha</th></tr>'+
+  h+=sec(0,'<div class="card"><h2>Últimas búsquedas</h2><p class="muted" style="font-size:12px;margin-bottom:12px">«Forzar login» obliga a esa IP anónima a entrar. «Bloquear @» hace que quien busque ese perfil tenga que entrar y pagar.</p><div class="tblwrap"><table><tr><th>Perfil</th><th>Plataforma</th><th>Links</th><th>Usuario</th><th>IP</th><th>Qué pasó</th><th>Acciones</th><th>Fecha</th></tr>'+
     (d.history||[]).map(function(x){
       var anon=!x.user_email, yaF=IPS.indexOf(x.ip)>-1, yaB=BLOQ.indexOf((x.username||'').toLowerCase())>-1;
       var b1=anon&&x.ip?'<button class="mini '+(yaF?'on':'')+'" onclick="toggleIP(\''+js(x.ip)+'\','+(!yaF)+')">'+(yaF?'Login forzado':'Forzar login')+'</button>':'';
       var b2='<button class="mini '+(yaB?'on':'')+'" onclick="bloquear(\''+js(x.username)+'\','+(!yaB)+')">'+(yaB?'@ bloqueado':'Bloquear @')+'</button>';
-      return '<tr><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td><div class="acc">'+b1+b2+'</div></td><td class="muted">'+fecha(x.date)+'</td></tr>';
+      return '<tr'+(esBloqueo(x.resultado)?' class="bloq"':'')+'><td>@'+esc(x.username)+'</td><td><span class="pill">'+esc(x.platform)+'</span></td><td>'+(x.count||'')+'</td><td class="email">'+(x.user_email?esc(x.user_email):'<span class="muted">anónimo</span>')+'</td><td class="ip">'+esc(x.ip)+'</td><td>'+resultadoHTML(x.resultado)+'</td><td><div class="acc">'+b1+b2+'</div></td><td class="muted">'+fecha(x.date)+'</td></tr>';
     }).join('')+'</table></div></div>');
 
   // 1 Chat
@@ -203,17 +232,20 @@ function render(d){
   // 8 Mensajes antiguos
   h+=sec(8,'<div id="msgArea" class="loading">Cargando mensajes...</div>');
 
+  // 9 Intentos bloqueados
+  h+=sec(9,'<div class="card"><h2>Intentos bloqueados</h2><p class="muted" style="font-size:12px;margin-bottom:12px">Búsquedas frenadas por un bloqueo tuyo: un @ bloqueado, una cuenta obligada a pagar o una IP con login forzado. En «Misma IP que» ves otras cuentas que han usado esa conexión: si alguien se ha hecho una cuenta nueva, aparecerá ahí.</p><div class="toolbar"><input class="inp" id="intInp" placeholder="Filtrar por @ o email" onkeydown="if(event.key===\'Enter\')filtrarIntentos()"><button class="btn" onclick="filtrarIntentos()">Filtrar</button><button class="mini" onclick="verIntentos(\'\')">Ver todos</button><span id="intInfo" class="muted" style="font-size:12px"></span></div><div id="intArea" class="muted">Cargando...</div></div>');
+
   document.getElementById('content').className='';
   document.getElementById('content').innerHTML=h;
   document.getElementById('hiloInp').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();responder();} });
-  loadUsuarios(); loadPagos(); loadBloqueados(); loadMessages(); loadAjustes(); loadConvs();
+  loadUsuarios(); loadPagos(); loadBloqueados(); loadMessages(); loadAjustes(); loadConvs(); loadIntentos();
   if(CONV) abrirConv(CONV);
 }
-function sec(i,html){ return '<div class="section'+(i===TAB?' active':'')+'">'+html+'</div>'; }
+function sec(i,html){ return '<div class="section'+(i===TAB?' active':'')+'" data-i="'+i+'">'+html+'</div>'; }
 function tab(i){
   TAB=i;
-  document.querySelectorAll('.tab').forEach(function(t,j){t.classList.toggle('active',j===i);});
-  document.querySelectorAll('.section').forEach(function(s,j){s.classList.toggle('active',j===i);});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-i')===String(i));});
+  document.querySelectorAll('.section').forEach(function(s){s.classList.toggle('active',s.getAttribute('data-i')===String(i));});
 }
 function recargarStats(){ pfetch(q('/stats')).then(function(r){return r.json();}).then(render); }
 
@@ -235,8 +267,53 @@ function loadBloqueados(){
     var a=document.getElementById('bloqArea'); if(!a)return;
     if(!d.perfiles||!d.perfiles.length){ a.innerHTML='No hay perfiles bloqueados.'; return; }
     a.className='';
-    a.innerHTML='<table><tr><th>Perfil</th><th>Veces buscado</th><th>Bloqueado el</th><th></th></tr>'+
-      d.perfiles.map(function(p){ return '<tr><td>@'+esc(p.username)+'</td><td>'+p.busquedas+'</td><td class="muted">'+fecha(p.fecha)+'</td><td><button class="mini" onclick="bloquear(\''+js(p.username)+'\',false)">Desbloquear</button></td></tr>'; }).join('')+'</table>';
+    a.innerHTML='<table><tr><th>Perfil</th><th>Bloqueado el</th><th>Búsquedas desde el bloqueo</th><th>Último intento</th><th>Veces buscado (total)</th><th></th></tr>'+
+      d.perfiles.map(function(p){
+        var n=p.intentos?'<b style="color:#F2777A">'+p.intentos+'</b>':'<span class="muted">0</span>';
+        var ver=p.intentos?'<button class="mini" onclick="verIntentos(\''+js(p.username)+'\')">Ver quién</button>':'';
+        return '<tr'+(p.intentos?' class="bloq"':'')+'><td>@'+esc(p.username)+'</td><td class="muted">'+fecha(p.fecha)+'</td><td>'+n+'</td><td class="muted">'+(p.ultimo?fecha(p.ultimo):'—')+'</td><td class="muted">'+p.busquedas+'</td><td><div class="acc">'+ver+'<button class="mini" onclick="bloquear(\''+js(p.username)+'\',false)">Desbloquear</button></div></td></tr>';
+      }).join('')+'</table>';
+  }).catch(function(){});
+}
+
+/* ===== INTENTOS BLOQUEADOS ===== */
+function verIntentos(f){
+  FILTRO_INT=f||'';
+  var i=document.getElementById('intInp'); if(i)i.value=FILTRO_INT?(FILTRO_INT.indexOf('@')>0?FILTRO_INT:'@'+FILTRO_INT):'';
+  tab(9); loadIntentos();
+}
+function filtrarIntentos(){
+  var v=document.getElementById('intInp').value.trim();
+  FILTRO_INT=v.indexOf('@')>0?v:v.replace(/^@/,'');
+  loadIntentos();
+}
+function loadIntentos(){
+  var f=FILTRO_INT, path='/intentos-bloqueados';
+  var ii=document.getElementById('intInp'); if(ii && !ii.value && f){ ii.value=f.indexOf('@')>0?f:'@'+f; }
+  if(f){ path+=(f.indexOf('@')>0?'?email=':'?username=')+encodeURIComponent(f); }
+  pfetch(q(path)).then(function(r){return r.json();}).then(function(d){
+    var a=document.getElementById('intArea'); if(!a)return;
+    var info=document.getElementById('intInfo');
+    var L=d.intentos||[];
+    if(info) info.textContent=(f?'Filtrando: '+f+' · ':'')+L.length+(L.length===1?' intento':' intentos');
+    if(!L.length){ a.className='muted'; a.innerHTML=f?'Nadie ha intentado buscar eso desde que lo bloqueaste.':'Todavía no hay intentos bloqueados.'; return; }
+    a.className='';
+    var IPS=S.forced_ips||[], MARC=S.marcados||[];
+    a.innerHTML='<div class="tblwrap"><table><tr><th>Fecha</th><th>Buscó</th><th>Quién</th><th>IP</th><th>Qué pasó</th><th>Misma IP que</th><th>Acciones</th></tr>'+
+      L.map(function(x){
+        var quien=x.email?'<span class="email">'+esc(x.email)+'</span>':'<span class="muted">anónimo</span>';
+        var otras='<span class="muted">—</span>';
+        if(x.otras_cuentas){
+          otras='<div class="otras">'+x.otras_cuentas.split(', ').map(function(e){
+            var ya=MARC.indexOf(e)>-1;
+            return esc(e)+(ya?' <span class="est est-debe">ya obligada</span>':' <button class="mini" onclick="marcarPago(\''+js(e)+'\',true)">Obligar a pagar</button>');
+          }).join('<br>')+'</div>';
+        }
+        var acc='';
+        if(!x.email && x.ip){ var yaF=IPS.indexOf(x.ip)>-1; acc+='<button class="mini '+(yaF?'on':'')+'" onclick="toggleIP(\''+js(x.ip)+'\','+(!yaF)+')">'+(yaF?'Login forzado':'Forzar login')+'</button>'; }
+        if(x.email && MARC.indexOf(x.email)<0){ acc+='<button class="mini" onclick="marcarPago(\''+js(x.email)+'\',true)">Obligar a pagar</button>'; }
+        return '<tr class="bloq"><td class="muted">'+fecha(x.fecha)+'</td><td>@'+esc(x.username)+' <span class="pill">'+esc(x.platform)+'</span></td><td>'+quien+'</td><td class="ip">'+esc(x.ip)+'</td><td>'+resultadoHTML(x.resultado)+'</td><td>'+otras+'</td><td><div class="acc">'+acc+'</div></td></tr>';
+      }).join('')+'</table></div>';
   }).catch(function(){});
 }
 
@@ -247,14 +324,15 @@ function loadUsuarios(){
     area.className='';
     if(!d.usuarios||!d.usuarios.length){ area.innerHTML='<div class="card"><p class="muted">Todavía no hay usuarios registrados.</p></div>'; return; }
     var h='<div class="card"><h2>Usuarios ('+d.usuarios.length+')</h2><p class="muted" style="font-size:12px;margin-bottom:12px">«Obligar a pagar» bloquea a esa cuenta hasta que se suscriba. Ordenados por búsquedas.</p><div class="tblwrap"><table>';
-    h+='<tr><th>Usuario</th><th>Búsquedas</th><th>Última</th><th>Estado</th><th>Obligar a pagar</th><th>Suscripción manual</th></tr>';
+    h+='<tr><th>Usuario</th><th>Búsquedas</th><th>Última</th><th>Estado</th><th>Intentos bloqueados</th><th>Obligar a pagar</th><th>Suscripción manual</th></tr>';
     d.usuarios.forEach(function(u,i){
       var pic=u.picture?'<img class="av" src="'+esc(u.picture)+'" referrerpolicy="no-referrer">':'';
       var em=js(u.email);
       var uso=u.limite?' · '+u.usados+'/'+u.limite+' links':'';
       var est=u.activo?'<span class="est est-activa">'+esc(u.plan_nombre)+' hasta '+dia(u.sub_hasta)+uso+'</span>'
              :(u.debe_pagar?'<span class="est est-debe">Debe pagar</span>':'<span class="est est-gratis">Gratis</span>');
-      h+='<tr><td>'+pic+'<span class="email">'+esc(u.email)+'</span></td><td>'+u.busquedas+'</td><td class="muted">'+fecha(u.ultima)+'</td><td>'+est+'</td>';
+      var bl=u.bloqueos?'<b style="color:#F2777A">'+u.bloqueos+'</b> <span class="muted" style="font-size:11px">· '+fecha(u.ultimo_bloqueo)+'</span> <button class="mini" onclick="verIntentos(\''+em+'\')">Ver</button>':'<span class="muted">0</span>';
+      h+='<tr'+(u.bloqueos?' class="bloq"':'')+'><td>'+pic+'<span class="email">'+esc(u.email)+'</span></td><td>'+u.busquedas+'</td><td class="muted">'+fecha(u.ultima)+'</td><td>'+est+'</td><td>'+bl+'</td>';
       h+='<td><button class="mini '+(u.debe_pagar?'on':'')+'" onclick="marcarPago(\''+em+'\','+(!u.debe_pagar)+')">'+(u.debe_pagar?'Sí — quitar':'Obligar a pagar')+'</button></td>';
       h+='<td><div class="acc"><select class="inp" style="height:28px;font-size:12px;padding:0 6px" id="sp_'+i+'"><option value="basico">Básico</option><option value="pro">Pro</option><option value="ilimitado" selected>Ilimitado</option></select><button class="mini give" onclick="darDias(\''+em+'\',30,'+i+')">+30 días</button><button class="mini" onclick="pedirDias(\''+em+'\','+i+')">Otro</button>'+(u.activo?'<button class="mini" onclick="quitarSub(\''+em+'\')">Quitar</button>':'')+'</div></td></tr>';
     });

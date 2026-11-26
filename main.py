@@ -63,6 +63,8 @@ def init_db():
             count INTEGER, user_email TEXT, created_at TIMESTAMP DEFAULT NOW())''')
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS count INTEGER")
         cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS user_email TEXT")
+        # Que paso con cada busqueda: ok, error, login:perfil, pago:cuenta...
+        cur.execute("ALTER TABLE searches ADD COLUMN IF NOT EXISTS resultado TEXT")
         cur.execute('''CREATE TABLE IF NOT EXISTS logins (
             id SERIAL PRIMARY KEY, email TEXT, name TEXT, picture TEXT, ip TEXT,
             created_at TIMESTAMP DEFAULT NOW())''')
@@ -98,6 +100,8 @@ def init_db():
         cur.execute("DELETE FROM sessions WHERE created_at < NOW() - INTERVAL '120 days'")
         cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_email ON searches (user_email)')
         cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_fecha ON searches (created_at)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_user ON searches (LOWER(username))')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_searches_ip ON searches (ip)')
         cur.execute('CREATE INDEX IF NOT EXISTS idx_chat_email ON chat (email)')
         cur.execute('CREATE INDEX IF NOT EXISTS idx_payments_ref ON payments (ref)')
         conn.commit()
@@ -318,6 +322,10 @@ def perfil_bloqueado(username):
         return b
     except:
         return False
+
+
+# Resultados que vienen de un bloqueo puesto a mano en el panel
+BLOQUEOS = ('login:ip', 'login:perfil', 'pago:perfil', 'login:cuenta', 'pago:cuenta')
 
 
 def ip_forzada(ip):
@@ -790,9 +798,11 @@ def usuarios_panel():
                               (u.sub_hasta IS NOT NULL AND u.sub_hasta > NOW()),
                               (SELECT COUNT(*) FROM searches s WHERE s.user_email = u.email),
                               (SELECT MAX(created_at) FROM searches s WHERE s.user_email = u.email),
-                              u.created_at, COALESCE(u.sub_plan, 'ilimitado'), COALESCE(u.links_usados, 0)
+                              u.created_at, COALESCE(u.sub_plan, 'ilimitado'), COALESCE(u.links_usados, 0),
+                              (SELECT COUNT(*) FROM searches s WHERE s.user_email = u.email AND s.resultado = ANY(%s)),
+                              (SELECT MAX(created_at) FROM searches s WHERE s.user_email = u.email AND s.resultado = ANY(%s))
                        FROM users u
-                       ORDER BY 7 DESC, u.created_at DESC LIMIT 5000''')
+                       ORDER BY 7 DESC, u.created_at DESC LIMIT 5000''', (list(BLOQUEOS), list(BLOQUEOS)))
         filas = cur.fetchall()
         cur.close()
         conn.close()
@@ -803,7 +813,8 @@ def usuarios_panel():
             'activo': bool(f[5]), 'busquedas': f[6] or 0,
             'ultima': str(f[7]) if f[7] else '', 'alta': str(f[8]) if f[8] else '',
             'plan': f[9], 'plan_nombre': planes.get(f[9], planes['ilimitado'])['nombre'],
-            'usados': f[10], 'limite': planes.get(f[9], planes['ilimitado'])['links']} for f in filas]})
+            'usados': f[10], 'limite': planes.get(f[9], planes['ilimitado'])['links'],
+            'bloqueos': f[11] or 0, 'ultimo_bloqueo': str(f[12]) if f[12] else ''} for f in filas]})
     except Exception as e:
         return fallo(e)
 
@@ -862,12 +873,54 @@ def perfiles_bloqueados():
         conn = get_db()
         cur = conn.cursor()
         cur.execute('''SELECT b.username, b.created_at,
-                              (SELECT COUNT(*) FROM searches s WHERE LOWER(s.username) = b.username)
+                              (SELECT COUNT(*) FROM searches s WHERE LOWER(s.username) = b.username),
+                              (SELECT COUNT(*) FROM searches s WHERE LOWER(s.username) = b.username
+                                 AND s.created_at >= b.created_at),
+                              (SELECT MAX(created_at) FROM searches s WHERE LOWER(s.username) = b.username
+                                 AND s.created_at >= b.created_at)
                        FROM blocked_profiles b ORDER BY b.created_at DESC''')
         filas = cur.fetchall()
         cur.close()
         conn.close()
-        return jsonify({'perfiles': [{'username': f[0], 'fecha': str(f[1]), 'busquedas': f[2] or 0} for f in filas]})
+        return jsonify({'perfiles': [{'username': f[0], 'fecha': str(f[1]), 'busquedas': f[2] or 0,
+                                      'intentos': f[3] or 0, 'ultimo': str(f[4]) if f[4] else ''} for f in filas]})
+    except Exception as e:
+        return fallo(e)
+
+
+@app.route('/intentos-bloqueados')
+def intentos_bloqueados():
+    """Busquedas frenadas por un bloqueo tuyo (@ bloqueado, cuenta obligada a pagar o IP forzada).
+    Para cada una dice que otras cuentas han usado esa misma IP: asi se ve si alguien se ha hecho otra cuenta."""
+    if not check_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        username = (request.args.get('username', '') or '').strip().lstrip('@').lower()
+        email = (request.args.get('email', '') or '').strip()
+        sql = '''SELECT s.username, s.platform, s.user_email, s.ip, s.resultado, s.created_at,
+                        (SELECT STRING_AGG(DISTINCT x.user_email, ', ')
+                           FROM searches x
+                          WHERE x.ip = s.ip AND x.user_email IS NOT NULL AND x.user_email <> ''
+                            AND x.user_email IS DISTINCT FROM s.user_email AND s.ip <> '')
+                   FROM searches s
+                  WHERE s.resultado = ANY(%s)'''
+        params = [list(BLOQUEOS)]
+        if username:
+            sql += ' AND LOWER(s.username) = %s'
+            params.append(username)
+        if email:
+            sql += ' AND s.user_email = %s'
+            params.append(email)
+        sql += ' ORDER BY s.created_at DESC LIMIT 300'
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'intentos': [{
+            'username': f[0] or '', 'platform': f[1] or '', 'email': f[2] or '', 'ip': f[3] or '',
+            'resultado': f[4] or '', 'fecha': str(f[5]), 'otras_cuentas': (f[6] or '')[:300]} for f in filas]})
     except Exception as e:
         return fallo(e)
 
@@ -1052,6 +1105,8 @@ def stats():
         pending_msgs = q("SELECT COUNT(*) FROM messages WHERE replied = FALSE")
         chat_no_leidos = q("SELECT COUNT(*) FROM chat WHERE de = 'user' AND leido = FALSE")
         suscritos = q("SELECT COUNT(*) FROM users WHERE sub_hasta > NOW()")
+        bloqueos_hoy = q("SELECT COUNT(*) FROM searches WHERE created_at >= CURRENT_DATE AND resultado = ANY(%s)",
+                         (list(BLOQUEOS),))
 
         cur.execute('SELECT platform, COUNT(*) FROM searches GROUP BY platform ORDER BY COUNT(*) DESC')
         platforms = cur.fetchall()
@@ -1063,7 +1118,7 @@ def stats():
                        FROM logins WHERE email IS NOT NULL AND email != ''
                        GROUP BY email ORDER BY MAX(created_at) DESC LIMIT 5000''')
         accounts = cur.fetchall()
-        cur.execute('''SELECT username, platform, count, user_email, ip, created_at
+        cur.execute('''SELECT username, platform, count, user_email, ip, created_at, resultado
                        FROM searches ORDER BY created_at DESC LIMIT 5000''')
         history = cur.fetchall()
         cur.execute("SELECT ip FROM forced_ips")
@@ -1086,7 +1141,8 @@ def stats():
             'accounts': [{'email': a[0], 'name': a[1], 'picture': a[2], 'logins': a[3],
                           'last_login': str(a[4])} for a in accounts],
             'history': [{'username': h[0], 'platform': h[1], 'count': h[2], 'user_email': h[3] or '',
-                         'ip': h[4] or '', 'date': str(h[5])} for h in history],
+                         'ip': h[4] or '', 'date': str(h[5]), 'resultado': h[6] or ''} for h in history],
+            'bloqueos_hoy': bloqueos_hoy,
         })
     except Exception as e:
         return fallo(e)
@@ -1188,16 +1244,33 @@ def get_links():
         return demasiadas()
 
     # Guardar la busqueda (tambien los intentos bloqueados, para verlos en el panel)
+    busqueda_id = None
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('INSERT INTO searches (ip, platform, username, count, user_email) VALUES (%s, %s, %s, %s, %s)',
+        cur.execute('''INSERT INTO searches (ip, platform, username, count, user_email, resultado)
+                       VALUES (%s, %s, %s, %s, %s, 'en_curso') RETURNING id''',
                     (ip, platform, user, days if platform == 'instagram' else count, email))
+        busqueda_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
     except Exception:
         pass
+
+    def marcar(res):
+        """Apunta en la busqueda que paso (para el panel)."""
+        if not busqueda_id:
+            return
+        try:
+            c2 = get_db()
+            k2 = c2.cursor()
+            k2.execute('UPDATE searches SET resultado = %s WHERE id = %s', (res, busqueda_id))
+            c2.commit()
+            k2.close()
+            c2.close()
+        except Exception:
+            pass
 
     u = get_user(email) if email else None
     activo = bool(u and u['activo'])
@@ -1205,28 +1278,38 @@ def get_links():
 
     # 1) IP forzada a iniciar sesion
     if not email and ip_forzada(ip):
+        marcar('login:ip')
         return jsonify({'error': 'login_requerido', 'motivo': 'forzado'}), 401
 
     # 2) Perfil (@) bloqueado o cuenta marcada: anonimo -> login; sin suscripcion -> pagar
-    if perfil_bloqueado(user) or (u and u['debe_pagar']):
+    es_perfil = perfil_bloqueado(user)
+    if es_perfil or (u and u['debe_pagar']):
+        motivo = 'perfil' if es_perfil else 'cuenta'
         if not email:
+            marcar('login:' + motivo)
             return jsonify({'error': 'login_requerido', 'motivo': 'forzado'}), 401
         if not activo:
+            marcar('pago:' + motivo)
             return jsonify({'error': 'pago_requerido', 'motivo': 'cuenta'}), 402
         contar = True
 
     # 3) Instagram: solo con un plan que incluya Instagram
     if platform == 'instagram':
         if not email:
+            marcar('login:instagram')
             return jsonify({'error': 'login_requerido', 'motivo': 'instagram'}), 401
         if not activo or not u['instagram']:
+            marcar('pago:instagram')
             return jsonify({'error': 'pago_requerido', 'motivo': 'instagram'}), 402
         # Instagram cuesta dinero por cada busqueda: maximo 30 por hora y cuenta
         if limitado('ig:' + email, 30, 3600):
+            marcar('limite_velocidad')
             return demasiadas()
         resultado, err = get_instagram_reels(user, days)
         if err:
+            marcar('error')
             return jsonify({'error': err}), 502
+        marcar('ok')
         return jsonify({'links': resultado.get('links', []), 'stats': resultado.get('stats'),
                         'avatar': get_avatar(user, 'instagram')})
 
@@ -1235,6 +1318,7 @@ def get_links():
     if contar and u['restantes'] is not None:
         restantes = u['restantes']
         if restantes <= 0:
+            marcar('pago:limite')
             return jsonify({'error': 'pago_requerido', 'motivo': 'limite'}), 402
         count = min(count, restantes)
 
@@ -1273,9 +1357,11 @@ def get_links():
                 except:
                     pass
                 restantes = max(0, restantes - len(links))
+            marcar('ok')
             return jsonify({'links': links, 'avatar': avatar, 'restantes': restantes})
     except Exception as e:
         app.logger.warning('links %s @%s: %s', platform, user, str(e)[:300])
+        marcar('error')
         return jsonify({'error': 'no_disponible'}), 502
 
 
